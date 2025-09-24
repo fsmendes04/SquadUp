@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CreateGroupDialog extends StatefulWidget {
-  final Future<void> Function(String name) onCreateGroup;
+  final Future<void> Function(String name, List<String> members) onCreateGroup;
 
   const CreateGroupDialog({super.key, required this.onCreateGroup});
 
@@ -14,21 +14,15 @@ class _CreateGroupDialogState extends State<CreateGroupDialog>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _groupNameController = TextEditingController();
+  final _membersController = TextEditingController();
 
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
   late Animation<double> _fadeAnimation;
 
   bool _isLoading = false;
-  int _selectedColorIndex = 0;
 
-  // Cores disponíveis para o grupo
-  final List<Color> _groupColors = [
-    const Color(0xFF51A3E6), // Azul principal
-    const Color(0xFF2ECC71), // Verde
-    const Color(0xFFE74C3C), // Vermelho
-    const Color(0xFFE67E22), // Laranja escuro
-  ];
+  final Color groupColor = const Color(0xFF51A3E6);
 
   final darkBlue = const Color.fromARGB(255, 29, 56, 95);
   final primaryBlue = const Color(0xFF51A3E6); // Azul principal
@@ -56,7 +50,18 @@ class _CreateGroupDialogState extends State<CreateGroupDialog>
   void dispose() {
     _animationController.dispose();
     _groupNameController.dispose();
+    _membersController.dispose();
     super.dispose();
+  }
+
+  List<String> _parseMembersList(String membersText) {
+    if (membersText.trim().isEmpty) return [];
+
+    return membersText
+        .split(',')
+        .map((member) => member.trim())
+        .where((member) => member.isNotEmpty)
+        .toList();
   }
 
   Future<void> _createGroup() async {
@@ -67,7 +72,8 @@ class _CreateGroupDialogState extends State<CreateGroupDialog>
     });
 
     try {
-      await widget.onCreateGroup(_groupNameController.text.trim());
+      final members = _parseMembersList(_membersController.text);
+      await widget.onCreateGroup(_groupNameController.text.trim(), members);
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -224,68 +230,63 @@ class _CreateGroupDialogState extends State<CreateGroupDialog>
 
                       const SizedBox(height: 20),
 
-                      // Seletor de cor
+                      // Campo membros do grupo
                       Text(
-                        'Choose Group Color',
+                        'Group Members',
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: darkBlue,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: List.generate(_groupColors.length, (index) {
-                          final isSelected = index == _selectedColorIndex;
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                _selectedColorIndex = index;
-                              });
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: 35,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                color: _groupColors[index],
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      isSelected
-                                          ? darkBlue
-                                          : Colors.transparent,
-                                  width: 3,
-                                ),
-                                boxShadow:
-                                    isSelected
-                                        ? [
-                                          BoxShadow(
-                                            color: _groupColors[index]
-                                                .withOpacity(0.4),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
-                                        : null,
-                              ),
-                              child:
-                                  isSelected
-                                      ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 20,
-                                      )
-                                      : null,
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _membersController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText:
+                              'Enter user IDs separated by commas\ne.g., user1, user2, user3',
+                          hintStyle: GoogleFonts.poppins(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                          prefixIcon: Padding(
+                            padding: const EdgeInsets.only(bottom: 40),
+                            child: Icon(
+                              Icons.person_add_rounded,
+                              color: darkBlue,
+                              size: 20,
                             ),
-                          );
-                        }),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(0.3),
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: primaryBlue,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 16,
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                        ),
                       ),
 
                       const SizedBox(height: 20),
-
                       // Botões de ação
                       Row(
                         children: [

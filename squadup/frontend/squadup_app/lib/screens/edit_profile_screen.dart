@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
+import '../services/avatar_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -13,9 +16,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _authService = AuthService();
+  final _avatarService = AvatarService();
+  final _imagePicker = ImagePicker();
 
   bool _isLoading = false;
   bool _isLoadingUserData = true;
+  bool _isUploadingAvatar = false;
   String _message = '';
   bool _isSuccessMessage = false;
   Map<String, String?>? userData;
@@ -94,6 +100,233 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return words[0][0].toUpperCase();
     }
     return 'U';
+  }
+
+  Future<void> _showAvatarOptions() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Choose Avatar',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildAvatarOption(
+                    icon: Icons.camera_alt,
+                    label: 'Camera',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.camera);
+                    },
+                  ),
+                  _buildAvatarOption(
+                    icon: Icons.photo_library,
+                    label: 'Gallery',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _pickImage(ImageSource.gallery);
+                    },
+                  ),
+                  if (userData?['avatar_url'] != null)
+                    _buildAvatarOption(
+                      icon: Icons.delete,
+                      label: 'Remove',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _removeAvatar();
+                      },
+                      isDestructive: true,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAvatarOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    bool isDestructive = false,
+  }) {
+    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color:
+                  isDestructive
+                      ? Colors.red.shade50
+                      : primaryBlue.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color:
+                    isDestructive
+                        ? Colors.red.shade200
+                        : primaryBlue.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Icon(
+              icon,
+              color: isDestructive ? Colors.red.shade600 : primaryBlue,
+              size: 24,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDestructive ? Colors.red.shade600 : darkBlue,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+
+      if (image != null) {
+        await _uploadAvatar(File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _message = 'Error selecting image: ${e.toString()}';
+          _isSuccessMessage = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _uploadAvatar(File imageFile) async {
+    setState(() {
+      _isUploadingAvatar = true;
+      _message = '';
+    });
+
+    try {
+      // Validate the image file
+      final validationError = _avatarService.validateImageFile(imageFile);
+      if (validationError != null) {
+        setState(() {
+          _message = validationError;
+          _isSuccessMessage = false;
+        });
+        return;
+      }
+
+      // Upload the avatar
+      final response = await _avatarService.uploadAvatar(imageFile);
+
+      if (response.success && response.data != null) {
+        // Update local user data
+        setState(() {
+          userData = {...userData!, 'avatar_url': response.data!.avatarUrl};
+          _message = 'Avatar updated successfully!';
+          _isSuccessMessage = true;
+        });
+
+        // Update stored user data
+        await _authService.updateStoredUserAvatar(response.data!.avatarUrl);
+      } else {
+        setState(() {
+          _message = response.message;
+          _isSuccessMessage = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _message = 'Error uploading avatar: ${e.toString()}';
+        _isSuccessMessage = false;
+      });
+    } finally {
+      setState(() {
+        _isUploadingAvatar = false;
+      });
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    setState(() {
+      _isUploadingAvatar = true;
+      _message = '';
+    });
+
+    try {
+      final response = await _avatarService.deleteAvatar();
+
+      if (response.success) {
+        // Update local user data
+        setState(() {
+          userData = {...userData!, 'avatar_url': null};
+          _message = 'Avatar removed successfully!';
+          _isSuccessMessage = true;
+        });
+
+        // Update stored user data
+        await _authService.updateStoredUserAvatar(null);
+      } else {
+        setState(() {
+          _message = response.message;
+          _isSuccessMessage = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _message = 'Error removing avatar: ${e.toString()}';
+        _isSuccessMessage = false;
+      });
+    } finally {
+      setState(() {
+        _isUploadingAvatar = false;
+      });
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -209,37 +442,142 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                       const SizedBox(height: 30),
 
-                      // Profile Picture
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              primaryBlue,
-                              primaryBlue.withValues(alpha: 0.8),
-                            ],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryBlue.withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                      // Profile Picture with upload functionality
+                      GestureDetector(
+                        onTap: _isUploadingAvatar ? null : _showAvatarOptions,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient:
+                                    userData?['avatar_url'] == null
+                                        ? LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            primaryBlue,
+                                            primaryBlue.withValues(alpha: 0.8),
+                                          ],
+                                        )
+                                        : null,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryBlue.withValues(alpha: 0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child:
+                                  userData?['avatar_url'] != null
+                                      ? ClipOval(
+                                        child: Image.network(
+                                          userData!['avatar_url']!,
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            return Container(
+                                              width: 120,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    primaryBlue,
+                                                    primaryBlue.withValues(
+                                                      alpha: 0.8,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  _getInitials(),
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 48,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                      : Center(
+                                        child: Text(
+                                          _getInitials(),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                            ),
+                            // Loading overlay
+                            if (_isUploadingAvatar)
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.black.withValues(alpha: 0.5),
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 3,
+                                  ),
+                                ),
+                              ),
+                            // Edit overlay
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color:
+                                      _isUploadingAvatar
+                                          ? Colors.grey
+                                          : primaryBlue,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  _isUploadingAvatar
+                                      ? Icons.hourglass_empty
+                                      : Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                        child: Center(
-                          child: Text(
-                            _getInitials(),
-                            style: GoogleFonts.poppins(
-                              fontSize: 48,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
                         ),
                       ),
 

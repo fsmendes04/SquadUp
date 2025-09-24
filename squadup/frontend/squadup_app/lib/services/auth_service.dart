@@ -118,6 +118,11 @@ class AuthService {
     } else {
       await prefs.remove('user_name'); // Remove if null
     }
+    if (user.avatarUrl != null) {
+      await prefs.setString('user_avatar_url', user.avatarUrl!);
+    } else {
+      await prefs.remove('user_avatar_url'); // Remove if null
+    }
   }
 
   // Get stored token
@@ -132,12 +137,14 @@ class AuthService {
     final userId = prefs.getString('user_id');
     final userEmail = prefs.getString('user_email');
     final userName = prefs.getString('user_name');
+    final avatarUrl = prefs.getString('user_avatar_url');
 
     if (userId != null && userEmail != null) {
       return {
         'id': userId,
         'email': userEmail,
         'name': userName, // Can be null
+        'avatar_url': avatarUrl, // Can be null
       };
     }
 
@@ -189,5 +196,63 @@ class AuthService {
       print('Error updating user name: $e');
       return false;
     }
+  }
+
+  // Update user profile (name and/or avatar)
+  Future<bool> updateProfile({String? name, String? avatarUrl}) async {
+    try {
+      final Map<String, dynamic> data = {};
+      if (name != null) data['name'] = name;
+      if (avatarUrl != null) data['avatar_url'] = avatarUrl;
+
+      final response = await _apiService.put(
+        '/auth/update-profile',
+        data: data,
+      );
+
+      if (response.statusCode == 200) {
+        // Update local storage
+        final prefs = await SharedPreferences.getInstance();
+        if (name != null) {
+          await prefs.setString('user_name', name);
+        }
+        if (avatarUrl != null) {
+          await prefs.setString('user_avatar_url', avatarUrl);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error updating profile: $e');
+      return false;
+    }
+  }
+
+  // Get stored avatar URL
+  Future<String?> getStoredAvatarUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_avatar_url');
+  }
+
+  // Update stored user avatar URL
+  Future<void> updateStoredUserAvatar(String? avatarUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (avatarUrl != null) {
+      await prefs.setString('user_avatar_url', avatarUrl);
+    } else {
+      await prefs.remove('user_avatar_url');
+    }
+  }
+
+  // Update logout to clear avatar URL
+  Future<void> logoutEnhanced() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('user_id');
+    await prefs.remove('user_email');
+    await prefs.remove('user_name');
+    await prefs.remove('user_avatar_url');
+    // Remover token do ApiService
+    _apiService.removeAuthToken();
   }
 }

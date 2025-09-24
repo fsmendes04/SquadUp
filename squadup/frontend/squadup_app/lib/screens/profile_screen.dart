@@ -67,7 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-    final lightGray = const Color.fromARGB(255, 248, 249, 250);
 
     return WillPopScope(
       onWillPop: () async {
@@ -130,14 +129,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 120,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    primaryBlue,
-                                    primaryBlue.withValues(alpha: 0.8),
-                                  ],
-                                ),
+                                gradient:
+                                    userData?['avatar_url'] == null
+                                        ? LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            primaryBlue,
+                                            primaryBlue.withValues(alpha: 0.8),
+                                          ],
+                                        )
+                                        : null,
                                 boxShadow: [
                                   BoxShadow(
                                     color: primaryBlue.withValues(alpha: 0.3),
@@ -146,16 +148,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ],
                               ),
-                              child: Center(
-                                child: Text(
-                                  _getInitials(),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                              child:
+                                  userData?['avatar_url'] != null
+                                      ? ClipOval(
+                                        child: Image.network(
+                                          userData!['avatar_url']!,
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (
+                                            context,
+                                            error,
+                                            stackTrace,
+                                          ) {
+                                            // If image fails to load, show initials
+                                            return Container(
+                                              width: 120,
+                                              height: 120,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                gradient: LinearGradient(
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                  colors: [
+                                                    primaryBlue,
+                                                    primaryBlue.withValues(
+                                                      alpha: 0.8,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              child: Center(
+                                                child: Text(
+                                                  _getInitials(),
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 48,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      )
+                                      : Center(
+                                        child: Text(
+                                          _getInitials(),
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
                             ),
                             const SizedBox(height: 20),
                             Text(
@@ -189,9 +235,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: Column(
                               children: [
                                 // App Settings
-                                _buildInfoCard(
-                                  'App Settings',
-                                  [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                      ),
+                                      child: Text(
+                                        'App Settings',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                          color: darkBlue,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 16),
                                     _buildActionRow(
                                       Icons.notifications_outlined,
                                       'Notifications',
@@ -262,8 +322,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       },
                                     ),
                                   ],
-                                  lightGray,
-                                  darkBlue,
                                 ),
 
                                 const SizedBox(height: 30),
@@ -391,44 +449,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ); // End of Scaffold
   } // End of WillPopScope
 
-  Widget _buildInfoCard(
-    String title,
-    List<Widget> children,
-    Color backgroundColor,
-    Color textColor,
-  ) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ...children,
-        ],
-      ),
-    );
-  }
-
   Widget _buildActionRow(
     IconData icon,
     String title,
@@ -436,57 +456,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
     VoidCallback onTap,
   ) {
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
+    return _SettingsCard(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      onTap: onTap,
+      darkBlue: darkBlue,
+      primaryBlue: primaryBlue,
+    );
+  }
+}
+
+class _SettingsCard extends StatefulWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Color darkBlue;
+  final Color primaryBlue;
+
+  const _SettingsCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    required this.darkBlue,
+    required this.primaryBlue,
+  });
+
+  @override
+  State<_SettingsCard> createState() => _SettingsCardState();
+}
+
+class _SettingsCardState extends State<_SettingsCard> {
+  bool _isPressed = false;
+
+  void _onTapDown(TapDownDetails details) {
+    setState(() {
+      _isPressed = true;
+    });
+  }
+
+  void _onTapUp(TapUpDetails details) {
+    setState(() {
+      _isPressed = false;
+    });
+    widget.onTap();
+  }
+
+  void _onTapCancel() {
+    setState(() {
+      _isPressed = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          decoration: BoxDecoration(
+            color:
+                _isPressed ? Colors.grey.withOpacity(0.05) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              // Title and subtitle (sem ícone)
+              Expanded(
+                child: Text(
+                  widget.title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: widget.darkBlue,
+                    height: 1.2,
                   ),
-                  child: Icon(icon, size: 20, color: darkBlue),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: darkBlue,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: darkBlue.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: darkBlue.withValues(alpha: 0.5),
-                ),
-              ],
-            ),
+              ),
+
+              const SizedBox(width: 8),
+
+              // Arrow indicator
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 24,
+                color: const Color.fromARGB(255, 29, 56, 95),
+              ),
+            ],
           ),
         ),
       ),

@@ -8,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/groups_service.dart';
 import '../models/group_with_members.dart';
 import '../models/create_group_request.dart';
+import '../models/add_member_request.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -213,17 +214,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: GroupCard(
             group: groupData,
             onTap: () {
-              // TODO: Navegar para o grupo específico
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Entrando no grupo: ${groupData['name']}'),
-                  backgroundColor: primaryBlue,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  margin: const EdgeInsets.all(16),
-                ),
+              // Navegar para a tela específica do grupo
+              Navigator.pushNamed(
+                context,
+                '/group',
+                arguments: {
+                  'groupId': groupData['id'],
+                  'groupName': groupData['name'],
+                },
               );
             },
           ),
@@ -306,15 +304,15 @@ class _HomeScreenState extends State<HomeScreen> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return CreateGroupDialog(
-          onCreateGroup: (String name) async {
-            await _createGroup(name);
+          onCreateGroup: (String name, List<String> members) async {
+            await _createGroup(name, members);
           },
         );
       },
     );
   }
 
-  Future<void> _createGroup(String name) async {
+  Future<void> _createGroup(String name, List<String> members) async {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     try {
@@ -324,19 +322,56 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // Criar o grupo usando o service
-      await _groupsService.createGroup(
+      final createdGroup = await _groupsService.createGroup(
         CreateGroupRequest(name: name),
         userData!['id']!,
       );
+
+      // Variáveis para rastrear membros adicionados
+      List<String> failedToAdd = [];
+
+      // Adicionar membros ao grupo se foram especificados
+      if (members.isNotEmpty) {
+        List<String> successfullyAdded = [];
+
+        for (String memberId in members) {
+          try {
+            await _groupsService.addMember(
+              createdGroup.id,
+              AddMemberRequest(userId: memberId),
+              userData!['id']!,
+            );
+            successfullyAdded.add(memberId);
+          } catch (e) {
+            print('Erro ao adicionar membro $memberId: $e');
+            failedToAdd.add(memberId);
+          }
+        }
+
+        // Mostrar feedback sobre membros que falharam
+        if (failedToAdd.isNotEmpty && mounted) {
+          _showErrorSnackBar(
+            'Alguns membros não puderam ser adicionados: ${failedToAdd.join(', ')}',
+          );
+        }
+      }
 
       // Recarregar a lista de grupos
       await _refreshGroups();
 
       // Mostrar mensagem de sucesso
       if (mounted) {
+        String successMessage = 'Grupo "$name" criado com sucesso!';
+        if (members.isNotEmpty) {
+          final addedCount = members.length - failedToAdd.length;
+          if (addedCount > 0) {
+            successMessage += ' $addedCount membro(s) adicionado(s).';
+          }
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Grupo "$name" criado com sucesso!'),
+            content: Text(successMessage),
             backgroundColor: primaryBlue,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -396,9 +431,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Image.asset(
                           'lib/images/logo_v3.png',
-                          height: 50,
-                          width: 50,
+                          height: 40,
+                          width: 40,
                           fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'SquadUp',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500,
+                            color: darkBlue,
+                          ),
                         ),
                       ],
                     ),
@@ -411,7 +455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             IconButton(
                               icon: const Icon(
                                 Icons.notifications_none_outlined,
-                                size: 28,
+                                size: 32,
                               ),
                               color: darkBlue,
                               onPressed: () {
@@ -447,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Builder(
                           builder:
                               (context) => IconButton(
-                                icon: const Icon(Icons.menu_rounded, size: 26),
+                                icon: const Icon(Icons.menu_rounded, size: 32),
                                 color: darkBlue,
                                 onPressed: () => _showTopDrawer(context),
                                 tooltip: 'Menu',

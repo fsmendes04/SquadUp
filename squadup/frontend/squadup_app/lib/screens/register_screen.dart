@@ -120,26 +120,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Botão de voltar
               Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/welcome');
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                padding: const EdgeInsets.only(left: 30, right: 30, top: 50),
                 child: Form(
                   key: _formKey,
                   child: Column(

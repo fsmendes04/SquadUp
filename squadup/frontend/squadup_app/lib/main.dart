@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:squadup_app/screens/welcome_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/login_screen.dart';
@@ -8,12 +7,12 @@ import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/add_name_screen.dart';
 import 'screens/edit_profile_screen.dart';
+import 'screens/group_home_screen.dart';
 import 'services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carregar variáveis de ambiente se existir
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
@@ -51,7 +50,15 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/edit-profile': (context) => const EditProfileScreen(),
         '/add-name': (context) => const AddNameScreen(),
-        '/welcome': (context) => const WelcomeScreen(),
+        '/group': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>?;
+          return GroupHomeScreen(
+            groupId: args?['groupId'] ?? '',
+            groupName: args?['groupName'] ?? '',
+          );
+        },
       },
     );
   }
@@ -101,7 +108,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     }
 
     if (!_isLoggedIn) {
-      return const WelcomeScreen();
+      return const LoginScreen();
     }
 
     if (!_hasName) {

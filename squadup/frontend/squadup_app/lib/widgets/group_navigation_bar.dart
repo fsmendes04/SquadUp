@@ -19,8 +19,18 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    List<IconData> icons = [Icons.home, Icons.person];
-    List<IconData> outlinedIcons = [Icons.home_outlined, Icons.person_outline];
+    List<IconData> icons = [
+      Icons.chat,
+      Icons.calendar_month,
+      Icons.wallet,
+      Icons.casino,
+    ];
+    List<IconData> outlinedIcons = [
+      Icons.chat_bubble_outline,
+      Icons.calendar_month_outlined,
+      Icons.wallet_outlined,
+      Icons.casino_outlined,
+    ];
     const darkBlue = Color.fromARGB(255, 29, 56, 95);
     const white = Color.fromARGB(255, 255, 255, 255);
 
@@ -40,7 +50,7 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(
-          2,
+          4,
           (index) => Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 1),

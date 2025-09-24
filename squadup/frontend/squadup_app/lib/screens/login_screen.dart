@@ -101,26 +101,12 @@ class _LoginScreenState extends State<LoginScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Botão de voltar - se necessário
               Padding(
-                padding: const EdgeInsets.only(left: 14.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/welcome');
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Color.fromARGB(255, 0, 0, 0),
-                      size: 22,
-                    ),
-                  ),
+                padding: const EdgeInsets.only(
+                  right: 30.0,
+                  left: 30.0,
+                  top: 50,
                 ),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30.0),
                 child: Form(
                   key: _formKey,
                   child: Column(

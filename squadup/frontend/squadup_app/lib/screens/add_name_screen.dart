@@ -87,9 +87,8 @@ class _AddNameScreenState extends State<AddNameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     final backgroundColor = Colors.white;
+    final buttonColor = const Color.fromARGB(255, 17, 80, 138);
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -126,7 +125,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 28,
                       fontWeight: FontWeight.w600,
-                      color: darkBlue,
+                      color: const Color.fromARGB(221, 0, 0, 0),
                     ),
                   ),
 
@@ -137,9 +136,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      color: darkBlue.withValues(alpha: 0.7),
-                      height: 1.5,
+                      color: const Color.fromARGB(255, 130, 130, 130),
                     ),
                   ),
 
@@ -148,7 +145,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                   // Name input
                   SquadUpInput(
                     controller: _nameController,
-                    label: 'Your Name',
+                    label: 'Name',
                     icon: Icons.person_outline,
                     keyboardType: TextInputType.name,
                     validator: (value) {
@@ -220,21 +217,21 @@ class _AddNameScreenState extends State<AddNameScreen> {
 
                   // Confirm button
                   SizedBox(
-                    width: double.infinity,
+                    width: 175, // largura reduzida do botão
                     height: 55,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _confirmName,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
+                        backgroundColor: buttonColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
                         elevation: 2,
-                        disabledBackgroundColor: primaryBlue.withValues(
+                        disabledBackgroundColor: buttonColor.withValues(
                           alpha: 0.6,
                         ),
-                        shadowColor: primaryBlue.withValues(alpha: 0.3),
+                        shadowColor: buttonColor.withValues(alpha: 0.3),
                       ),
                       child:
                           _isLoading
@@ -250,14 +247,12 @@ class _AddNameScreenState extends State<AddNameScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Continue",
+                                    "Get Started",
                                     style: GoogleFonts.poppins(
                                       fontSize: 18,
-                                      fontWeight: FontWeight.w600,
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.arrow_forward, size: 20),
                                 ],
                               ),
                     ),

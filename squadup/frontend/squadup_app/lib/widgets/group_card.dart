@@ -56,10 +56,9 @@ class _GroupCardState extends State<GroupCard> {
           ),
           child: Row(
             children: [
-              // Group avatar - estilo Instagram story
               Container(
-                width: 56,
-                height: 56,
+                width: 62,
+                height: 62,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -85,14 +84,7 @@ class _GroupCardState extends State<GroupCard> {
                       ),
                     ),
                     child: Center(
-                      child: Text(
-                        widget.group['name'][0].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: Icon(Icons.groups, color: Colors.white, size: 28),
                     ),
                   ),
                 ),
@@ -118,21 +110,6 @@ class _GroupCardState extends State<GroupCard> {
                     ),
 
                     const SizedBox(height: 2),
-
-                    // Informações secundárias
-                    Row(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 6),
-                          width: 3,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: Colors.grey[400],
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),

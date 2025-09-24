@@ -98,22 +98,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Converte GroupWithMembers para o formato esperado pelo GroupCard
   Map<String, dynamic> _groupToCardFormat(GroupWithMembers group, int index) {
-    // Cores predefinidas para os grupos
-    final colors = [
-      const Color(0xFF51A3E6),
-      const Color(0xFF6C63FF),
-      const Color(0xFF2ECC71),
-      const Color(0xFFE74C3C),
-      const Color(0xFFF39C12),
-      const Color(0xFF9B59B6),
-    ];
-
-    // Imagens predefinidas para os grupos
-    final images = [
-      'lib/images/group1.png',
-      'lib/images/group2.png',
-      'lib/images/group3.png',
-    ];
+    // Todos os grupos terão a mesma cor
+    final colorGroup = const Color(0xFF51A3E6);
 
     // Calcular última atividade (simulado - você pode implementar com dados reais)
     final now = DateTime.now();
@@ -133,8 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'name': group.name,
       'memberCount': group.memberCount,
       'lastActivity': lastActivity,
-      'image': images[index % images.length],
-      'color': colors[index % colors.length],
+      'color': colorGroup,
       'isActive': true,
     };
   }
@@ -181,22 +166,81 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (_userGroups.isEmpty) {
-      const SizedBox(height: 100);
-      return Center(
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 60.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_add, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            // Logo com gradiente e sombra
+            SizedBox(
+              width: 300,
+              height: 300,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.12,
+                  child: Image.asset(
+                    'lib/images/logo_v3.png',
+                    width: 300,
+                    height: 300,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Subtitle
             Text(
-              'Você ainda não faz parte de nenhum grupo',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+              'You\'re not part of any group yet',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[500],
+              ),
               textAlign: TextAlign.center,
             ),
+
             const SizedBox(height: 8),
+
             Text(
-              'Crie seu primeiro grupo ou peça para ser adicionado!',
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[500]),
+              'Create or join a group to get started!',
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[500],
+              ),
               textAlign: TextAlign.center,
+            ),
+
+            const SizedBox(height: 40),
+
+            // Botão de ação
+            GestureDetector(
+              onTap: () => _showCreateGroupDialog(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 16,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 15, 74, 128),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Create Group',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -302,9 +346,10 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return CreateGroupDialog(
           onCreateGroup: (String name, List<String> members) async {
+            Navigator.of(dialogContext).pop(); // Fecha o dialog primeiro
             await _createGroup(name, members);
           },
         );
@@ -455,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             IconButton(
                               icon: const Icon(
                                 Icons.notifications_none_outlined,
-                                size: 32,
+                                size: 34,
                               ),
                               color: darkBlue,
                               onPressed: () {
@@ -491,7 +536,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Builder(
                           builder:
                               (context) => IconButton(
-                                icon: const Icon(Icons.menu_rounded, size: 32),
+                                icon: const Icon(Icons.menu_rounded, size: 34),
                                 color: darkBlue,
                                 onPressed: () => _showTopDrawer(context),
                                 tooltip: 'Menu',
@@ -503,7 +548,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 25),
               // Greeting
               Align(
                 alignment: Alignment.centerLeft,
@@ -522,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 25),
 
               // Scrollable main content
               Expanded(
@@ -534,71 +579,88 @@ class _HomeScreenState extends State<HomeScreen> {
                       bottom: kBottomNavigationBarHeight + 12,
                     ),
                     physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Section title and add button
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'My Groups',
-                              style: GoogleFonts.poppins(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w600,
-                                color: darkBlue,
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () => _showCreateGroupDialog(),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: primaryBlue,
-                                  borderRadius: BorderRadius.circular(20),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: darkBlue.withValues(alpha: 0.3),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                    child:
+                        _userGroups.isEmpty &&
+                                !_isLoadingGroups &&
+                                _groupsError == null
+                            ? SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height -
+                                  kToolbarHeight -
+                                  kBottomNavigationBarHeight -
+                                  200, // Espaço para header e padding
+                              child: _buildGroupsList(primaryBlue),
+                            )
+                            : Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Section title and add button
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 4),
                                     Text(
-                                      'New',
+                                      'My Groups',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 14,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                                        color: darkBlue,
+                                      ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => _showCreateGroupDialog(),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: primaryBlue,
+                                          borderRadius: BorderRadius.circular(
+                                            15,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: darkBlue.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(
+                                              Icons.add,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              'New',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
-                              ),
+
+                                const SizedBox(height: 20),
+
+                                // Groups list
+                                _buildGroupsList(primaryBlue),
+
+                                const SizedBox(height: 20),
+                              ],
                             ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Groups list
-                        _buildGroupsList(primaryBlue),
-
-                        const SizedBox(height: 20),
-                      ],
-                    ),
                   ),
                 ),
               ),

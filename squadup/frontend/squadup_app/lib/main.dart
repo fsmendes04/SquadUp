@@ -16,7 +16,6 @@ void main() async {
   try {
     await dotenv.load(fileName: ".env");
   } catch (e) {
-    // Continue se não houver arquivo .env
     print('No .env file found, continuing...');
   }
 

@@ -129,17 +129,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 120,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient:
-                                    userData?['avatar_url'] == null
-                                        ? LinearGradient(
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                          colors: [
-                                            primaryBlue,
-                                            primaryBlue.withValues(alpha: 0.8),
-                                          ],
-                                        )
-                                        : null,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    primaryBlue,
+                                    primaryBlue.withValues(alpha: 0.8),
+                                  ],
+                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: primaryBlue.withValues(alpha: 0.3),
@@ -148,60 +145,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ],
                               ),
-                              child:
-                                  userData?['avatar_url'] != null
-                                      ? ClipOval(
-                                        child: Image.network(
-                                          userData!['avatar_url']!,
-                                          width: 120,
-                                          height: 120,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (
-                                            context,
-                                            error,
-                                            stackTrace,
-                                          ) {
-                                            // If image fails to load, show initials
-                                            return Container(
-                                              width: 120,
-                                              height: 120,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                gradient: LinearGradient(
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                  colors: [
-                                                    primaryBlue,
-                                                    primaryBlue.withValues(
-                                                      alpha: 0.8,
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              child: Center(
-                                                child: Text(
-                                                  _getInitials(),
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 48,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Colors.white,
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                      )
-                                      : Center(
-                                        child: Text(
-                                          _getInitials(),
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
+                              child: Center(
+                                child: Text(
+                                  _getInitials(),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 20),
                             Text(

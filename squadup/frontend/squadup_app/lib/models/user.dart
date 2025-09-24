@@ -2,7 +2,6 @@ class User {
   final String id;
   final String email;
   final String? name;
-  final String? avatarUrl;
   final String? metadata;
   final String? role;
   final String? emailConfirmedAt;
@@ -13,7 +12,6 @@ class User {
     required this.id,
     required this.email,
     this.name,
-    this.avatarUrl,
     this.metadata,
     this.role,
     this.emailConfirmedAt,
@@ -22,19 +20,15 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    // Extract name and avatar_url from user_metadata if it exists
     String? name;
-    String? avatarUrl;
     if (json['user_metadata'] is Map) {
       name = json['user_metadata']['name'];
-      avatarUrl = json['user_metadata']['avatar_url'];
     }
 
     return User(
       id: json['id'],
       email: json['email'],
       name: name,
-      avatarUrl: avatarUrl,
       metadata: json['user_metadata']?.toString(),
       role: json['role'],
       emailConfirmedAt: json['email_confirmed_at'],
@@ -48,7 +42,6 @@ class User {
       'id': id,
       'email': email,
       'name': name,
-      'avatar_url': avatarUrl,
       'user_metadata': metadata,
       'role': role,
       'email_confirmed_at': emailConfirmedAt,

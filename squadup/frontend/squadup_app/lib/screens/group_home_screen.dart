@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/groups_service.dart';
 import '../models/group_with_members.dart';
+import 'expenses_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;
@@ -78,281 +79,395 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: _buildAppBar(),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _buildErrorState()
-              : RefreshIndicator(
-                onRefresh: _refreshGroup,
-                color: primaryBlue,
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildAvatarsSection(),
-                      const SizedBox(height: 24),
-                      _buildActivitySection(),
-                      const SizedBox(height: 24),
-                      _buildNavigationCards(),
-                      const SizedBox(height: 32),
-                    ],
+      body: SafeArea(
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? _buildErrorState()
+                : RefreshIndicator(
+                  onRefresh: _refreshGroup,
+                  color: primaryBlue,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTopBar(),
+                          const SizedBox(height: 25),
+                          _buildAvatarsSection(),
+                          const SizedBox(height: 24),
+                          _buildActivitySection(),
+                          const SizedBox(height: 24),
+                          _buildNavigationCards(),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 
-  // 1️⃣ Cabeçalho (AppBar)
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 20),
-        onPressed: () => Navigator.pop(context),
+  // 1️⃣ Top Bar com título do grupo
+  Widget _buildTopBar() {
+    return SizedBox(
+      height: kToolbarHeight,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 2),
+                // Círculo do grupo
+                Container(
+                  width: 58,
+                  height: 58,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    child: Container(
+                      margin: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [primaryBlue.withOpacity(0.7), primaryBlue],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.groups,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Nome do grupo
+                Expanded(
+                  child: Text(
+                    widget.groupName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.more_vert, color: darkBlue, size: 34),
+            onPressed: _showGroupOptions,
+            tooltip: 'Opções do grupo',
+          ),
+        ],
       ),
-      title: Text(
-        widget.groupName,
-        style: GoogleFonts.poppins(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: darkBlue,
+    );
+  }
+
+  // 3️⃣ Seção de Avatares dos Membros (estilo atualizado)
+  Widget _buildAvatarsSection() {
+    if (_groupDetails == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Membros (${_groupDetails!.memberCount})',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: darkBlue,
+              ),
+            ),
+            GestureDetector(
+              onTap: _addMember,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: primaryBlue,
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: darkBlue.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.person_add, color: Colors.white, size: 18),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Adicionar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-      centerTitle: false,
-      actions: [
-        IconButton(
-          icon: Icon(Icons.more_vert, color: darkBlue),
-          onPressed: _showGroupOptions,
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 70,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _groupDetails!.members.length,
+            itemBuilder: (context, index) {
+              final member = _groupDetails!.members[index];
+              return Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: Column(
+                  children: [
+                    // Avatar com mesmo estilo da home page
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Container(
+                        margin: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        child: Container(
+                          margin: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [
+                                primaryBlue.withOpacity(0.7),
+                                primaryBlue,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              member.userId[0].toUpperCase(),
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
   }
 
-  // 2️⃣ Seção de Avatares dos Membros
-  Widget _buildAvatarsSection() {
-    if (_groupDetails == null) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
-        children: [
-          // Avatares dos membros
-          Expanded(
-            child: SizedBox(
-              height: 50,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: _groupDetails!.members.length,
-                itemBuilder: (context, index) {
-                  final member = _groupDetails!.members[index];
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: CircleAvatar(
-                      radius: 25,
-                      backgroundColor: primaryBlue.withOpacity(0.1),
-                      child: Text(
-                        member.userId[0].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: primaryBlue,
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          // Botão adicionar membro
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: Colors.grey[300]!,
-                width: 2,
-                style: BorderStyle.solid,
-              ),
-            ),
-            child: IconButton(
-              onPressed: _addMember,
-              icon: Icon(Icons.add, color: Colors.grey[600], size: 24),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 3️⃣ Seção de Atividade Recente
+  // 4️⃣ Seção de Atividade Recente
   Widget _buildActivitySection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildActivityItem(
-            'Dívidas em andamento',
-            onTap: () => _showFeatureSnackBar('Dívidas'),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Atividades Recentes',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: darkBlue,
           ),
-          const SizedBox(height: 16),
-          _buildActivityItem(
-            'Mensagens novas',
-            onTap: () => _showFeatureSnackBar('Mensagens'),
-          ),
-          const SizedBox(height: 16),
-          _buildActivityItem(
-            'Eventos novos',
-            onTap: () => _showFeatureSnackBar('Eventos'),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildActivityItem(String title, {required VoidCallback onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
+  // 5️⃣ Seção de Funcionalidades (Cards de Navegação)
+  Widget _buildNavigationCards() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Funcionalidades',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: darkBlue,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Primeira linha - dois cards lado a lado
+        Row(
           children: [
             Expanded(
-              child: Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: darkBlue,
+              child: _buildNavigationCard(
+                height: 120,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primaryBlue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.chat_bubble_outline,
+                        color: primaryBlue,
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Chat',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    ),
+                  ],
                 ),
+                onTap: () => _showFeatureSnackBar('Chat'),
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildNavigationCard(
+                height: 120,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF6C63FF).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.calendar_month_outlined,
+                        color: const Color(0xFF6C63FF),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Calendário',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    ),
+                  ],
+                ),
+                onTap: () => _showFeatureSnackBar('Calendário'),
+              ),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  // 4️⃣ Botões de Navegação (Cards)
-  Widget _buildNavigationCards() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          // Primeira linha - dois cards lado a lado
-          Row(
+        const SizedBox(height: 16),
+        // Segunda linha - card da carteira compartilhada (destaque)
+        _buildNavigationCard(
+          height: 120,
+          child: Row(
             children: [
-              Expanded(
-                child: _buildNavigationCard(
-                  height: 120,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: primaryBlue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.chat_bubble_outline,
-                          color: primaryBlue,
-                          size: 28,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Chat',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: darkBlue,
-                        ),
-                      ),
-                    ],
-                  ),
-                  onTap: () => _showFeatureSnackBar('Chat'),
-                ),
-              ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildNavigationCard(
-                  height: 120,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF6C63FF).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.calendar_month_outlined,
-                          color: const Color(0xFF6C63FF),
-                          size: 28,
-                        ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2ECC71).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Calendário',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: darkBlue,
-                        ),
+                      child: Icon(
+                        Icons.account_balance_wallet_outlined,
+                        color: const Color(0xFF2ECC71),
+                        size: 28,
                       ),
-                    ],
-                  ),
-                  onTap: () => _showFeatureSnackBar('Calendário'),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Expenses',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
             ],
           ),
-          const SizedBox(height: 16),
-          // Segunda linha - um card maior
-          _buildNavigationCard(
-            height: 80,
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2ECC71).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.account_balance_wallet_outlined,
-                    color: const Color(0xFF2ECC71),
-                    size: 28,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    'Carteira Compartilhada',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ExpensesScreen(
+                      groupId: widget.groupId,
+                      groupName: widget.groupName,
                     ),
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: Colors.grey[400], size: 24),
-              ],
-            ),
-            onTap: () => _showFeatureSnackBar('Carteira'),
-          ),
-        ],
-      ),
+              ),
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -387,34 +502,36 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
   }
 
   Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
-          Text(
-            _error!,
-            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _refreshGroup,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primaryBlue,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              _error!,
+              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _refreshGroup,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryBlue,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'Tentar novamente',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
               ),
             ),
-            child: Text(
-              'Tentar novamente',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

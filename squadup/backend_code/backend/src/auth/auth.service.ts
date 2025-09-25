@@ -41,7 +41,15 @@ export class AuthService {
         updatePayload.name = updateData.name;
       }
 
+      // Adicionar avatar_url se fornecido
+      if (updateData.avatar_url !== undefined) {
+        updatePayload.avatar_url = updateData.avatar_url;
+      }
 
+      // Adicionar avatar_path se fornecido (para controle interno)
+      if (updateData.avatar_path !== undefined) {
+        updatePayload.avatar_path = updateData.avatar_path;
+      }
 
       const { data, error } = await this.supabase.client.auth.updateUser({
         data: updatePayload,

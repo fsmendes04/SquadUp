@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/navigation_bar.dart';
+import '../widgets/avatar_widget.dart';
 import '../services/auth_service.dart';
+
+import '../models/user.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -13,6 +16,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
   Map<String, String?>? userData;
+  User? _currentUser;
   bool _isLoading = true;
   bool _profileUpdated = false;
 
@@ -24,12 +28,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserData() async {
     try {
+      // Primeiro, carregar dados locais (incluindo avatar atualizado)
       final user = await _authService.getStoredUser();
       setState(() {
         userData = user;
-        _isLoading = false;
       });
+
+      // Criar User a partir dos dados locais
+      if (user != null) {
+        setState(() {
+          _currentUser = User(
+            id: user['id']!,
+            email: user['email']!,
+            name: user['name'],
+            avatarUrl: user['avatar_url'], // Este valor agora está atualizado
+            createdAt: DateTime.now().toIso8601String(),
+            updatedAt: DateTime.now().toIso8601String(),
+          );
+        });
+      }
+
+      // Opcional: Tentar buscar dados mais recentes do servidor em background
+      try {
+        final serverUser = await _authService.getCurrentUserProfile();
+        if (serverUser != null) {
+          setState(() {
+            _currentUser = serverUser;
+            userData = {
+              'id': serverUser.id,
+              'email': serverUser.email,
+              'name': serverUser.name,
+              'avatar_url': serverUser.avatarUrl,
+            };
+          });
+        }
+      } catch (e) {
+        print('Aviso: Não foi possível sincronizar com servidor: $e');
+        // Não é um erro crítico, continua com dados locais
+      }
     } catch (e) {
+      print('Erro ao carregar dados do usuário: $e');
+    } finally {
       setState(() {
         _isLoading = false;
       });
@@ -50,17 +89,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     }
     return 'User';
-  }
-
-  String _getInitials() {
-    final displayName = _getDisplayName();
-    final words = displayName.split(' ');
-    if (words.length >= 2) {
-      return '${words[0][0]}${words[1][0]}'.toUpperCase();
-    } else if (words.isNotEmpty && words[0].isNotEmpty) {
-      return words[0][0].toUpperCase();
-    }
-    return 'U';
   }
 
   @override
@@ -125,18 +153,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Column(
                           children: [
                             Container(
-                              width: 120,
-                              height: 120,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    primaryBlue,
-                                    primaryBlue.withValues(alpha: 0.8),
-                                  ],
-                                ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: primaryBlue.withValues(alpha: 0.3),
@@ -145,15 +163,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                 ],
                               ),
-                              child: Center(
-                                child: Text(
-                                  _getInitials(),
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 48,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.white,
-                                  ),
-                                ),
+                              child: AvatarWidget(
+                                user: _currentUser,
+                                size: 120,
+                                showEditButton: false,
                               ),
                             ),
                             const SizedBox(height: 20),

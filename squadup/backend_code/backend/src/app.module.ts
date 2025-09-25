@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { GroupsModule } from './groups/groups.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { ExpensesModule } from './expenses/expenses.module';
     }),
     AuthModule,
     GroupsModule,
-    ExpensesModule
+    ExpensesModule,
+    UploadModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -113,10 +113,17 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', user.id);
     await prefs.setString('user_email', user.email);
+
     if (user.name != null) {
       await prefs.setString('user_name', user.name!);
     } else {
-      await prefs.remove('user_name'); // Remove if null
+      await prefs.remove('user_name');
+    }
+
+    if (user.avatarUrl != null) {
+      await prefs.setString('user_avatar_url', user.avatarUrl!);
+    } else {
+      await prefs.remove('user_avatar_url');
     }
   }
 
@@ -132,12 +139,14 @@ class AuthService {
     final userId = prefs.getString('user_id');
     final userEmail = prefs.getString('user_email');
     final userName = prefs.getString('user_name');
+    final userAvatarUrl = prefs.getString('user_avatar_url');
 
     if (userId != null && userEmail != null) {
       return {
         'id': userId,
         'email': userEmail,
-        'name': userName, // Can be null
+        'name': userName,
+        'avatar_url': userAvatarUrl,
       };
     }
 
@@ -216,12 +225,74 @@ class AuthService {
     }
   }
 
+  // Métodos relacionados a avatar
+  Future<User?> getCurrentUserProfile() async {
+    try {
+      final response = await _apiService.get('/auth/profile');
+
+      if (response.data['success'] == true) {
+        final userData = response.data['data']['user'];
+        final user = User.fromJson(userData);
+        await _storeUser(user); // Atualizar cache local
+        return user;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user profile: $e');
+      return null;
+    }
+  }
+
+  // Atualizar perfil incluindo dados de avatar
+  Future<bool> updateProfileWithAvatar({
+    String? name,
+    String? avatarUrl,
+    String? avatarPath,
+  }) async {
+    try {
+      final data = <String, dynamic>{};
+      if (name != null) data['name'] = name;
+      if (avatarUrl != null) data['avatar_url'] = avatarUrl;
+      if (avatarPath != null) data['avatar_path'] = avatarPath;
+
+      final response = await _apiService.put(
+        '/auth/update-profile',
+        data: data,
+      );
+
+      if (response.data['success'] == true) {
+        // Atualizar cache local
+        final userData = response.data['data'];
+        if (userData != null) {
+          final user = User.fromJson(userData);
+          await _storeUser(user);
+        }
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Error updating profile with avatar: $e');
+      return false;
+    }
+  }
+
+  // Atualizar apenas o avatar no cache local
+  Future<void> updateLocalAvatar(String? avatarUrl) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (avatarUrl != null) {
+      await prefs.setString('user_avatar_url', avatarUrl);
+    } else {
+      await prefs.remove('user_avatar_url');
+    }
+  }
+
   Future<void> logoutEnhanced() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('user_id');
     await prefs.remove('user_email');
     await prefs.remove('user_name');
+    await prefs.remove('user_avatar_url'); // Remover URL do avatar
     _apiService.removeAuthToken();
   }
 }

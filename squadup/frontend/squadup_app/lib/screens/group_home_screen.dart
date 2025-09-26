@@ -49,7 +49,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         });
       }
     } catch (e) {
-      print('Error loading group details: $e');
+      debugPrint('Error loading group details: $e');
       if (mounted) {
         setState(() {
           _error = 'Erro ao carregar detalhes do grupo';
@@ -136,7 +136,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
-                      colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+                      colors: [primaryBlue.withValues(alpha: 0.8), primaryBlue],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -152,7 +152,10 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [primaryBlue.withOpacity(0.7), primaryBlue],
+                          colors: [
+                            primaryBlue.withValues(alpha: 0.7),
+                            primaryBlue,
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -267,7 +270,10 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
-                          colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+                          colors: [
+                            primaryBlue.withValues(alpha: 0.8),
+                            primaryBlue,
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -284,7 +290,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
                               colors: [
-                                primaryBlue.withOpacity(0.7),
+                                primaryBlue.withValues(alpha: 0.7),
                                 primaryBlue,
                               ],
                               begin: Alignment.topLeft,
@@ -357,7 +363,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: primaryBlue.withOpacity(0.1),
+                        color: primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -390,7 +396,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6C63FF).withOpacity(0.1),
+                        color: const Color(0xFF6C63FF).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -430,7 +436,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2ECC71).withOpacity(0.1),
+                        color: const Color(0xFF2ECC71).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -484,7 +490,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         border: Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

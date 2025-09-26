@@ -15,15 +15,17 @@ import 'services/auth_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  bool envLoaded = false;
   try {
     await dotenv.load(fileName: ".env");
+    envLoaded = true;
   } catch (e) {
-    print('No .env file found, continuing...');
+    debugPrint('No .env file found, continuing...');
   }
 
-  // Inicializar Supabase apenas se as variáveis existirem
-  if (dotenv.env['SUPABASE_URL'] != null &&
-      dotenv.env['SUPABASE_ANON_KEY'] != null) {
+  if (envLoaded &&
+      dotenv.env['SUPABASE_URL']?.isNotEmpty == true &&
+      dotenv.env['SUPABASE_ANON_KEY']?.isNotEmpty == true) {
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
       anonKey: dotenv.env['SUPABASE_ANON_KEY']!,

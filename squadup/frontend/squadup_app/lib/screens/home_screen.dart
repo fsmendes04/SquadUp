@@ -53,8 +53,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      // Handle error silently or show a message
-      print('Error loading user data: $e');
       if (mounted) {
         setState(() {
           _isLoadingGroups = false;
@@ -80,7 +78,6 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      print('Error loading user groups: $e');
       if (mounted) {
         setState(() {
           _isLoadingGroups = false;
@@ -295,7 +292,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       barrierDismissible: true,
       barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withValues(alpha: 0.4),
       transitionDuration: const Duration(milliseconds: 300),
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return SlideTransition(
@@ -388,7 +385,6 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             successfullyAdded.add(memberId);
           } catch (e) {
-            print('Erro ao adicionar membro $memberId: $e');
             failedToAdd.add(memberId);
           }
         }
@@ -427,7 +423,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      print('Error creating group: $e');
       _showErrorSnackBar('Erro ao criar grupo: ${e.toString()}');
     }
   }

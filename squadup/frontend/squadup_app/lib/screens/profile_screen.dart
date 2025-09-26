@@ -4,8 +4,6 @@ import '../widgets/navigation_bar.dart';
 import '../widgets/avatar_widget.dart';
 import '../services/auth_service.dart';
 
-import '../models/user.dart';
-
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
@@ -16,7 +14,6 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final _authService = AuthService();
   Map<String, String?>? userData;
-  User? _currentUser;
   bool _isLoading = true;
   bool _profileUpdated = false;
 
@@ -28,47 +25,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      // Primeiro, carregar dados locais (incluindo avatar atualizado)
       final user = await _authService.getStoredUser();
       setState(() {
         userData = user;
+        _isLoading = false;
       });
-
-      // Criar User a partir dos dados locais
-      if (user != null) {
-        setState(() {
-          _currentUser = User(
-            id: user['id']!,
-            email: user['email']!,
-            name: user['name'],
-            avatarUrl: user['avatar_url'], // Este valor agora está atualizado
-            createdAt: DateTime.now().toIso8601String(),
-            updatedAt: DateTime.now().toIso8601String(),
-          );
-        });
-      }
-
-      // Opcional: Tentar buscar dados mais recentes do servidor em background
-      try {
-        final serverUser = await _authService.getCurrentUserProfile();
-        if (serverUser != null) {
-          setState(() {
-            _currentUser = serverUser;
-            userData = {
-              'id': serverUser.id,
-              'email': serverUser.email,
-              'name': serverUser.name,
-              'avatar_url': serverUser.avatarUrl,
-            };
-          });
-        }
-      } catch (e) {
-        print('Aviso: Não foi possível sincronizar com servidor: $e');
-        // Não é um erro crítico, continua com dados locais
-      }
     } catch (e) {
-      print('Erro ao carregar dados do usuário: $e');
-    } finally {
       setState(() {
         _isLoading = false;
       });
@@ -164,9 +126,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                               child: AvatarWidget(
-                                user: _currentUser,
-                                size: 120,
-                                showEditButton: false,
+                                radius: 60,
+                                allowEdit: true,
+                                onAvatarChanged: () {
+                                  _profileUpdated = true;
+                                  _loadUserData();
+                                },
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -491,7 +456,9 @@ class _SettingsCardState extends State<_SettingsCard> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color:
-                _isPressed ? Colors.grey.withOpacity(0.05) : Colors.transparent,
+                _isPressed
+                    ? Colors.grey.withValues(alpha: 0.05)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(

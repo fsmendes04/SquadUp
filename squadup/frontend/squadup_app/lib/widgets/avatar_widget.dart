@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../models/user.dart';
-import '../services/avatar_service.dart';
+import '../services/auth_service.dart';
 
 class AvatarWidget extends StatefulWidget {
-  final User? user;
-  final double size;
-  final bool showEditButton;
-  final Function(User)? onAvatarUpdated;
-  final VoidCallback? onEditPressed;
+  final double radius;
+  final bool allowEdit;
+  final VoidCallback? onAvatarChanged;
 
   const AvatarWidget({
     Key? key,
-    this.user,
-    this.size = 80.0,
-    this.showEditButton = false,
-    this.onAvatarUpdated,
-    this.onEditPressed,
+    this.radius = 30,
+    this.allowEdit = false,
+    this.onAvatarChanged,
   }) : super(key: key);
 
   @override
@@ -24,245 +19,254 @@ class AvatarWidget extends StatefulWidget {
 }
 
 class _AvatarWidgetState extends State<AvatarWidget> {
-  final AvatarService _avatarService = AvatarService();
-  bool _isUploading = false;
+  final AuthService _authService = AuthService();
+  String? _avatarUrl;
+  bool _isLoading = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Avatar principal
-        Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Theme.of(context).primaryColor.withOpacity(0.3),
-              width: 2,
-            ),
-          ),
-          child: ClipOval(child: _buildAvatarImage()),
-        ),
-
-        // Indicador de carregamento
-        if (_isUploading)
-          Container(
-            width: widget.size,
-            height: widget.size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.5),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-                strokeWidth: 2,
-              ),
-            ),
-          ),
-
-        // Botão de edição
-        if (widget.showEditButton && !_isUploading)
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.camera_alt, color: Colors.white),
-                iconSize: widget.size * 0.2,
-                padding: EdgeInsets.all(widget.size * 0.05),
-                constraints: BoxConstraints(
-                  minWidth: widget.size * 0.3,
-                  minHeight: widget.size * 0.3,
-                ),
-                onPressed: widget.onEditPressed ?? _showImageSourceDialog,
-              ),
-            ),
-          ),
-      ],
-    );
+  void initState() {
+    super.initState();
+    _loadAvatar();
   }
 
-  Widget _buildAvatarImage() {
-    if (widget.user?.hasAvatar == true) {
-      return Image.network(
-        widget.user!.avatarUrl!,
-        fit: BoxFit.cover,
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CircularProgressIndicator(
-              value:
-                  loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
-                      : null,
-            ),
-          );
-        },
-        errorBuilder: (context, error, stackTrace) {
-          return _buildPlaceholderAvatar();
-        },
-      );
-    } else {
-      return _buildPlaceholderAvatar();
+  Future<void> _loadAvatar() async {
+    final avatarUrl = await _authService.getUserAvatarUrl();
+    if (mounted) {
+      setState(() {
+        _avatarUrl = avatarUrl;
+      });
     }
   }
 
-  Widget _buildPlaceholderAvatar() {
-    return Container(
-      color: Theme.of(context).primaryColor.withOpacity(0.1),
-      child: Icon(
-        Icons.person,
-        size: widget.size * 0.6,
-        color: Theme.of(context).primaryColor.withOpacity(0.7),
-      ),
-    );
-  }
+  Future<void> _showImageSourceDialog() async {
+    if (_isLoading) return;
 
-  void _showImageSourceDialog() {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
         return SafeArea(
-          child: Wrap(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Selecionar foto do perfil',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Galeria'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _selectAndUploadImage(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_camera),
-                title: const Text('Câmera'),
-                onTap: () {
-                  Navigator.pop(context);
-                  _selectAndUploadImage(ImageSource.camera);
-                },
-              ),
-              if (widget.user?.hasAvatar == true)
-                ListTile(
-                  leading: const Icon(Icons.delete, color: Colors.red),
-                  title: const Text(
-                    'Remover foto',
-                    style: TextStyle(color: Colors.red),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _removeAvatar();
-                  },
                 ),
-              const SizedBox(height: 16),
-            ],
+                const SizedBox(height: 20),
+                Text(
+                  'Escolher foto do perfil',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildImageSourceOption(
+                      icon: Icons.photo_library,
+                      label: 'Galeria',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickAndUploadAvatar(ImageSource.gallery);
+                      },
+                    ),
+                    _buildImageSourceOption(
+                      icon: Icons.camera_alt,
+                      label: 'Câmera',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _pickAndUploadAvatar(ImageSource.camera);
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Future<void> _selectAndUploadImage(ImageSource source) async {
-    try {
+  Widget _buildImageSourceOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 32, color: Theme.of(context).primaryColor),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUploadAvatar(ImageSource source) async {
+    if (_isLoading) return;
+
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 800,
+      maxHeight: 800,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
       setState(() {
-        _isUploading = true;
+        _isLoading = true;
       });
 
-      final updatedUser = await _avatarService.selectAndUploadAvatar(source);
+      try {
+        final response = await _authService.uploadAvatar(pickedFile.path);
 
-      if (widget.onAvatarUpdated != null) {
-        widget.onAvatarUpdated!(updatedUser);
-      }
+        if (response.success && mounted) {
+          await _loadAvatar(); // Recarregar avatar
+          widget.onAvatarChanged?.call();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Avatar atualizado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao atualizar avatar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Avatar atualizado com sucesso!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao atualizar avatar: ${response.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro inesperado: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
-
-  Future<void> _removeAvatar() async {
-    try {
-      setState(() {
-        _isUploading = true;
-      });
-
-      final updatedUser = await _avatarService.deleteAvatar();
-
-      if (widget.onAvatarUpdated != null) {
-        widget.onAvatarUpdated!(updatedUser);
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Avatar removido com sucesso!'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao remover avatar: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isUploading = false;
-        });
-      }
-    }
-  }
-}
-
-// Widget simples para exibir avatar sem edição
-class SimpleAvatarWidget extends StatelessWidget {
-  final User? user;
-  final double size;
-
-  const SimpleAvatarWidget({Key? key, this.user, this.size = 40.0})
-    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return AvatarWidget(user: user, size: size, showEditButton: false);
+    return Stack(
+      children: [
+        CircleAvatar(
+          radius: widget.radius,
+          backgroundColor: Colors.grey[300],
+          backgroundImage:
+              _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+          child:
+              _isLoading
+                  ? SizedBox(
+                    width: widget.radius,
+                    height: widget.radius,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                  : _avatarUrl == null
+                  ? Icon(
+                    Icons.person,
+                    size: widget.radius * 0.8,
+                    color: Colors.grey[600],
+                  )
+                  : null,
+        ),
+        if (widget.allowEdit && !_isLoading)
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: _showImageSourceDialog,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                padding: EdgeInsets.all(widget.radius * 0.15),
+                child: Icon(
+                  Icons.camera_alt,
+                  size: widget.radius * 0.3,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// Widget simples para exibir avatar apenas (sem edição)
+class UserAvatarDisplay extends StatelessWidget {
+  final String? avatarUrl;
+  final double radius;
+  final VoidCallback? onTap;
+
+  const UserAvatarDisplay({
+    Key? key,
+    this.avatarUrl,
+    this.radius = 25,
+    this.onTap,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.grey[300],
+        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+        child:
+            avatarUrl == null
+                ? Icon(
+                  Icons.person,
+                  size: radius * 0.8,
+                  color: Colors.grey[600],
+                )
+                : null,
+      ),
+    );
   }
 }

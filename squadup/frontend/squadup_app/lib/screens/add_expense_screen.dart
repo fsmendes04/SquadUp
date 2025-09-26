@@ -215,7 +215,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFF2ECC71).withOpacity(0.8),
+                          const Color(0xFF2ECC71).withValues(alpha: 0.8),
                           const Color(0xFF2ECC71),
                         ],
                         begin: Alignment.topLeft,
@@ -234,7 +234,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF2ECC71).withOpacity(0.7),
+                              const Color(0xFF2ECC71).withValues(alpha: 0.7),
                               const Color(0xFF2ECC71),
                             ],
                             begin: Alignment.topLeft,
@@ -527,7 +527,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                                 borderRadius: BorderRadius.circular(8),
                                 color:
                                     isSelected
-                                        ? primaryBlue.withOpacity(0.1)
+                                        ? primaryBlue.withValues(alpha: 0.1)
                                         : Colors.transparent,
                               ),
                               child: CheckboxListTile(
@@ -565,7 +565,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: primaryBlue.withOpacity(0.1),
+                                color: primaryBlue.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Row(
@@ -632,7 +632,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               elevation: 3,
-                              shadowColor: primaryBlue.withOpacity(0.3),
+                              shadowColor: primaryBlue.withValues(alpha: 0.3),
                             ),
                             child:
                                 _isLoading
@@ -679,7 +679,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         border: Border.all(color: Colors.grey[200]!, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

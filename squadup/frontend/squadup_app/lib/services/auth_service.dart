@@ -4,6 +4,7 @@ import '../models/auth_response.dart';
 import '../models/login_request.dart';
 import '../models/register_request.dart';
 import '../models/user.dart';
+import '../models/avatar_upload_response.dart';
 import 'api_service.dart';
 
 class AuthService {
@@ -113,17 +114,15 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_id', user.id);
     await prefs.setString('user_email', user.email);
-
     if (user.name != null) {
       await prefs.setString('user_name', user.name!);
     } else {
-      await prefs.remove('user_name');
+      await prefs.remove('user_name'); // Remove if null
     }
-
     if (user.avatarUrl != null) {
       await prefs.setString('user_avatar_url', user.avatarUrl!);
     } else {
-      await prefs.remove('user_avatar_url');
+      await prefs.remove('user_avatar_url'); // Remove if null
     }
   }
 
@@ -145,8 +144,8 @@ class AuthService {
       return {
         'id': userId,
         'email': userEmail,
-        'name': userName,
-        'avatar_url': userAvatarUrl,
+        'name': userName, // Can be null
+        'avatar_url': userAvatarUrl, // Can be null
       };
     }
 
@@ -166,6 +165,7 @@ class AuthService {
     await prefs.remove('user_id');
     await prefs.remove('user_email');
     await prefs.remove('user_name');
+    await prefs.remove('user_avatar_url');
     // Remover token do ApiService
     _apiService.removeAuthToken();
   }
@@ -195,15 +195,15 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      print('Error updating user name: $e');
       return false;
     }
   }
 
-  Future<bool> updateProfile({String? name}) async {
+  Future<bool> updateProfile({String? name, String? avatarUrl}) async {
     try {
       final Map<String, dynamic> data = {};
       if (name != null) data['name'] = name;
+      if (avatarUrl != null) data['avatar_url'] = avatarUrl;
 
       final response = await _apiService.put(
         '/auth/update-profile',
@@ -216,73 +216,14 @@ class AuthService {
         if (name != null) {
           await prefs.setString('user_name', name);
         }
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Error updating profile: $e');
-      return false;
-    }
-  }
-
-  // Métodos relacionados a avatar
-  Future<User?> getCurrentUserProfile() async {
-    try {
-      final response = await _apiService.get('/auth/profile');
-
-      if (response.data['success'] == true) {
-        final userData = response.data['data']['user'];
-        final user = User.fromJson(userData);
-        await _storeUser(user); // Atualizar cache local
-        return user;
-      }
-      return null;
-    } catch (e) {
-      print('Error getting user profile: $e');
-      return null;
-    }
-  }
-
-  // Atualizar perfil incluindo dados de avatar
-  Future<bool> updateProfileWithAvatar({
-    String? name,
-    String? avatarUrl,
-    String? avatarPath,
-  }) async {
-    try {
-      final data = <String, dynamic>{};
-      if (name != null) data['name'] = name;
-      if (avatarUrl != null) data['avatar_url'] = avatarUrl;
-      if (avatarPath != null) data['avatar_path'] = avatarPath;
-
-      final response = await _apiService.put(
-        '/auth/update-profile',
-        data: data,
-      );
-
-      if (response.data['success'] == true) {
-        // Atualizar cache local
-        final userData = response.data['data'];
-        if (userData != null) {
-          final user = User.fromJson(userData);
-          await _storeUser(user);
+        if (avatarUrl != null) {
+          await prefs.setString('user_avatar_url', avatarUrl);
         }
         return true;
       }
       return false;
     } catch (e) {
-      print('Error updating profile with avatar: $e');
       return false;
-    }
-  }
-
-  // Atualizar apenas o avatar no cache local
-  Future<void> updateLocalAvatar(String? avatarUrl) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (avatarUrl != null) {
-      await prefs.setString('user_avatar_url', avatarUrl);
-    } else {
-      await prefs.remove('user_avatar_url');
     }
   }
 
@@ -292,7 +233,77 @@ class AuthService {
     await prefs.remove('user_id');
     await prefs.remove('user_email');
     await prefs.remove('user_name');
-    await prefs.remove('user_avatar_url'); // Remover URL do avatar
+    await prefs.remove('user_avatar_url');
     _apiService.removeAuthToken();
+  }
+
+  // Update avatar URL only
+  Future<bool> updateAvatarUrl(String avatarUrl) async {
+    try {
+      final response = await _apiService.put(
+        '/auth/update-avatar-url',
+        data: {'avatar_url': avatarUrl},
+      );
+
+      if (response.statusCode == 200) {
+        // Update local storage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_avatar_url', avatarUrl);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Upload avatar file
+  Future<AvatarUploadResponse> uploadAvatar(String filePath) async {
+    try {
+      FormData formData = FormData.fromMap({
+        'avatar': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _apiService.post(
+        '/auth/upload-avatar',
+        data: formData,
+      );
+
+      final avatarResponse = AvatarUploadResponse.fromJson(response.data);
+
+      if (avatarResponse.success && avatarResponse.data != null) {
+        // Extract avatar URL from user metadata
+        final userData = avatarResponse.data!;
+        final avatarUrl = userData['user_metadata']?['avatar_url'];
+
+        if (avatarUrl != null) {
+          // Update local storage
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('user_avatar_url', avatarUrl);
+        }
+      }
+
+      return avatarResponse;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        return AvatarUploadResponse.fromJson(e.response!.data);
+      } else {
+        return AvatarUploadResponse(
+          success: false,
+          message: 'Network error: ${e.message}',
+        );
+      }
+    } catch (e) {
+      return AvatarUploadResponse(
+        success: false,
+        message: 'Unexpected error: $e',
+      );
+    }
+  }
+
+  // Get current user's avatar URL
+  Future<String?> getUserAvatarUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_avatar_url');
   }
 }

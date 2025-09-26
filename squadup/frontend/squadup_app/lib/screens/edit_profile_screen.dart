@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/auth_service.dart';
-import '../widgets/avatar_widget.dart';
-import '../models/user.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -21,7 +19,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _message = '';
   bool _isSuccessMessage = false;
   Map<String, String?>? userData;
-  User? _currentUser;
 
   @override
   void initState() {
@@ -46,58 +43,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  void _onAvatarUpdated(User updatedUser) {
-    setState(() {
-      _currentUser = updatedUser;
-      // Atualizar também os dados básicos
-      userData = {
-        'id': updatedUser.id,
-        'email': updatedUser.email,
-        'name': updatedUser.name,
-        'avatar_url': updatedUser.avatarUrl,
-      };
-    });
-  }
-
   Future<void> _loadUserData() async {
     try {
       final user = await _authService.getStoredUser();
       setState(() {
         userData = user;
         _nameController.text = user?['name'] ?? '';
+        _isLoadingUserData = false;
       });
-
-      // Carregar dados completos do servidor incluindo avatar
-      try {
-        final serverUser = await _authService.getCurrentUserProfile();
-        if (serverUser != null) {
-          setState(() {
-            _currentUser = serverUser;
-          });
-        }
-      } catch (e) {
-        print('Erro ao carregar perfil do servidor: $e');
-        // Se falhar, criar User a partir dos dados locais
-        if (user != null) {
-          setState(() {
-            _currentUser = User(
-              id: user['id']!,
-              email: user['email']!,
-              name: user['name'],
-              avatarUrl: user['avatar_url'],
-              createdAt: DateTime.now().toIso8601String(),
-              updatedAt: DateTime.now().toIso8601String(),
-            );
-          });
-        }
-      }
     } catch (e) {
-      print('Erro ao carregar dados do usuário: $e');
-    } finally {
       setState(() {
         _isLoadingUserData = false;
       });
     }
+  }
+
+  String _getDisplayName() {
+    if (userData != null) {
+      if (userData!['name'] != null && userData!['name']!.isNotEmpty) {
+        return userData!['name']!;
+      }
+    }
+    return 'User';
+  }
+
+  String _getInitials() {
+    final displayName = _getDisplayName();
+    final words = displayName.split(' ');
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    } else if (words.isNotEmpty && words[0].isNotEmpty) {
+      return words[0][0].toUpperCase();
+    }
+    return 'U';
+  }
+
+  void _showCameraMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Avatar functionality coming soon!'),
+        backgroundColor: const Color.fromARGB(255, 81, 163, 230),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.all(16),
+      ),
+    );
   }
 
   Future<void> _saveProfile() async {
@@ -213,23 +203,75 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                       const SizedBox(height: 30),
 
-                      // Profile Picture with avatar editing
-                      Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: primaryBlue.withValues(alpha: 0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
+                      // Profile Picture with camera icon
+                      GestureDetector(
+                        onTap: _showCameraMessage,
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    primaryBlue,
+                                    primaryBlue.withValues(alpha: 0.8),
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryBlue.withValues(alpha: 0.3),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 8),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _getInitials(),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Camera icon overlay
+                            Positioned(
+                              bottom: 0,
+                              right: 0,
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: primaryBlue,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
                             ),
                           ],
-                        ),
-                        child: AvatarWidget(
-                          user: _currentUser,
-                          size: 120,
-                          showEditButton: true,
-                          onAvatarUpdated: _onAvatarUpdated,
                         ),
                       ),
 

@@ -51,7 +51,9 @@ class _GroupCardState extends State<GroupCard> {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
           decoration: BoxDecoration(
             color:
-                _isPressed ? Colors.grey.withOpacity(0.05) : Colors.transparent,
+                _isPressed
+                    ? Colors.grey.withValues(alpha: 0.05)
+                    : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -62,7 +64,7 @@ class _GroupCardState extends State<GroupCard> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
-                    colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+                    colors: [primaryBlue.withValues(alpha: 0.8), primaryBlue],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -78,7 +80,7 @@ class _GroupCardState extends State<GroupCard> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [groupColor.withOpacity(0.7), groupColor],
+                        colors: [groupColor.withValues(alpha: 0.7), groupColor],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

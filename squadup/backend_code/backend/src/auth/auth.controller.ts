@@ -89,7 +89,11 @@ export class AuthController {
     @CurrentUser() user: any
   ) {
     try {
-      const result = await this.authService.updateProfile(updateData);
+      console.log('🔍 UpdateProfile - user object:', user);
+      console.log('🔍 UpdateProfile - user.id:', user?.id);
+      console.log('🔍 UpdateProfile - updateData:', updateData);
+
+      const result = await this.authService.updateProfileWithUserId(updateData, user.id);
 
       return {
         success: true,

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/auth_service.dart';
@@ -6,27 +7,62 @@ class AvatarWidget extends StatefulWidget {
   final double radius;
   final bool allowEdit;
   final VoidCallback? onAvatarChanged;
+  final AvatarController? controller;
 
   const AvatarWidget({
     Key? key,
     this.radius = 30,
     this.allowEdit = false,
     this.onAvatarChanged,
+    this.controller,
   }) : super(key: key);
 
   @override
   State<AvatarWidget> createState() => _AvatarWidgetState();
 }
 
+// Classe controller para acessar métodos do AvatarWidget
+class AvatarController {
+  _AvatarWidgetState? _state;
+
+  void _attach(_AvatarWidgetState state) {
+    _state = state;
+  }
+
+  void _detach() {
+    _state = null;
+  }
+
+  Future<bool> uploadSelectedAvatar() async {
+    return await _state?.uploadSelectedAvatar() ?? true;
+  }
+
+  void discardChanges() {
+    _state?.discardChanges();
+  }
+
+  bool hasUnsavedChanges() {
+    return _state?.hasUnsavedChanges() ?? false;
+  }
+}
+
 class _AvatarWidgetState extends State<AvatarWidget> {
   final AuthService _authService = AuthService();
   String? _avatarUrl;
+  String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _loadAvatar();
+    widget.controller?._attach(this);
+  }
+
+  @override
+  void dispose() {
+    widget.controller?._detach();
+    super.dispose();
   }
 
   Future<void> _loadAvatar() async {
@@ -77,7 +113,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                       label: 'Galeria',
                       onTap: () {
                         Navigator.pop(context);
-                        _pickAndUploadAvatar(ImageSource.gallery);
+                        _pickImage(ImageSource.gallery);
                       },
                     ),
                     _buildImageSourceOption(
@@ -85,7 +121,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                       label: 'Câmera',
                       onTap: () {
                         Navigator.pop(context);
-                        _pickAndUploadAvatar(ImageSource.camera);
+                        _pickImage(ImageSource.camera);
                       },
                     ),
                   ],
@@ -128,9 +164,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
     );
   }
 
-  Future<void> _pickAndUploadAvatar(ImageSource source) async {
-    if (_isLoading) return;
-
+  Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(
       source: source,
@@ -139,49 +173,68 @@ class _AvatarWidgetState extends State<AvatarWidget> {
       imageQuality: 80,
     );
 
-    if (pickedFile != null) {
+    if (pickedFile != null && mounted) {
       setState(() {
-        _isLoading = true;
+        _selectedImagePath = pickedFile.path;
       });
 
-      try {
-        final response = await _authService.uploadAvatar(pickedFile.path);
+      widget.onAvatarChanged?.call(); // Notifica que houve uma mudança pendente
 
-        if (response.success && mounted) {
-          await _loadAvatar(); // Recarregar avatar
-          widget.onAvatarChanged?.call();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Imagem selecionada. Clique em "Save" para salvar as alterações.',
+          ),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Avatar atualizado com sucesso!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro ao atualizar avatar: ${response.message}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erro inesperado: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
+  // Método para fazer upload do avatar selecionado (será chamado pelo EditProfileScreen)
+  Future<bool> uploadSelectedAvatar() async {
+    if (_selectedImagePath == null) return true; // Nada para fazer upload
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await _authService.uploadAvatar(_selectedImagePath!);
+
+      if (response.success) {
+        await _loadAvatar(); // Recarregar avatar
+        setState(() {
+          _selectedImagePath = null; // Limpar seleção após upload bem-sucedido
+        });
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
+  }
+
+  // Método para descartar mudanças pendentes
+  void discardChanges() {
+    if (mounted) {
+      setState(() {
+        _selectedImagePath = null;
+      });
+    }
+  }
+
+  // Verifica se há mudanças pendentes
+  bool hasUnsavedChanges() {
+    return _selectedImagePath != null;
   }
 
   @override
@@ -192,7 +245,11 @@ class _AvatarWidgetState extends State<AvatarWidget> {
           radius: widget.radius,
           backgroundColor: Colors.grey[300],
           backgroundImage:
-              _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+              _selectedImagePath != null
+                  ? FileImage(File(_selectedImagePath!)) as ImageProvider
+                  : _avatarUrl != null
+                  ? NetworkImage(_avatarUrl!)
+                  : null,
           child:
               _isLoading
                   ? SizedBox(
@@ -203,7 +260,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                  : _avatarUrl == null
+                  : (_selectedImagePath == null && _avatarUrl == null)
                   ? Icon(
                     Icons.person,
                     size: widget.radius * 0.8,

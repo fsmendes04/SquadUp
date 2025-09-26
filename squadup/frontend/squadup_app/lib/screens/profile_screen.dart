@@ -127,11 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               child: AvatarWidget(
                                 radius: 60,
-                                allowEdit: true,
-                                onAvatarChanged: () {
-                                  _profileUpdated = true;
-                                  _loadUserData();
-                                },
+                                allowEdit: false, // Apenas visualização
                               ),
                             ),
                             const SizedBox(height: 20),

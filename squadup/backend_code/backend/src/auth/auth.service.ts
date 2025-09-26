@@ -47,8 +47,49 @@ export class AuthService {
         updatePayload.avatar_url = updateData.avatar_url;
       }
 
-      const { data, error } = await this.supabase.client.auth.updateUser({
-        data: updatePayload,
+      // Use service role to update user metadata directly
+      const { createClient } = require('@supabase/supabase-js');
+      const adminSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+
+      // Get current user to find userId from the request context
+      // For now, we'll need to modify the controller to pass userId
+      throw new BadRequestException('UpdateProfile method needs userId - use updateProfileWithUserId instead');
+
+    } catch (error) {
+      console.error('❌ Unexpected error updating profile:', error);
+      throw new BadRequestException(`Unexpected error updating profile: ${error}`);
+    }
+  }
+
+  async updateProfileWithUserId(updateData: UpdateProfileDto, userId: string) {
+    try {
+      const updatePayload: any = {};
+
+      // Adicionar name se fornecido
+      if (updateData.name !== undefined) {
+        updatePayload.name = updateData.name;
+      }
+
+      // Adicionar avatar_url se fornecido
+      if (updateData.avatar_url !== undefined) {
+        updatePayload.avatar_url = updateData.avatar_url;
+      }
+
+      console.log('🔄 Updating profile for userId:', userId, 'with data:', updatePayload);
+
+      // Use service role to update user metadata directly
+      const { createClient } = require('@supabase/supabase-js');
+      const adminSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+
+      // Update user metadata using service role
+      const { data, error } = await adminSupabase.auth.admin.updateUserById(userId, {
+        user_metadata: updatePayload,
       });
 
       if (error) {
@@ -139,15 +180,49 @@ export class AuthService {
     try {
       console.log('🔄 Starting updateAvatar for userId:', userId);
 
-      // Upload da nova imagem
-      const avatarUrl = await this.uploadAvatar(file, userId);
-
-      // Use service role to update user metadata directly
+      // Use service role to get current user data and check for existing avatar
       const { createClient } = require('@supabase/supabase-js');
       const adminSupabase = createClient(
         process.env.SUPABASE_URL,
         process.env.SUPABASE_SERVICE_ROLE_KEY
       );
+
+      // Get current user data to check for existing avatar
+      const { data: currentUser, error: getUserError } = await adminSupabase.auth.admin.getUserById(userId);
+
+      if (getUserError) {
+        console.error('❌ Error getting current user:', getUserError);
+      } else if (currentUser?.user?.user_metadata?.avatar_url) {
+        // Extract the file path from the current avatar URL to delete it
+        const currentAvatarUrl = currentUser.user.user_metadata.avatar_url;
+        console.log('🗑️ Found existing avatar, will delete:', currentAvatarUrl);
+
+        try {
+          // Extract the file path from the full URL
+          // URL format: https://[project].supabase.co/storage/v1/object/public/user-uploads/[userId]/[filename]
+          const urlParts = currentAvatarUrl.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const oldFilePath = `${userId}/${fileName}`;
+
+          // Delete the old avatar file from storage
+          const { error: deleteError } = await this.supabase.client.storage
+            .from('user-uploads')
+            .remove([oldFilePath]);
+
+          if (deleteError) {
+            console.error('⚠️ Warning: Could not delete old avatar file:', deleteError);
+            // Continue with upload even if deletion fails
+          } else {
+            console.log('✅ Old avatar file deleted successfully:', oldFilePath);
+          }
+        } catch (deleteErr) {
+          console.error('⚠️ Warning: Error processing old avatar deletion:', deleteErr);
+          // Continue with upload even if deletion processing fails
+        }
+      }
+
+      // Upload da nova imagem
+      const avatarUrl = await this.uploadAvatar(file, userId);
 
       // Atualizar o perfil do usuário com a nova URL do avatar usando service role
       const { data, error } = await adminSupabase.auth.admin.updateUserById(userId, {

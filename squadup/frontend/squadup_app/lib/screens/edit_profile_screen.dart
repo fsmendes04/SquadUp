@@ -168,8 +168,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     final lightGray = const Color.fromARGB(255, 248, 249, 250);
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) async {
         // Verificar se há mudanças não salvas
         if (_avatarController.hasUnsavedChanges()) {
           final shouldDiscard = await showDialog<bool>(
@@ -195,9 +196,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
           );
-          return shouldDiscard ?? false;
+          if (!(shouldDiscard ?? false)) {
+            return;
+          }
         }
-        return true;
       },
       child: Scaffold(
         backgroundColor: Colors.white,

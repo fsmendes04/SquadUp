@@ -1,82 +1,42 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/auth_service.dart';
+import '../services/groups_service.dart';
 
-class AvatarWidget extends StatefulWidget {
+class AvatarGroupWidget extends StatefulWidget {
+  final String groupId;
+  final String? avatarUrl;
   final double radius;
   final bool allowEdit;
   final VoidCallback? onAvatarChanged;
-  final AvatarController? controller;
 
-  const AvatarWidget({
+  const AvatarGroupWidget({
     super.key,
+    required this.groupId,
+    this.avatarUrl,
     this.radius = 30,
     this.allowEdit = false,
     this.onAvatarChanged,
-    this.controller,
   });
 
   @override
-  State<AvatarWidget> createState() => _AvatarWidgetState();
+  State<AvatarGroupWidget> createState() => _AvatarGroupWidgetState();
 }
 
-// Classe controller para acessar métodos do AvatarWidget
-class AvatarController {
-  _AvatarWidgetState? _state;
-
-  void _attach(_AvatarWidgetState state) {
-    _state = state;
-  }
-
-  void _detach() {
-    _state = null;
-  }
-
-  Future<bool> uploadSelectedAvatar() async {
-    return await _state?.uploadSelectedAvatar() ?? true;
-  }
-
-  void discardChanges() {
-    _state?.discardChanges();
-  }
-
-  bool hasUnsavedChanges() {
-    return _state?.hasUnsavedChanges() ?? false;
-  }
-}
-
-class _AvatarWidgetState extends State<AvatarWidget> {
-  final AuthService _authService = AuthService();
+class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
+  final GroupsService _groupsService = GroupsService();
   String? _avatarUrl;
-  String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
+  String? _selectedImagePath;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _loadAvatar();
-    widget.controller?._attach(this);
-  }
-
-  @override
-  void dispose() {
-    widget.controller?._detach();
-    super.dispose();
-  }
-
-  Future<void> _loadAvatar() async {
-    final avatarUrl = await _authService.getUserAvatarUrl();
-    if (mounted) {
-      setState(() {
-        _avatarUrl = avatarUrl;
-      });
-    }
+    _avatarUrl = widget.avatarUrl;
   }
 
   Future<void> _showImageSourceDialog() async {
     if (_isLoading) return;
-
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -99,7 +59,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Escolher foto do perfil',
+                  'Escolher foto do grupo',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -172,48 +132,42 @@ class _AvatarWidgetState extends State<AvatarWidget> {
       maxHeight: 800,
       imageQuality: 80,
     );
-
     if (pickedFile != null && mounted) {
       setState(() {
         _selectedImagePath = pickedFile.path;
       });
-
-      widget.onAvatarChanged?.call(); // Notifica que houve uma mudança pendente
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Imagem selecionada. Clique em "Save" para salvar as alterações.',
-          ),
-          backgroundColor: Colors.orange,
-          duration: Duration(seconds: 2),
-        ),
-      );
+      _uploadSelectedAvatar();
     }
   }
 
-  // Método para fazer upload do avatar selecionado (será chamado pelo EditProfileScreen)
-  Future<bool> uploadSelectedAvatar() async {
-    if (_selectedImagePath == null) return true; // Nada para fazer upload
-
+  Future<void> _uploadSelectedAvatar() async {
+    if (_selectedImagePath == null) return;
     setState(() {
       _isLoading = true;
     });
-
     try {
-      final response = await _authService.uploadAvatar(_selectedImagePath!);
-
-      if (response.success) {
-        await _loadAvatar(); // Recarregar avatar
-        setState(() {
-          _selectedImagePath = null; // Limpar seleção após upload bem-sucedido
-        });
-        return true;
-      } else {
-        return false;
-      }
+      final response = await _groupsService.uploadGroupAvatar(
+        widget.groupId,
+        _selectedImagePath!,
+      );
+      setState(() {
+        _avatarUrl = response['data']['avatar_url'];
+        _selectedImagePath = null;
+      });
+      if (widget.onAvatarChanged != null) widget.onAvatarChanged!();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Avatar do grupo atualizado!'),
+          backgroundColor: Colors.green,
+        ),
+      );
     } catch (e) {
-      return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erro ao atualizar avatar: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -221,20 +175,6 @@ class _AvatarWidgetState extends State<AvatarWidget> {
         });
       }
     }
-  }
-
-  // Método para descartar mudanças pendentes
-  void discardChanges() {
-    if (mounted) {
-      setState(() {
-        _selectedImagePath = null;
-      });
-    }
-  }
-
-  // Verifica se há mudanças pendentes
-  bool hasUnsavedChanges() {
-    return _selectedImagePath != null;
   }
 
   @override
@@ -262,7 +202,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                   )
                   : (_selectedImagePath == null && _avatarUrl == null)
                   ? Icon(
-                    Icons.person,
+                    Icons.groups,
                     size: widget.radius * 0.8,
                     color: Colors.grey[600],
                   )
@@ -294,13 +234,13 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   }
 }
 
-// Widget simples para exibir avatar apenas (sem edição)
-class UserAvatarDisplay extends StatelessWidget {
+// Widget simples para exibir avatar de grupo apenas (sem edição)
+class GroupAvatarDisplay extends StatelessWidget {
   final String? avatarUrl;
   final double radius;
   final VoidCallback? onTap;
 
-  const UserAvatarDisplay({
+  const GroupAvatarDisplay({
     super.key,
     this.avatarUrl,
     this.radius = 25,
@@ -318,7 +258,7 @@ class UserAvatarDisplay extends StatelessWidget {
         child:
             avatarUrl == null
                 ? Icon(
-                  Icons.person,
+                  Icons.groups,
                   size: radius * 0.8,
                   color: Colors.grey[600],
                 )

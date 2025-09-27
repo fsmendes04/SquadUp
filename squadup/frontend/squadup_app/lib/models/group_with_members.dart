@@ -5,24 +5,20 @@ class GroupWithMembers extends Group {
   final List<GroupMember> members;
 
   GroupWithMembers({
-    required String id,
-    required String name,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    required String createdBy,
+    required super.id,
+    required super.name,
+    super.avatarUrl,
+    required super.createdAt,
+    required super.updatedAt,
+    required super.createdBy,
     required this.members,
-  }) : super(
-         id: id,
-         name: name,
-         createdAt: createdAt,
-         updatedAt: updatedAt,
-         createdBy: createdBy,
-       );
+  });
 
   factory GroupWithMembers.fromJson(Map<String, dynamic> json) {
     return GroupWithMembers(
       id: json['id'],
       name: json['name'],
+      avatarUrl: json['avatar_url'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       createdBy: json['created_by'],

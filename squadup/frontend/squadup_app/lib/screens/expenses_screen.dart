@@ -79,8 +79,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
         return;
       }
 
+      if (!mounted) return;
       final result = await Navigator.push<bool>(
-          context,
+        context,
         MaterialPageRoute(
           builder:
               (context) => AddExpenseScreen(
@@ -91,9 +92,9 @@ class _ExpensesScreenState extends State<ExpensesScreen> {
       );
 
       // Se a despesa foi criada com sucesso, recarrega a lista
-        if (mounted && result == true) {
-          _loadExpenses();
-        }
+      if (mounted && result == true) {
+        _loadExpenses();
+      }
     } catch (e) {
       if (mounted) {
         _showSnackBar('Erro ao carregar dados do grupo: $e', isError: true);

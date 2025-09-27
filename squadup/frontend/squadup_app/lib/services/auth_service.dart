@@ -152,6 +152,12 @@ class AuthService {
     return null;
   }
 
+  // Get current user ID
+  Future<String?> getCurrentUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_id');
+  }
+
   // Check if user is logged in
   Future<bool> isLoggedIn() async {
     final token = await getStoredToken();
@@ -275,7 +281,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting user by ID: $e');
       return null;
     }
   }
@@ -324,7 +329,6 @@ class AuthService {
     }
   }
 
-  // Get current user's avatar URL
   Future<String?> getUserAvatarUrl() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('user_avatar_url');

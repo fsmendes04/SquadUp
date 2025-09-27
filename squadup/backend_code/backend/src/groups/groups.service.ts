@@ -9,6 +9,154 @@ import { Group, GroupMember, GroupWithMembers } from './models/group.model';
 export class GroupsService {
   constructor(private readonly supabaseService: SupabaseService) { }
 
+  async uploadGroupAvatar(file: Express.Multer.File, groupId: string, accessToken: string): Promise<string> {
+    try {
+      console.log('🚀 Starting group avatar upload for group:', groupId);
+
+      // Criar cliente Supabase com JWT token do usuário para respeitar RLS
+      const { createClient } = require('@supabase/supabase-js');
+      const userSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_KEY, // Esta é a anon key
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        }
+      );
+
+      // Criar nome único para o arquivo
+      const fileExtension = file.originalname.split('.').pop() || 'jpg';
+      const fileName = `group_avatar_${Date.now()}.${fileExtension}`;
+      const filePath = `${groupId}/${fileName}`; // Organizar por groupId
+
+      console.log('📁 Upload path:', filePath);
+
+      // Upload para o Supabase Storage usando cliente com JWT token
+      const { data, error } = await userSupabase.storage
+        .from('group-avatars')
+        .upload(filePath, file.buffer, {
+          contentType: file.mimetype,
+          upsert: true
+        });
+
+      if (error) {
+        console.error('❌ Error uploading group avatar:', error);
+        throw new BadRequestException(`Error uploading group avatar: ${error.message}`);
+      }
+
+      console.log('📤 Upload successful, data:', data);
+
+      // Obter URL pública da imagem usando o cliente regular (não precisa de auth para URLs públicas)
+      const { data: publicUrlData } = this.supabaseService.client.storage
+        .from('group-avatars')
+        .getPublicUrl(filePath);
+
+      console.log('✅ Group avatar uploaded successfully:', publicUrlData.publicUrl);
+      return publicUrlData.publicUrl;
+    } catch (error) {
+      console.error('❌ Unexpected error uploading group avatar:', error);
+      throw new BadRequestException(`Unexpected error uploading group avatar: ${error}`);
+    }
+  }
+
+  async updateGroupAvatar(file: Express.Multer.File, groupId: string, userId: string, accessToken: string) {
+    try {
+      console.log('🔄 Starting updateGroupAvatar for groupId:', groupId, 'by user:', userId);
+
+      // Verificar se o usuário é admin do grupo
+      const isAdmin = await this.isUserAdmin(groupId, userId);
+      if (!isAdmin) {
+        throw new ForbiddenException('Apenas administradores podem alterar o avatar do grupo');
+      }
+
+      // Get current group data to check for existing avatar
+      const { data: currentGroup, error: getGroupError } = await this.supabaseService.client
+        .from('groups')
+        .select('avatar_url')
+        .eq('id', groupId)
+        .single();
+
+      if (getGroupError) {
+        console.error('❌ Error getting current group:', getGroupError);
+      } else if (currentGroup?.avatar_url) {
+        // Extract the file path from the current avatar URL to delete it
+        console.log('🗑️ Found existing avatar, will delete:', currentGroup.avatar_url);
+
+        try {
+          // Criar cliente Supabase com JWT token para deletar o arquivo antigo
+          const { createClient } = require('@supabase/supabase-js');
+          const userSupabase = createClient(
+            process.env.SUPABASE_URL,
+            process.env.SUPABASE_KEY,
+            {
+              global: {
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              },
+            }
+          );
+
+          // Extract the file path from the full URL
+          // URL format: https://[project].supabase.co/storage/v1/object/public/group-avatars/[groupId]/[filename]
+          const urlParts = currentGroup.avatar_url.split('/');
+          const fileName = urlParts[urlParts.length - 1];
+          const oldFilePath = `${groupId}/${fileName}`;
+
+          // Delete the old avatar file from storage using JWT token
+          const { error: deleteError } = await userSupabase.storage
+            .from('group-avatars')
+            .remove([oldFilePath]);
+
+          if (deleteError) {
+            console.error('⚠️ Warning: Could not delete old group avatar file:', deleteError);
+            // Continue with upload even if deletion fails
+          } else {
+            console.log('✅ Old group avatar file deleted successfully:', oldFilePath);
+          }
+        } catch (deleteErr) {
+          console.error('⚠️ Warning: Error processing old group avatar deletion:', deleteErr);
+          // Continue with upload even if deletion fails
+        }
+      }
+
+      // Upload the new avatar
+      const avatarUrl = await this.uploadGroupAvatar(file, groupId, accessToken);
+
+      // Update the group's avatar_url in the database
+      const { error: updateError } = await this.supabaseService.client
+        .from('groups')
+        .update({
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', groupId);
+
+      if (updateError) {
+        console.error('❌ Error updating group avatar_url:', updateError);
+        throw new BadRequestException(`Error updating group avatar: ${updateError.message}`);
+      }
+
+      console.log('✅ Group avatar updated successfully in database');
+
+      return {
+        success: true,
+        message: 'Group avatar updated successfully',
+        avatar_url: avatarUrl,
+      };
+
+    } catch (error) {
+      console.error('❌ Error in updateGroupAvatar:', error);
+      if (error instanceof ForbiddenException || error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(`Unexpected error updating group avatar: ${error.message || error}`);
+    }
+  }
+
   async createGroup(createGroupDto: CreateGroupDto, userId: string): Promise<Group> {
     const { name, memberIds = [] } = createGroupDto;
 

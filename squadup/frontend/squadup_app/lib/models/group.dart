@@ -1,6 +1,7 @@
 class Group {
   final String id;
   final String name;
+  final String? avatarUrl;
   final DateTime createdAt;
   final DateTime updatedAt;
   final String createdBy;
@@ -11,12 +12,14 @@ class Group {
     required this.createdAt,
     required this.updatedAt,
     required this.createdBy,
+    this.avatarUrl,
   });
 
   factory Group.fromJson(Map<String, dynamic> json) {
     return Group(
       id: json['id'],
       name: json['name'],
+      avatarUrl: json['avatar_url'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: DateTime.parse(json['updated_at']),
       createdBy: json['created_by'],
@@ -27,6 +30,7 @@ class Group {
     return {
       'id': id,
       'name': name,
+      'avatar_url': avatarUrl,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'created_by': createdBy,
@@ -35,6 +39,6 @@ class Group {
 
   @override
   String toString() {
-    return 'Group{id: $id, name: $name, createdAt: $createdAt, updatedAt: $updatedAt, createdBy: $createdBy}';
+    return 'Group{id: $id, name: $name, avatarUrl: $avatarUrl, createdAt: $createdAt, updatedAt: $updatedAt, createdBy: $createdBy}';
   }
 }

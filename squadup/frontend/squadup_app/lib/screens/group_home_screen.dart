@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/groups_service.dart';
 import '../models/group_with_members.dart';
 import '../widgets/avatar_widget.dart';
+import '../widgets/avatar_group_widget.dart';
 import 'expenses_screen.dart';
+import 'edit_group_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;
@@ -130,46 +132,10 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                   constraints: const BoxConstraints(),
                 ),
                 const SizedBox(width: 2),
-                // Círculo do grupo
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [primaryBlue.withValues(alpha: 0.8), primaryBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white,
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            primaryBlue.withValues(alpha: 0.7),
-                            primaryBlue,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.groups,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                      ),
-                    ),
-                  ),
+                // Avatar do grupo
+                GroupAvatarDisplay(
+                  avatarUrl: _groupDetails?.avatarUrl,
+                  radius: 29,
                 ),
                 const SizedBox(width: 12),
                 // Nome do grupo
@@ -516,13 +482,10 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
   }
 
   void _showGroupOptions() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Opções do grupo em breve!'),
-        backgroundColor: primaryBlue,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditGroupScreen(groupId: widget.groupId),
       ),
     );
   }

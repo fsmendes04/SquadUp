@@ -5,6 +5,10 @@ export class UpdateGroupDto {
   @IsOptional()
   name?: string;
 
+  @IsString()
+  @IsOptional()
+  avatar_url?: string | null;
+
   @IsArray()
   @IsOptional()
   memberIds?: string[];

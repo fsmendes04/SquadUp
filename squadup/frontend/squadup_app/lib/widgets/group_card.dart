@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'avatar_group_widget.dart';
 
 class GroupCard extends StatefulWidget {
   final Map<String, dynamic> group;
@@ -36,8 +37,6 @@ class _GroupCardState extends State<GroupCard> {
   @override
   Widget build(BuildContext context) {
     final darkBlue = const Color(0xFF1D385F);
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-    final groupColor = widget.group['color'] as Color;
     final isActive = widget.group['isActive'] as bool;
 
     return GestureDetector(
@@ -58,38 +57,9 @@ class _GroupCardState extends State<GroupCard> {
           ),
           child: Row(
             children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [primaryBlue.withValues(alpha: 0.8), primaryBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: Container(
-                  margin: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                  ),
-                  child: Container(
-                    margin: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [groupColor.withValues(alpha: 0.7), groupColor],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.groups, color: Colors.white, size: 28),
-                    ),
-                  ),
-                ),
+              GroupAvatarDisplay(
+                avatarUrl: widget.group['avatar_url'],
+                radius: 31,
               ),
 
               const SizedBox(width: 16),

@@ -1,8 +1,9 @@
 export interface Group {
   id: string;
   name: string;
+  avatar_url?: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   created_by: string;
 }
 

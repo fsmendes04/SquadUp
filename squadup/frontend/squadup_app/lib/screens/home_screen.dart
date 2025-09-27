@@ -117,6 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
       'memberCount': group.memberCount,
       'lastActivity': lastActivity,
       'color': colorGroup,
+      'avatar_url': group.avatarUrl,
       'isActive': true,
     };
   }

@@ -35,10 +35,18 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Add dependencies to resolve missing annotations
+    implementation("com.google.errorprone:error_prone_annotations:2.18.0")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
 }

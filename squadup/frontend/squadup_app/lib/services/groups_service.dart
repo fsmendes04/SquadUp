@@ -197,8 +197,42 @@ class GroupsService {
     }
   }
 
+  /// Faz upload do avatar do grupo
+  /// [groupId] - ID do grupo
+  /// [filePath] - Caminho do arquivo de imagem
+  Future<Map<String, dynamic>> uploadGroupAvatar(
+    String groupId,
+    String filePath,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        'avatar': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _apiService.dio.post(
+        '$_groupsEndpoint/$groupId/avatar',
+        data: formData,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception(
+          'Erro ao fazer upload do avatar: ${response.statusMessage}',
+        );
+      }
+    } on DioException catch (e) {
+      throw GroupsService._handleDioException(
+        e,
+        'Erro ao fazer upload do avatar do grupo',
+      );
+    } catch (e) {
+      throw Exception('Erro inesperado ao fazer upload do avatar: $e');
+    }
+  }
+
   /// Trata exceções do Dio e retorna mensagens de erro apropriadas
-  Exception _handleDioException(DioException e, String defaultMessage) {
+  static Exception _handleDioException(DioException e, String defaultMessage) {
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
         return Exception('Timeout de conexão. Verifique sua internet.');

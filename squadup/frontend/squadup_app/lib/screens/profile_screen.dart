@@ -58,10 +58,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, _profileUpdated);
-        return false; // Prevent default pop behavior
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) {
+          Navigator.pop(context, _profileUpdated);
+        }
       },
       child: Scaffold(
         extendBody: true,

@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
-  static const String baseUrl =
-      'http://10.0.2.2:3000'; // URL base da API - 10.0.2.2 para Android emulator
+  static const String baseUrl = 'http://10.0.2.2:3000';
   static const Duration connectTimeout = Duration(seconds: 10);
   static const Duration receiveTimeout = Duration(seconds: 10);
 
@@ -26,9 +26,20 @@ class ApiService {
       LogInterceptor(
         requestBody: true,
         responseBody: true,
-        logPrint: (object) => print(object),
+        logPrint: (object) => _log(object),
       ),
     );
+  }
+
+  // Logging helper usando debugPrint
+  void _log(Object? object) {
+    // Use debugPrint para evitar problemas de truncamento e não poluir produção
+    // Em produção, você pode customizar para enviar logs para um serviço externo ou desabilitar
+    assert(() {
+      // Só loga em debug mode
+      debugPrint(object?.toString());
+      return true;
+    }());
   }
 
   // Getter para acessar a instância do Dio
@@ -83,13 +94,11 @@ class ApiService {
     }
   }
 
-  // Endpoints específicos da API de autenticação
   static const String loginEndpoint = '/auth/login';
   static const String registerEndpoint = '/auth/register';
   static const String logoutEndpoint = '/auth/logout';
   static const String refreshTokenEndpoint = '/auth/refresh';
 
-  // URLs completas para facilitar o uso
   static String get loginUrl => baseUrl + loginEndpoint;
   static String get registerUrl => baseUrl + registerEndpoint;
   static String get logoutUrl => baseUrl + logoutEndpoint;

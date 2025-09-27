@@ -5,6 +5,10 @@ export class CreateGroupDto {
   @IsNotEmpty()
   name: string;
 
+  @IsString()
+  @IsOptional()
+  avatar_url?: string | null;
+
   @IsArray()
   @IsOptional()
   memberIds?: string[];

@@ -4,6 +4,8 @@ class GroupMember {
   final String userId;
   final DateTime joinedAt;
   final String role; // 'admin' ou 'member'
+  final String? name;
+  final String? avatarUrl;
 
   GroupMember({
     required this.id,
@@ -11,6 +13,8 @@ class GroupMember {
     required this.userId,
     required this.joinedAt,
     required this.role,
+    this.name,
+    this.avatarUrl,
   });
 
   factory GroupMember.fromJson(Map<String, dynamic> json) {
@@ -20,6 +24,8 @@ class GroupMember {
       userId: json['user_id'],
       joinedAt: DateTime.parse(json['joined_at']),
       role: json['role'],
+      name: json['name'],
+      avatarUrl: json['avatar_url'],
     );
   }
 
@@ -30,6 +36,8 @@ class GroupMember {
       'user_id': userId,
       'joined_at': joinedAt.toIso8601String(),
       'role': role,
+      if (name != null) 'name': name,
+      if (avatarUrl != null) 'avatar_url': avatarUrl,
     };
   }
 
@@ -37,6 +45,6 @@ class GroupMember {
 
   @override
   String toString() {
-    return 'GroupMember{id: $id, groupId: $groupId, userId: $userId, joinedAt: $joinedAt, role: $role}';
+    return 'GroupMember{id: $id, groupId: $groupId, userId: $userId, joinedAt: $joinedAt, role: $role, name: $name, avatarUrl: $avatarUrl}';
   }
 }

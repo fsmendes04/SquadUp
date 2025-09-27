@@ -5,6 +5,8 @@ import {
   HttpException,
   HttpStatus,
   Put,
+  Get,
+  Param,
   UseGuards,
   UseInterceptors,
   UploadedFile,
@@ -105,6 +107,29 @@ export class AuthController {
         {
           success: false,
           message: 'Error updating profile',
+          error: error.message,
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Get('user/:id')
+  @UseGuards(AuthGuard)
+  async getUserById(@Param('id') userId: string) {
+    try {
+      const user = await this.authService.getUserById(userId);
+
+      return {
+        success: true,
+        message: 'User retrieved successfully',
+        data: user,
+      };
+    } catch (error) {
+      throw new HttpException(
+        {
+          success: false,
+          message: 'Error retrieving user',
           error: error.message,
         },
         HttpStatus.BAD_REQUEST,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/groups_service.dart';
 import '../models/group_with_members.dart';
+import '../widgets/avatar_widget.dart';
 import 'expenses_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
@@ -253,7 +254,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 70,
+          height: 90,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: _groupDetails!.members.length,
@@ -262,52 +263,24 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
               return Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Avatar com mesmo estilo da home page
-                    Container(
-                      width: 58,
-                      height: 58,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            primaryBlue.withValues(alpha: 0.8),
-                            primaryBlue,
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
+                    // Avatar usando UserAvatarDisplay
+                    UserAvatarDisplay(avatarUrl: member.avatarUrl, radius: 29),
+                    const SizedBox(height: 4),
+                    // Nome do usuário
+                    SizedBox(
+                      width: 60,
+                      child: Text(
+                        member.name ?? 'Usuário',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: darkBlue,
+                          fontWeight: FontWeight.w500,
                         ),
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        child: Container(
-                          margin: const EdgeInsets.all(2),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                primaryBlue.withValues(alpha: 0.7),
-                                primaryBlue,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(
-                              member.userId[0].toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ],

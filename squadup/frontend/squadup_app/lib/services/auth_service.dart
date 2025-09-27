@@ -257,6 +257,29 @@ class AuthService {
     }
   }
 
+  // Get user by ID
+  Future<Map<String, dynamic>?> getUserById(String userId) async {
+    try {
+      final response = await _apiService.get('/auth/user/$userId');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final userData = response.data['data'];
+        return {
+          'id': userData['id'],
+          'email': userData['email'],
+          'name': userData['user_metadata']?['name'],
+          'avatar_url': userData['user_metadata']?['avatar_url'],
+          'created_at': userData['created_at'],
+          'updated_at': userData['updated_at'],
+        };
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user by ID: $e');
+      return null;
+    }
+  }
+
   // Upload avatar file
   Future<AvatarUploadResponse> uploadAvatar(String filePath) async {
     try {

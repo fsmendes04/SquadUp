@@ -120,6 +120,37 @@ export class AuthService {
     return data;
   }
 
+  async getUserById(userId: string) {
+    try {
+      console.log('🔍 Getting user by ID:', userId);
+
+      // Use service role to get user data
+      const { createClient } = require('@supabase/supabase-js');
+      const adminSupabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+      );
+
+      const { data, error } = await adminSupabase.auth.admin.getUserById(userId);
+
+      if (error || !data.user) {
+        console.error('❌ Error getting user by ID:', error);
+        throw new BadRequestException('User not found');
+      }
+
+      console.log('✅ User found:', {
+        id: data.user.id,
+        email: data.user.email,
+        user_metadata: data.user.user_metadata
+      });
+
+      return data.user;
+    } catch (error) {
+      console.error('❌ Unexpected error getting user by ID:', error);
+      throw new BadRequestException(`Error getting user: ${error}`);
+    }
+  }
+
   async getUserFromToken(token: string) {
     const { data: { user }, error } = await this.supabase.client.auth.getUser(token);
 

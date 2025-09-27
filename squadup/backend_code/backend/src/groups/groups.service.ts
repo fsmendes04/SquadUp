@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { createClient } from '@supabase/supabase-js';
 import { SupabaseService } from '../supabase/supabase.service';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
@@ -257,6 +258,7 @@ export class GroupsService {
   }
 
   private async getGroupMembers(groupId: string): Promise<GroupMember[]> {
+    // Primeiro, buscar os membros do grupo
     const { data: members, error } = await this.supabaseService.client
       .from('group_members')
       .select('*')
@@ -267,7 +269,68 @@ export class GroupsService {
       throw new BadRequestException(`Erro ao buscar membros do grupo: ${error.message}`);
     }
 
-    return members || [];
+    if (!members || members.length === 0) {
+      return [];
+    }
+
+    // Buscar os dados dos usuários para cada membro usando Service Role
+    const userIds = members.map(member => member.user_id);
+    console.log('Buscando dados dos usuários para IDs:', userIds);
+
+    // Criar cliente admin usando service role key
+    const adminClient = createClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    );
+
+    // Buscar dados dos usuários usando Admin API
+    const users: any[] = [];
+    for (const userId of userIds) {
+      try {
+        const { data: user, error } = await adminClient.auth.admin.getUserById(userId);
+        if (user && !error) {
+          users.push({
+            id: user.user.id,
+            name: user.user.user_metadata?.name || null,
+            avatar_url: user.user.user_metadata?.avatar_url || null,
+          });
+        } else {
+          console.warn(`Erro ao buscar usuário ${userId}:`, error?.message);
+        }
+      } catch (error) {
+        console.warn(`Erro ao buscar usuário ${userId}:`, error);
+      }
+    }
+
+    console.log('Dados dos usuários retornados:', users);
+
+    // Criar um mapa de usuários por ID para facilitar a busca
+    const usersMap = new Map();
+    if (users) {
+      users.forEach(user => {
+        usersMap.set(user.id, { name: user.name, avatar_url: user.avatar_url });
+      });
+    }
+
+    // Mapear para incluir name e avatar_url no objeto GroupMember
+    return members.map((member: any) => {
+      const userData = usersMap.get(member.user_id);
+      return {
+        id: member.id,
+        group_id: member.group_id,
+        user_id: member.user_id,
+        joined_at: member.joined_at,
+        role: member.role,
+        name: userData?.name || null,
+        avatar_url: userData?.avatar_url || null,
+      };
+    });
   }
 
   private async isUserAdmin(groupId: string, userId: string): Promise<boolean> {

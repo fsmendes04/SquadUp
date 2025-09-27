@@ -12,6 +12,8 @@ export interface GroupMember {
   user_id: string;
   joined_at: string;
   role: 'admin' | 'member';
+  name?: string;
+  avatar_url?: string;
 }
 
 export interface GroupWithMembers extends Group {

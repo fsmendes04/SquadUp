@@ -100,8 +100,6 @@ export class GroupsService {
             }
           );
 
-          // Extract the file path from the full URL
-          // URL format: https://[project].supabase.co/storage/v1/object/public/group-avatars/[groupId]/[filename]
           const urlParts = currentGroup.avatar_url.split('/');
           const fileName = urlParts[urlParts.length - 1];
           const oldFilePath = `${groupId}/${fileName}`;
@@ -234,7 +232,8 @@ export class GroupsService {
           name,
           created_at,
           updated_at,
-          created_by
+          created_by,
+          avatar_url
         )
       `)
       .eq('user_id', userId);
@@ -252,10 +251,11 @@ export class GroupsService {
 
     for (const userGroup of userGroups) {
       if (userGroup.groups) {
-        const group = userGroup.groups as Group;
+        const group = userGroup.groups as Group & { avatar_url?: string };
         const members = await this.getGroupMembers(group.id);
         groupsWithMembers.push({
           ...group,
+          avatar_url: group.avatar_url || null,
           members,
         });
       }

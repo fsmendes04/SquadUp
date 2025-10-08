@@ -5,7 +5,7 @@ import '../widgets/avatar_group_widget.dart';
 
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
-  const EditGroupScreen({Key? key, required this.groupId}) : super(key: key);
+  const EditGroupScreen({super.key, required this.groupId});
 
   @override
   State<EditGroupScreen> createState() => _EditGroupScreenState();
@@ -15,7 +15,6 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   final GroupsService _groupsService = GroupsService();
   GroupWithMembers? _group;
   bool _loading = true;
-  bool _avatarLoading = false;
 
   @override
   void initState() {

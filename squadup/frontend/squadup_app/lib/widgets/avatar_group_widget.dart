@@ -155,19 +155,6 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
         _selectedImagePath = null;
       });
       if (widget.onAvatarChanged != null) widget.onAvatarChanged!();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Avatar do grupo atualizado!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Erro ao atualizar avatar: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
       if (mounted) {
         setState(() {
@@ -179,34 +166,87 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final double outerRadius = widget.radius;
+    final double borderWidth = 2;
+    final double innerRadius = outerRadius - borderWidth;
+    final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+
     return Stack(
       children: [
-        CircleAvatar(
-          radius: widget.radius,
-          backgroundColor: Colors.grey[300],
-          backgroundImage:
-              _selectedImagePath != null
-                  ? FileImage(File(_selectedImagePath!)) as ImageProvider
-                  : _avatarUrl != null
-                  ? NetworkImage(_avatarUrl!)
-                  : null,
-          child:
-              _isLoading
-                  ? SizedBox(
-                    width: widget.radius,
-                    height: widget.radius,
-                    child: const CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        // Outer gradient border
+        Container(
+          width: outerRadius * 2,
+          height: outerRadius * 2,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Center(
+            // White border
+            child: Container(
+              width: innerRadius * 2,
+              height: innerRadius * 2,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: Center(
+                child: Container(
+                  width: (innerRadius - borderWidth) * 2,
+                  height: (innerRadius - borderWidth) * 2,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [primaryBlue.withOpacity(0.7), primaryBlue],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  )
-                  : (_selectedImagePath == null && _avatarUrl == null)
-                  ? Icon(
-                    Icons.groups,
-                    size: widget.radius * 0.8,
-                    color: Colors.grey[600],
-                  )
-                  : null,
+                  ),
+                  child: ClipOval(
+                    child:
+                        _isLoading
+                            ? Center(
+                              child: SizedBox(
+                                width: widget.radius,
+                                height: widget.radius,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
+                                ),
+                              ),
+                            )
+                            : (_selectedImagePath != null)
+                            ? Image.file(
+                              File(_selectedImagePath!),
+                              fit: BoxFit.cover,
+                              width: (innerRadius - borderWidth) * 2,
+                              height: (innerRadius - borderWidth) * 2,
+                            )
+                            : (_avatarUrl != null)
+                            ? Image.network(
+                              _avatarUrl!,
+                              fit: BoxFit.cover,
+                              width: (innerRadius - borderWidth) * 2,
+                              height: (innerRadius - borderWidth) * 2,
+                            )
+                            : Center(
+                              child: Icon(
+                                Icons.groups,
+                                size: widget.radius * 0.8,
+                                color: Colors.white,
+                              ),
+                            ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
         if (widget.allowEdit && !_isLoading)
           Positioned(
@@ -249,20 +289,65 @@ class GroupAvatarDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double outerRadius = radius;
+    final double borderWidth = 2;
+    final double innerRadius = outerRadius - borderWidth;
+    final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+
     return GestureDetector(
       onTap: onTap,
-      child: CircleAvatar(
-        radius: radius,
-        backgroundColor: Colors.grey[300],
-        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
-        child:
-            avatarUrl == null
-                ? Icon(
-                  Icons.groups,
-                  size: radius * 0.8,
-                  color: Colors.grey[600],
-                )
-                : null,
+      child: Container(
+        width: outerRadius * 2,
+        height: outerRadius * 2,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            colors: [primaryBlue.withOpacity(0.8), primaryBlue],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Container(
+            width: innerRadius * 2,
+            height: innerRadius * 2,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            child: Center(
+              child: Container(
+                width: (innerRadius - borderWidth) * 2,
+                height: (innerRadius - borderWidth) * 2,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [primaryBlue.withOpacity(0.7), primaryBlue],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: ClipOval(
+                  child:
+                      avatarUrl != null
+                          ? Image.network(
+                            avatarUrl!,
+                            fit: BoxFit.cover,
+                            width: (innerRadius - borderWidth) * 2,
+                            height: (innerRadius - borderWidth) * 2,
+                          )
+                          : Center(
+                            child: Icon(
+                              Icons.groups,
+                              size: radius,
+                              color: Colors.white,
+                            ),
+                          ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

@@ -11,55 +11,23 @@ class CustomDrawerBar extends StatelessWidget {
     final darkBlue = const Color(0xFF0B3A66);
 
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
+      width: MediaQuery.of(context).size.width,
+      color: Colors.white,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildDrawerItem(
             context,
-            icon: Icons.home,
-            title: 'Home',
-            index: 0,
-            darkBlue: darkBlue,
-          ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.person,
-            title: 'Perfil',
-            index: 1,
-            darkBlue: darkBlue,
-          ),
-          _buildDrawerItem(
-            context,
-            icon: Icons.chat,
-            title: 'Chat',
-            index: 2,
-            darkBlue: darkBlue,
-          ),
-          _buildDrawerItem(
-            context,
             icon: Icons.settings,
             title: 'Definições',
-            index: 3,
+            index: 0,
             darkBlue: darkBlue,
           ),
           _buildDrawerItem(
             context,
             icon: Icons.logout,
             title: 'Logout',
-            index: 4,
+            index: 1,
             darkBlue: darkBlue,
             isLast: true,
           ),

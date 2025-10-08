@@ -93,7 +93,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Converte GroupWithMembers para o formato esperado pelo GroupCard
   Map<String, dynamic> _groupToCardFormat(GroupWithMembers group, int index) {
     // Todos os grupos terão a mesma cor
     final colorGroup = const Color(0xFF51A3E6);
@@ -316,19 +315,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.of(context).pop(); // Fecha o drawer
                 // Navegação baseada no index (sem redirecionamentos ainda)
                 switch (index) {
-                  case 0: // Home
-                    // Já está na home
-                    break;
-                  case 1: // Perfil
-                    // TODO: Implementar navegação para perfil
-                    break;
-                  case 2: // Chat
-                    // TODO: Implementar navegação para chat
-                    break;
-                  case 3: // Definições
+                  case 0: // Definições
                     // TODO: Implementar navegação para definições
                     break;
-                  case 4: // Logout
+                  case 1: // Logout
                     _logout();
                     break;
                 }

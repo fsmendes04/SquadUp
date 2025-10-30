@@ -19,9 +19,9 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { AuthGuard } from '../User/user.guard';
-import { CurrentUser } from '../User/current-user.decorator';
-import { GroupsService } from './groups.service';
+import { AuthGuard } from '../User/userToken';
+import { CurrentUser } from '../common/decorators';
+import { GroupsService } from './groupsService';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { AddMemberDto } from './dto/add-member.dto';
@@ -38,7 +38,7 @@ export class GroupsController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
           new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|gif|webp)$/ }),
         ],
       }),
@@ -48,9 +48,6 @@ export class GroupsController {
     @Req() request: any,
   ) {
     try {
-      console.log('🔍 Debug uploadGroupAvatar - user object:', user);
-      console.log('🔍 Debug uploadGroupAvatar - user.id:', user?.id);
-
       const accessToken = request.accessToken;
       const result = await this.groupsService.updateGroupAvatar(file, groupId, user.id, accessToken);
 
@@ -100,7 +97,6 @@ export class GroupsController {
     @Body() updateGroupDto: UpdateGroupDto,
     @Query('userId') userId: string,
   ) {
-    // description removido do DTO
     return this.groupsService.updateGroup(id, updateGroupDto, userId);
   }
 

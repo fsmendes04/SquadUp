@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { createClient } from '@supabase/supabase-js';
-import { SupabaseService } from '../supabase/supabaseService';
+import { SupabaseService } from '../Supabase/supabaseService';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
-import { Group, GroupMember, GroupWithMembers } from './models/group.model';
+import { Group, GroupMember, GroupWithMembers } from './groupModel';
 
 @Injectable()
 export class GroupsService {
@@ -11,9 +11,6 @@ export class GroupsService {
 
   async uploadGroupAvatar(file: Express.Multer.File, groupId: string, accessToken: string): Promise<string> {
     try {
-      console.log('🚀 Starting group avatar upload for group:', groupId);
-
-      // Criar cliente Supabase com JWT token do usuário para respeitar RLS
       const { createClient } = require('@supabase/supabase-js');
       const userSupabase = createClient(
         process.env.SUPABASE_URL,
@@ -27,14 +24,10 @@ export class GroupsService {
         }
       );
 
-      // Criar nome único para o arquivo
       const fileExtension = file.originalname.split('.').pop() || 'jpg';
       const fileName = `group_avatar_${Date.now()}.${fileExtension}`;
       const filePath = `${groupId}/${fileName}`; // Organizar por groupId
 
-      console.log('📁 Upload path:', filePath);
-
-      // Upload para o Supabase Storage usando cliente com JWT token
       const { data, error } = await userSupabase.storage
         .from('group-avatars')
         .upload(filePath, file.buffer, {
@@ -43,36 +36,26 @@ export class GroupsService {
         });
 
       if (error) {
-        console.error('❌ Error uploading group avatar:', error);
         throw new BadRequestException(`Error uploading group avatar: ${error.message}`);
       }
 
-      console.log('📤 Upload successful, data:', data);
-
-      // Obter URL pública da imagem usando o cliente regular (não precisa de auth para URLs públicas)
       const { data: publicUrlData } = this.supabaseService.client.storage
         .from('group-avatars')
         .getPublicUrl(filePath);
 
-      console.log('✅ Group avatar uploaded successfully:', publicUrlData.publicUrl);
       return publicUrlData.publicUrl;
     } catch (error) {
-      console.error('❌ Unexpected error uploading group avatar:', error);
       throw new BadRequestException(`Unexpected error uploading group avatar: ${error}`);
     }
   }
 
   async updateGroupAvatar(file: Express.Multer.File, groupId: string, userId: string, accessToken: string) {
     try {
-      console.log('🔄 Starting updateGroupAvatar for groupId:', groupId, 'by user:', userId);
-
-      // Verificar se o usuário é admin do grupo
       const isAdmin = await this.isUserAdmin(groupId, userId);
       if (!isAdmin) {
         throw new ForbiddenException('Apenas administradores podem alterar o avatar do grupo');
       }
 
-      // Get current group data to check for existing avatar
       const { data: currentGroup, error: getGroupError } = await this.supabaseService.client
         .from('groups')
         .select('avatar_url')
@@ -80,13 +63,9 @@ export class GroupsService {
         .single();
 
       if (getGroupError) {
-        console.error('❌ Error getting current group:', getGroupError);
       } else if (currentGroup?.avatar_url) {
-        // Extract the file path from the current avatar URL to delete it
-        console.log('🗑️ Found existing avatar, will delete:', currentGroup.avatar_url);
 
         try {
-          // Criar cliente Supabase com JWT token para deletar o arquivo antigo
           const { createClient } = require('@supabase/supabase-js');
           const userSupabase = createClient(
             process.env.SUPABASE_URL,
@@ -104,27 +83,17 @@ export class GroupsService {
           const fileName = urlParts[urlParts.length - 1];
           const oldFilePath = `${groupId}/${fileName}`;
 
-          // Delete the old avatar file from storage using JWT token
           const { error: deleteError } = await userSupabase.storage
             .from('group-avatars')
             .remove([oldFilePath]);
 
-          if (deleteError) {
-            console.error('⚠️ Warning: Could not delete old group avatar file:', deleteError);
-            // Continue with upload even if deletion fails
-          } else {
-            console.log('✅ Old group avatar file deleted successfully:', oldFilePath);
-          }
         } catch (deleteErr) {
           console.error('⚠️ Warning: Error processing old group avatar deletion:', deleteErr);
-          // Continue with upload even if deletion fails
         }
       }
 
-      // Upload the new avatar
       const avatarUrl = await this.uploadGroupAvatar(file, groupId, accessToken);
 
-      // Update the group's avatar_url in the database
       const { error: updateError } = await this.supabaseService.client
         .from('groups')
         .update({
@@ -134,11 +103,8 @@ export class GroupsService {
         .eq('id', groupId);
 
       if (updateError) {
-        console.error('❌ Error updating group avatar_url:', updateError);
         throw new BadRequestException(`Error updating group avatar: ${updateError.message}`);
       }
-
-      console.log('✅ Group avatar updated successfully in database');
 
       return {
         success: true,
@@ -147,7 +113,6 @@ export class GroupsService {
       };
 
     } catch (error) {
-      console.error('❌ Error in updateGroupAvatar:', error);
       if (error instanceof ForbiddenException || error instanceof BadRequestException) {
         throw error;
       }
@@ -171,7 +136,6 @@ export class GroupsService {
       throw new BadRequestException(`Erro ao criar grupo: ${groupError.message}`);
     }
 
-    // Adicionar o criador como admin do grupo
     const { error: memberError } = await this.supabaseService.client
       .from('group_members')
       .insert({
@@ -181,7 +145,6 @@ export class GroupsService {
       });
 
     if (memberError) {
-      // Se falhar ao adicionar o criador, deletar o grupo criado
       await this.supabaseService.client
         .from('groups')
         .delete()
@@ -190,7 +153,6 @@ export class GroupsService {
       throw new BadRequestException(`Erro ao adicionar criador ao grupo: ${memberError.message}`);
     }
 
-    // Adicionar membros adicionais se fornecidos
     if (memberIds.length > 0) {
       const membersToAdd = memberIds.map(memberId => ({
         group_id: group.id,
@@ -246,12 +208,13 @@ export class GroupsService {
       return [];
     }
 
-    // Buscar membros para cada grupo
     const groupsWithMembers: GroupWithMembers[] = [];
 
     for (const userGroup of userGroups) {
       if (userGroup.groups) {
-        const group = userGroup.groups as Group & { avatar_url?: string };
+        // Handle both single group object and array of groups
+        const groupData = Array.isArray(userGroup.groups) ? userGroup.groups[0] : userGroup.groups;
+        const group = groupData as Group & { avatar_url?: string };
         const members = await this.getGroupMembers(group.id);
         groupsWithMembers.push({
           ...group,

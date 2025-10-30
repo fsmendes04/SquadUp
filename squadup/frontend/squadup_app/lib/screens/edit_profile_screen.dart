@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../widgets/avatar_widget.dart';
 
 class EditProfileScreen extends StatefulWidget {

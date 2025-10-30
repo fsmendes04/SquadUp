@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
 import '../services/groups_service.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../models/expense.dart';
 import 'add_expense_screen.dart';
 

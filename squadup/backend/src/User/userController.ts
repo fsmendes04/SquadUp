@@ -6,85 +6,123 @@ import {
   HttpStatus,
   Put,
   Get,
-  Param,
   UseGuards,
   UseInterceptors,
   UploadedFile,
   MaxFileSizeValidator,
   FileTypeValidator,
-  ParseFilePipe
+  ParseFilePipe,
+  Logger,
+  BadRequestException
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { UserService } from './userService';
+import { SessionService } from './sessionService';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { AuthGuard } from './user.guard';
-import { CurrentUser } from './current-user.decorator';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { AuthGuard } from './userToken';
+import { CurrentUser } from '../common/decorators';
+import { GetToken } from '../common/decorators';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) { }
+  private readonly logger = new Logger(UserController.name);
+
+  constructor(
+    private readonly userService: UserService,
+    private readonly sessionService: SessionService,
+  ) { }
 
   @Post('register')
+  @Throttle({ default: { limit: 6, ttl: 60000 } })
   async register(@Body() registerDto: RegisterDto) {
     try {
+      // Additional input validation
+      if (!registerDto.email || !registerDto.password) {
+        throw new BadRequestException('Email and password are required');
+      }
+
       const result = await this.userService.register(
         registerDto.email,
         registerDto.password,
       );
 
+      // Don't return session data with sensitive info
       return {
         success: true,
-        message: 'User registered successfully',
+        message: 'User registered successfully. Please check your email to confirm your account.',
         data: {
-          user: result.user,
-          session: result.session,
+          user: {
+            id: result.user?.id,
+            email: result.user?.email,
+            created_at: result.user?.created_at
+          }
         },
       };
     } catch (error) {
+      this.logger.error('Registration error', error.message);
+
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
       throw new HttpException(
         {
           success: false,
-          message: 'Error registering user',
-          error: error.message,
+          message: error.message || 'Registration failed',
         },
-        HttpStatus.BAD_REQUEST,
+        statusCode,
       );
     }
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
   async login(@Body() loginDto: LoginDto) {
     try {
+      // Additional input validation
+      if (!loginDto.email || !loginDto.password) {
+        throw new BadRequestException('Email and password are required');
+      }
+
       const result = await this.userService.login(
         loginDto.email,
         loginDto.password,
       );
 
+      // Return minimal necessary data
       return {
         success: true,
         message: 'Login successful',
         data: {
-          user: result.user,
-          session: result.session,
+          user: {
+            id: result.user.id,
+            email: result.user.email,
+            user_metadata: result.user.user_metadata
+          },
+          access_token: result.session?.access_token,
+          refresh_token: result.session?.refresh_token,
+          expires_in: result.session?.expires_in,
+          expires_at: result.session?.expires_at
         },
       };
     } catch (error) {
+      this.logger.error('Login error', error.message);
+
       throw new HttpException(
         {
           success: false,
-          message: 'Error logging in',
-          error: error.message,
+          message: 'Invalid credentials',
         },
         HttpStatus.UNAUTHORIZED,
       );
     }
   }
 
-  @Put('update-profile')
+  @Put('profile')
   @UseGuards(AuthGuard)
   @UseInterceptors(FileInterceptor('avatar'))
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute
   async updateProfile(
     @Body() updateData: UpdateProfileDto,
     @CurrentUser() user: any,
@@ -92,7 +130,7 @@ export class UserController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
-          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|gif|webp)$/ }),
+          new FileTypeValidator({ fileType: /^image\/(jpeg|jpg|png|webp)$/ }),
         ],
         fileIsRequired: false,
       }),
@@ -100,47 +138,116 @@ export class UserController {
     file?: Express.Multer.File,
   ) {
     try {
-      const result = await this.userService.updateProfile(updateData, user.id, file);
+      // Validate that at least one field is being updated
+      if (!updateData.name && !updateData.avatar_url && !file) {
+        throw new BadRequestException('At least one field must be provided for update');
+      }
+
+      const result = await this.userService.updateProfile(
+        updateData,
+        user.id,
+        file
+      );
 
       return {
         success: true,
         message: 'Profile updated successfully',
-        data: result,
+        data: {
+          id: result.id,
+          email: result.email,
+          user_metadata: result.user_metadata
+        },
       };
     } catch (error) {
+      this.logger.error('Profile update error', error.message);
+
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
       throw new HttpException(
         {
           success: false,
-          message: 'Error updating profile',
-          error: error.message,
+          message: error.message || 'Failed to update profile',
         },
-        HttpStatus.BAD_REQUEST,
+        statusCode,
       );
     }
   }
 
-  @Get(':id')
+  @Get('profile')
   @UseGuards(AuthGuard)
-  async getUserById(@Param('id') userId: string) {
+  @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute
+  async getCurrentUserProfile(@CurrentUser() user: any) {
     try {
-      const user = await this.userService.getUserById(userId);
+      const userData = await this.userService.getUserById(user.id);
 
       return {
         success: true,
         message: 'User retrieved successfully',
-        data: user,
+        data: {
+          id: userData.id,
+          email: userData.email,
+          user_metadata: userData.user_metadata,
+          created_at: userData.created_at,
+          updated_at: userData.updated_at
+        },
       };
     } catch (error) {
+      this.logger.error('Get profile error', error.message);
+
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
       throw new HttpException(
         {
           success: false,
-          message: 'Error retrieving user',
-          error: error.message,
+          message: error.message || 'Failed to retrieve profile',
         },
-        HttpStatus.BAD_REQUEST,
+        statusCode,
       );
     }
   }
 
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async logout(@GetToken() token: string) {
+    try {
+      await this.userService.logout(token);
+      this.logger.log('User logged out successfully');
+      return {
+        success: true,
+        message: 'Logged out successfully',
+      };
+    } catch (error) {
+      this.logger.error('Logout error', error.message);
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Logout failed',
+        },
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
+  @Post('refresh')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async refreshSession(@Body() refreshTokenDto: RefreshTokenDto) {
+    try {
+      const result = await this.sessionService.refreshSession(refreshTokenDto.refresh_token);
+
+      return {
+        success: true,
+        message: 'Session refreshed successfully',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error('Session refresh error', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to refresh session',
+        },
+        error.status || HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
 }

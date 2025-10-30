@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
-import { GroupsController } from './groups.controller';
-import { GroupsService } from './groups.service';
-import { SupabaseService } from '../supabase/supabaseService';
-import { AuthModule } from '../User/user.module';
+import { GroupsController } from './groupsController';
+import { GroupsService } from './groupsService';
+import { SupabaseService } from '../Supabase/supabaseService';
+import { UserModule } from '../User/user.module';
 
 @Module({
-  imports: [AuthModule],
+  imports: [UserModule],
   controllers: [GroupsController],
   providers: [GroupsService, SupabaseService],
   exports: [GroupsService],

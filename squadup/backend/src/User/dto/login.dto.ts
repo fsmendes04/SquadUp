@@ -1,9 +1,12 @@
-import { IsEmail, IsString } from 'class-validator';
+import { IsEmail, IsString, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class LoginDto {
-  @IsEmail({}, { message: 'Email should be a valid email address' })
+  @IsEmail({}, { message: 'Invalid email format' })
+  @Transform(({ value }) => value?.toLowerCase().trim())
   email: string;
 
-  @IsString({ message: 'Password must be a string' })
+  @IsString()
+  @MinLength(1)
   password: string;
 }

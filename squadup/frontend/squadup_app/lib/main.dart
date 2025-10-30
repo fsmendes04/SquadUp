@@ -10,7 +10,7 @@ import 'screens/profile_screen.dart';
 import 'screens/add_name_screen.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/group_home_screen.dart';
-import 'services/auth_service.dart';
+import 'services/user_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

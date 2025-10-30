@@ -1,11 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../config/app_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:3000';
-  static const Duration connectTimeout = Duration(seconds: 10);
-  static const Duration receiveTimeout = Duration(seconds: 10);
-
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;
 
@@ -14,93 +11,124 @@ class ApiService {
   ApiService._internal() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: connectTimeout,
-        receiveTimeout: receiveTimeout,
-        headers: {'Content-Type': 'application/json'},
+        baseUrl: AppConfig.baseUrl,
+        connectTimeout: AppConfig.connectTimeout,
+        receiveTimeout: AppConfig.receiveTimeout,
+        headers: AppConfig.defaultHeaders,
+        validateStatus: (status) => status != null && status < 500,
       ),
     );
 
-    // Adicionar interceptor para logs (opcional)
+    _setupInterceptors();
+  }
+
+  void _setupInterceptors() {
+    if (AppConfig.enableApiLogs) {
+      _dio.interceptors.add(
+        LogInterceptor(
+          requestBody: true,
+          responseBody: true,
+          error: true,
+          requestHeader: false,
+          responseHeader: false,
+          logPrint: (object) => _log(object),
+        ),
+      );
+    }
+
     _dio.interceptors.add(
-      LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-        logPrint: (object) => _log(object),
+      InterceptorsWrapper(
+        onError: (error, handler) {
+          _log('❌ Error: ${error.message}');
+          return handler.next(error);
+        },
       ),
     );
   }
 
-  // Logging helper usando debugPrint
   void _log(Object? object) {
-    // Use debugPrint para evitar problemas de truncamento e não poluir produção
-    // Em produção, você pode customizar para enviar logs para um serviço externo ou desabilitar
-    assert(() {
-      // Só loga em debug mode
+    if (kDebugMode) {
       debugPrint(object?.toString());
-      return true;
-    }());
+    }
   }
 
-  // Getter para acessar a instância do Dio
   Dio get dio => _dio;
 
-  // Método para adicionar token de autorização
   void setAuthToken(String token) {
     _dio.options.headers['Authorization'] = 'Bearer $token';
+    _log('✅ Auth token set');
   }
 
-  // Método para remover token de autorização
   void removeAuthToken() {
     _dio.options.headers.remove('Authorization');
+    _log('🔓 Auth token removed');
   }
 
-  // Método genérico para requisições GET
+  bool get hasAuthToken => _dio.options.headers.containsKey('Authorization');
+
+  Future<Response> _request(
+    String method,
+    String endpoint, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.request(
+        endpoint,
+        data: data,
+        queryParameters: queryParameters,
+        options: (options ?? Options()).copyWith(method: method),
+      );
+      return response;
+    } on DioException catch (e) {
+      _log('Request failed: ${e.message}');
+      rethrow;
+    }
+  }
+
   Future<Response> get(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
-  }) async {
-    try {
-      return await _dio.get(endpoint, queryParameters: queryParameters);
-    } catch (e) {
-      rethrow;
-    }
-  }
+  }) => _request('GET', endpoint, queryParameters: queryParameters);
 
-  // Método genérico para requisições POST
-  Future<Response> post(String endpoint, {dynamic data}) async {
-    try {
-      return await _dio.post(endpoint, data: data);
-    } catch (e) {
-      rethrow;
-    }
-  }
+  Future<Response> post(String endpoint, {dynamic data}) =>
+      _request('POST', endpoint, data: data);
 
-  // Método genérico para requisições PUT
-  Future<Response> put(String endpoint, {dynamic data}) async {
-    try {
-      return await _dio.put(endpoint, data: data);
-    } catch (e) {
-      rethrow;
-    }
-  }
+  Future<Response> put(String endpoint, {dynamic data}) =>
+      _request('PUT', endpoint, data: data);
 
-  // Método genérico para requisições DELETE
-  Future<Response> delete(String endpoint) async {
-    try {
-      return await _dio.delete(endpoint);
-    } catch (e) {
-      rethrow;
-    }
-  }
+  Future<Response> delete(String endpoint, {dynamic data}) =>
+      _request('DELETE', endpoint, data: data);
 
-  static const String loginEndpoint = '/auth/login';
-  static const String registerEndpoint = '/auth/register';
-  static const String logoutEndpoint = '/auth/logout';
-  static const String refreshTokenEndpoint = '/auth/refresh';
+  Future<Response> patch(String endpoint, {dynamic data}) =>
+      _request('PATCH', endpoint, data: data);
 
-  static String get loginUrl => baseUrl + loginEndpoint;
-  static String get registerUrl => baseUrl + registerEndpoint;
-  static String get logoutUrl => baseUrl + logoutEndpoint;
-  static String get refreshTokenUrl => baseUrl + refreshTokenEndpoint;
+  Future<Response> postMultipart(
+    String endpoint, {
+    required FormData data,
+    ProgressCallback? onSendProgress,
+  }) => _request(
+    'POST',
+    endpoint,
+    data: data,
+    options: Options(contentType: 'multipart/form-data'),
+  );
+
+  Future<Response> putMultipart(
+    String endpoint, {
+    required FormData data,
+    ProgressCallback? onSendProgress,
+  }) => _request(
+    'PUT',
+    endpoint,
+    data: data,
+    options: Options(contentType: 'multipart/form-data'),
+  );
+
+  static const String loginEndpoint = '/user/login';
+  static const String registerEndpoint = '/user/register';
+  static const String logoutEndpoint = '/user/logout';
+  static const String refreshTokenEndpoint = '/user/refresh';
+  static const String profileEndpoint = '/user/profile';
 }

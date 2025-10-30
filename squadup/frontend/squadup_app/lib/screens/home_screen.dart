@@ -4,7 +4,7 @@ import '../widgets/navigation_bar.dart';
 import '../widgets/drawer_bar.dart';
 import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../services/groups_service.dart';
 import '../models/group_with_members.dart';
 import '../models/create_group_request.dart';

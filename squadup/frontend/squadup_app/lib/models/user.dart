@@ -30,15 +30,15 @@ class User {
     }
 
     return User(
-      id: json['id'],
-      email: json['email'],
+      id: json['id'] ?? '',
+      email: json['email'] ?? '',
       name: name,
       avatarUrl: avatarUrl,
       metadata: json['user_metadata']?.toString(),
       role: json['role'],
       emailConfirmedAt: json['email_confirmed_at'],
-      createdAt: json['created_at'],
-      updatedAt: json['updated_at'],
+      createdAt: json['created_at'] ?? '',
+      updatedAt: json['updated_at'] ?? '',
     );
   }
 

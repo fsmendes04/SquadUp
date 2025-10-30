@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AvatarWidget extends StatefulWidget {
   final double radius;
@@ -47,7 +47,7 @@ class AvatarController {
 }
 
 class _AvatarWidgetState extends State<AvatarWidget> {
-  final AuthService _authService = AuthService();
+  final UserService _authService = UserService();
   String? _avatarUrl;
   String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
   bool _isLoading = false;

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { SupabaseService } from '../supabase/supabaseService';
+import { SupabaseService } from '../Supabase/supabaseService';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FilterExpensesDto } from './dto/filter-expenses.dto';

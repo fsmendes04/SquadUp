@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/register_request.dart';
-import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -16,7 +15,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authService = AuthService();
+  final _userService = UserService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
@@ -27,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    // Limpa a mensagem de erro quando o usuário digita
     _emailController.addListener(_clearErrorMessage);
     _passwordController.addListener(_clearErrorMessage);
     _confirmPasswordController.addListener(_clearErrorMessage);
@@ -60,48 +58,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() {
       _isLoading = true;
-      _message = ''; // Limpa mensagem anterior
+      _message = '';
     });
 
     try {
-      final registerRequest = RegisterRequest(
+      final response = await _userService.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      final response = await _authService.register(registerRequest);
+      if (!mounted) return;
 
-      if (response.success) {
-        if (mounted) {
-          // Se há uma sessão, o usuário está logado imediatamente
-          if (response.data?.session != null) {
-            Navigator.pushReplacementNamed(context, '/home');
-          } else {
-            // Se não há sessão, mostra mensagem para confirmar email
-            setState(() {
-              _message =
-                  'Conta criada! Verifique seu email para ativar a conta.';
-              _isSuccessMessage = true;
-            });
-            // Opcional: navegar para tela de confirmação de email
-            // Navigator.pushReplacementNamed(context, '/email-confirmation');
-          }
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _message = response.message;
-            _isSuccessMessage = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+      if (response['success'] == true) {
+        // Backend retorna sucesso mas sem sessão (precisa confirmar email)
         setState(() {
-          _message = 'Erro inesperado. Tente novamente.';
+          _message =
+              response['message'] ??
+              'Conta criada! Verifique seu email para ativar a conta.';
+          _isSuccessMessage = true;
+        });
+
+        _emailController.clear();
+        _passwordController.clear();
+        _confirmPasswordController.clear();
+      } else {
+        setState(() {
+          _message = response['message'] ?? 'Falha no registro';
           _isSuccessMessage = false;
         });
       }
+    } on Exception catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _message = e.toString().replaceAll('Exception: ', '');
+        _isSuccessMessage = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _message = 'Erro inesperado. Tente novamente.';
+        _isSuccessMessage = false;
+      });
     } finally {
       if (mounted) {
         setState(() {
@@ -109,6 +108,67 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     }
+  }
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, digite seu email';
+    }
+
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    if (!emailRegex.hasMatch(value)) {
+      return 'Por favor, digite um email válido';
+    }
+
+    if (value.length > 254) {
+      return 'Email muito longo';
+    }
+
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, digite sua senha';
+    }
+
+    if (value.length < 8) {
+      return 'A senha deve ter pelo menos 8 caracteres';
+    }
+
+    // Validação de senha forte (deve corresponder ao backend)
+    final hasUppercase = RegExp(r'[A-Z]').hasMatch(value);
+    final hasLowercase = RegExp(r'[a-z]').hasMatch(value);
+    final hasDigit = RegExp(r'\d').hasMatch(value);
+
+    if (!hasUppercase) {
+      return 'Senha deve conter letra maiúscula';
+    }
+
+    if (!hasLowercase) {
+      return 'Senha deve conter letra minúscula';
+    }
+
+    if (!hasDigit) {
+      return 'Senha deve conter número';
+    }
+
+    return null;
+  }
+
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Por favor, confirme sua senha';
+    }
+
+    if (value != _passwordController.text) {
+      return 'As senhas não coincidem';
+    }
+
+    return null;
   }
 
   @override
@@ -127,14 +187,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Logo principal - usando o logotipo da empresa
                       SizedBox(
                         height: 190,
                         child: Center(
                           child: Image.asset(
                             'lib/images/logo_v3.png',
-                            height: 150, // Reduced height
-                            width: 290, // Reduced width
+                            height: 150,
+                            width: 290,
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -169,17 +228,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, digite seu email';
-                          }
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
-                            return 'Por favor, digite um email válido';
-                          }
-                          return null;
-                        },
+                        validator: _validateEmail,
                       ),
 
                       const SizedBox(height: 4),
@@ -189,15 +238,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Password',
                         icon: Icons.lock_outline,
                         obscureText: _obscurePassword,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, digite sua senha';
-                          }
-                          if (value.length < 6) {
-                            return 'A senha deve ter pelo menos 6 caracteres';
-                          }
-                          return null;
-                        },
+                        validator: _validatePassword,
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: IconButton(
@@ -223,15 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Confirm Password',
                         icon: Icons.lock_outline,
                         obscureText: _obscureConfirmPassword,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, confirme sua senha';
-                          }
-                          if (value != _passwordController.text) {
-                            return 'As senhas não coincidem';
-                          }
-                          return null;
-                        },
+                        validator: _validateConfirmPassword,
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: IconButton(
@@ -284,7 +317,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 40),
 
-                      // Botão de registro
                       SizedBox(
                         width: 175,
                         height: 55,
@@ -331,7 +363,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 40),
 
-                      // Link para login
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

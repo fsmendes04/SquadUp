@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '../User/user.guard';
-import { CurrentUser } from '../User/current-user.decorator';
+import { AuthGuard } from '../User/userToken';
+import { CurrentUser } from '../common/decorators';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';

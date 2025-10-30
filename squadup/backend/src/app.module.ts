@@ -1,22 +1,41 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './appController';
-import { AppService } from './appService';
-import { AuthModule } from './User/user.module';
+import { UserModule } from './User/user.module';
 import { GroupsModule } from './Groups/groups.module';
 import { ExpensesModule } from './Expenses/expenses.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { validateEnvironment } from './common/config/envValidation';
+import { SecurityHeadersMiddleware } from './common/middleware/securityHeaders';
+import { RequestLoggingMiddleware } from './common/middleware/logger';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnvironment,
     }),
-    AuthModule,
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
+    UserModule,
     GroupsModule,
     ExpensesModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(SecurityHeadersMiddleware, RequestLoggingMiddleware)
+      .forRoutes('*');
+  }
+}

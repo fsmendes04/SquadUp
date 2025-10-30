@@ -1,39 +1,64 @@
 import 'package:flutter/foundation.dart';
 
 class AppConfig {
-  // URLs da API para diferentes ambientes
-  static const String _developmentUrl =
-      'http://10.0.2.2:3000'; // Emulador Android
-  static const String _developmentUrlIOS =
-      'http://localhost:3000'; // Simulator iOS
+  AppConfig._();
 
-  // URL base atual baseada no ambiente
-  static String get baseUrl {
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return _developmentUrlIOS;
-    } else {
-      return _developmentUrl;
-    }
-  }
+  static const String _devBaseUrl = 'http://localhost:3000';
+  static const String _prodBaseUrl = 'https://api.yourapp.com';
 
-  // Configurações de timeout
-  static const Duration connectTimeout = Duration(seconds: 10);
-  static const Duration receiveTimeout = Duration(seconds: 10);
+  static String get baseUrl => kReleaseMode ? _prodBaseUrl : _devBaseUrl;
 
-  // Headers padrão
-  static Map<String, String> get defaultHeaders => {
+  static const Duration connectTimeout = Duration(seconds: 15);
+  static const Duration receiveTimeout = Duration(seconds: 15);
+  static const Duration sendTimeout = Duration(seconds: 15);
+
+  static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  // Configurações de debug
-  static bool get enableApiLogs => kDebugMode;
+  static const bool enableApiLogs = !kReleaseMode;
+  static const bool enableCrashReporting = kReleaseMode;
 
-  // Versão da API
-  static const String apiVersion = 'v1';
+  static const int maxRetries = 3;
+  static const Duration retryDelay = Duration(seconds: 1);
 
-  // URLs específicas
-  static String get authUrl => '$baseUrl/auth';
-  static String get groupsUrl => '$baseUrl/groups';
-  static String get expensesUrl => '$baseUrl/expenses';
+  static const int maxAvatarSizeBytes = 5 * 1024 * 1024; // 5MB
+
+  static const List<String> allowedAvatarTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+  ];
+  static const List<String> allowedAvatarExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+  ];
+
+  static const int maxNameLength = 100;
+  static const int minPasswordLength = 8;
+
+  static const Duration profileCacheDuration = Duration(minutes: 5);
+  static const Duration tokenRefreshThreshold = Duration(minutes: 5);
+
+  static const Map<String, int> rateLimits = {
+    'register': 3,
+    'login': 5,
+    'profile_update': 10,
+    'profile_get': 30,
+    'logout': 10,
+    'refresh': 10,
+  };
+
+  static const String networkErrorMessage =
+      'Connection failed. Please check your internet connection.';
+  static const String timeoutErrorMessage =
+      'Request timed out. Please try again.';
+  static const String serverErrorMessage =
+      'Server error. Please try again later.';
+  static const String unauthorizedErrorMessage =
+      'Session expired. Please login again.';
 }

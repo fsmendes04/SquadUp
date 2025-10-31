@@ -26,7 +26,7 @@ class AvatarGroupWidget extends StatefulWidget {
 class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
   final GroupsService _groupsService = GroupsService();
   String? _avatarUrl;
-  String? _selectedImagePath;
+  File? _selectedImageFile;
   bool _isLoading = false;
 
   @override
@@ -35,8 +35,19 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
     _avatarUrl = widget.avatarUrl;
   }
 
+  @override
+  void didUpdateWidget(AvatarGroupWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.avatarUrl != oldWidget.avatarUrl) {
+      setState(() {
+        _avatarUrl = widget.avatarUrl;
+      });
+    }
+  }
+
   Future<void> _showImageSourceDialog() async {
     if (_isLoading) return;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -125,41 +136,90 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: source,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 80,
-    );
-    if (pickedFile != null && mounted) {
-      setState(() {
-        _selectedImagePath = pickedFile.path;
-      });
-      _uploadSelectedAvatar();
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
+
+      if (pickedFile != null && mounted) {
+        setState(() {
+          _selectedImageFile = File(pickedFile.path);
+        });
+        await _uploadSelectedAvatar();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao selecionar imagem: ${e.toString()}'),
+            backgroundColor: Colors.red[600],
+          ),
+        );
+      }
     }
   }
 
   Future<void> _uploadSelectedAvatar() async {
-    if (_selectedImagePath == null) return;
+    if (_selectedImageFile == null) return;
+
     setState(() {
       _isLoading = true;
     });
+
     try {
       final response = await _groupsService.uploadGroupAvatar(
-        widget.groupId,
-        _selectedImagePath!,
+        groupId: widget.groupId,
+        avatarFilePath: _selectedImageFile!.path,
       );
-      setState(() {
-        _avatarUrl = response['data']['avatar_url'];
-        _selectedImagePath = null;
-      });
-      if (widget.onAvatarChanged != null) widget.onAvatarChanged!();
-    } finally {
+
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'];
+        final newAvatarUrl = data['avatar_url'] as String?;
+
+        if (mounted) {
+          setState(() {
+            _avatarUrl = newAvatarUrl;
+            _selectedImageFile = null;
+            _isLoading = false;
+          });
+
+          // Callback para notificar mudança
+          if (widget.onAvatarChanged != null) {
+            widget.onAvatarChanged!();
+          }
+
+          // Mostrar sucesso
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] ?? 'Avatar atualizado com sucesso!',
+              ),
+              backgroundColor: Colors.green[600],
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Erro ao fazer upload');
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
+          _selectedImageFile = null;
           _isLoading = false;
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
   }
@@ -221,19 +281,52 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
                                 ),
                               ),
                             )
-                            : (_selectedImagePath != null)
+                            : (_selectedImageFile != null)
                             ? Image.file(
-                              File(_selectedImagePath!),
+                              _selectedImageFile!,
                               fit: BoxFit.cover,
                               width: (innerRadius - borderWidth) * 2,
                               height: (innerRadius - borderWidth) * 2,
                             )
-                            : (_avatarUrl != null)
+                            : (_avatarUrl != null && _avatarUrl!.isNotEmpty)
                             ? Image.network(
                               _avatarUrl!,
                               fit: BoxFit.cover,
                               width: (innerRadius - borderWidth) * 2,
                               height: (innerRadius - borderWidth) * 2,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Center(
+                                  child: Icon(
+                                    Icons.groups,
+                                    size: widget.radius * 0.8,
+                                    color: Colors.white,
+                                  ),
+                                );
+                              },
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                loadingProgress
+                                                    .expectedTotalBytes!
+                                            : null,
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          Colors.white,
+                                        ),
+                                  ),
+                                );
+                              },
                             )
                             : Center(
                               child: Icon(
@@ -248,6 +341,7 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
             ),
           ),
         ),
+        // Edit button
         if (widget.allowEdit && !_isLoading)
           Positioned(
             bottom: 0,
@@ -259,6 +353,13 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
                   color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 padding: EdgeInsets.all(widget.radius * 0.15),
                 child: Icon(
@@ -329,12 +430,36 @@ class GroupAvatarDisplay extends StatelessWidget {
                 ),
                 child: ClipOval(
                   child:
-                      avatarUrl != null
+                      (avatarUrl != null && avatarUrl!.isNotEmpty)
                           ? Image.network(
                             avatarUrl!,
                             fit: BoxFit.cover,
                             width: (innerRadius - borderWidth) * 2,
                             height: (innerRadius - borderWidth) * 2,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Center(
+                                child: Icon(
+                                  Icons.groups,
+                                  size: radius,
+                                  color: Colors.white,
+                                ),
+                              );
+                            },
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Center(
+                                child: SizedBox(
+                                  width: radius * 0.6,
+                                  height: radius * 0.6,
+                                  child: const CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
                           )
                           : Center(
                             child: Icon(

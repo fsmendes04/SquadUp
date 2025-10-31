@@ -6,9 +6,7 @@ import '../widgets/create_group_dialog.dart';
 import '../widgets/group_card.dart';
 import '../services/user_service.dart';
 import '../services/groups_service.dart';
-import '../models/group_with_members.dart';
-import '../models/create_group_request.dart';
-import '../models/add_member_request.dart';
+import '../models/groups.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,9 +16,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _authService = AuthService();
+  final _userService = UserService();
   final _groupsService = GroupsService();
-  Map<String, String?>? userData;
+
+  Map<String, dynamic>? _userData;
   List<GroupWithMembers> _userGroups = [];
   bool _isLoadingGroups = true;
   String? _groupsError;
@@ -33,23 +32,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      final user = await _authService.getStoredUser();
+      final response = await _userService.getProfile();
 
-      if (user != null && (user['name'] == null || user['name']!.isEmpty)) {
-        if (mounted) {
-          Navigator.pushReplacementNamed(context, '/add-name');
-          return;
+      if (response['success'] == true && response['data'] != null) {
+        final userData = response['data'];
+
+        if (userData['name'] == null || userData['name'].toString().isEmpty) {
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/add-name');
+            return;
+          }
         }
-      }
 
-      if (mounted) {
-        setState(() {
-          userData = user;
-        });
+        if (mounted) {
+          setState(() {
+            _userData = userData;
+          });
 
-        // Carregar grupos do usuário após carregar os dados do usuário
-        if (user != null && user['id'] != null) {
-          await _loadUserGroups(user['id']!);
+          await _loadUserGroups();
         }
       }
     } catch (e) {
@@ -62,63 +62,45 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadUserGroups(String userId) async {
+  Future<void> _loadUserGroups() async {
     try {
       setState(() {
         _isLoadingGroups = true;
         _groupsError = null;
       });
 
-      final groups = await _groupsService.getUserGroups(userId);
+      final response = await _groupsService.getUserGroups();
 
       if (mounted) {
-        setState(() {
-          _userGroups = groups;
-          _isLoadingGroups = false;
-        });
+        if (response['success'] == true && response['data'] != null) {
+          final groupsList =
+              (response['data'] as List)
+                  .map((json) => GroupWithMembers.fromJson(json))
+                  .toList();
+
+          setState(() {
+            _userGroups = groupsList;
+            _isLoadingGroups = false;
+          });
+        } else {
+          setState(() {
+            _isLoadingGroups = false;
+            _groupsError = response['message'] ?? 'Erro ao carregar grupos';
+          });
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _isLoadingGroups = false;
-          _groupsError = 'Erro ao carregar seus grupos';
+          _groupsError = e.toString().replaceFirst('Exception: ', '');
         });
       }
     }
   }
 
   Future<void> _refreshGroups() async {
-    if (userData != null && userData!['id'] != null) {
-      await _loadUserGroups(userData!['id']!);
-    }
-  }
-
-  Map<String, dynamic> _groupToCardFormat(GroupWithMembers group, int index) {
-    // Todos os grupos terão a mesma cor
-    final colorGroup = const Color(0xFF51A3E6);
-
-    // Calcular última atividade (simulado - você pode implementar com dados reais)
-    final now = DateTime.now();
-    final difference = now.difference(group.updatedAt);
-    String lastActivity;
-
-    if (difference.inMinutes < 60) {
-      lastActivity = '${difference.inMinutes} min atrás';
-    } else if (difference.inHours < 24) {
-      lastActivity = '${difference.inHours}h atrás';
-    } else {
-      lastActivity = '${difference.inDays} dias atrás';
-    }
-
-    return {
-      'id': group.id,
-      'name': group.name,
-      'memberCount': group.memberCount,
-      'lastActivity': lastActivity,
-      'color': colorGroup,
-      'avatar_url': group.avatarUrl,
-      'isActive': true,
-    };
+    await _loadUserGroups();
   }
 
   Widget _buildGroupsList(Color primaryBlue) {
@@ -134,6 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_groupsError != null) {
       return Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
@@ -249,20 +232,17 @@ class _HomeScreenState extends State<HomeScreen> {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: _userGroups.length,
       itemBuilder: (context, index) {
-        final groupData = _groupToCardFormat(_userGroups[index], index);
+        final group = _userGroups[index];
         return Padding(
           padding: const EdgeInsets.only(bottom: 20),
           child: GroupCard(
-            group: groupData,
+            group: group,
             onTap: () {
               // Navegar para a tela específica do grupo
               Navigator.pushNamed(
                 context,
                 '/group',
-                arguments: {
-                  'groupId': groupData['id'],
-                  'groupName': groupData['name'],
-                },
+                arguments: {'groupId': group.id, 'groupName': group.name},
               );
             },
           ),
@@ -272,16 +252,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout() async {
-    await _authService.logout();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+    try {
+      await _userService.logout();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorSnackBar('Erro ao fazer logout');
+      }
     }
   }
 
   String _getDisplayName() {
-    if (userData != null) {
-      if (userData!['name'] != null && userData!['name']!.isNotEmpty) {
-        return userData!['name']!;
+    if (_userData != null) {
+      final metadata = _userData!['user_metadata'];
+      if (metadata != null && metadata['name'] != null) {
+        return metadata['name'].toString();
       }
     }
     return 'User';
@@ -312,8 +299,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.transparent,
             child: CustomDrawerBar(
               onItemTap: (index) {
-                Navigator.of(context).pop(); // Fecha o drawer
-                // Navegação baseada no index (sem redirecionamentos ainda)
+                Navigator.of(context).pop();
                 switch (index) {
                   case 0: // Definições
                     // TODO: Implementar navegação para definições
@@ -336,85 +322,53 @@ class _HomeScreenState extends State<HomeScreen> {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return CreateGroupDialog(
-          onCreateGroup: (String name, List<String> members) async {
-            Navigator.of(dialogContext).pop(); // Fecha o dialog primeiro
-            await _createGroup(name, members);
+          onCreateGroup: (String name, List<String> memberIds) async {
+            Navigator.of(dialogContext).pop();
+            await _createGroup(name, memberIds);
           },
         );
       },
     );
   }
 
-  Future<void> _createGroup(String name, List<String> members) async {
+  Future<void> _createGroup(String name, List<String> memberIds) async {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     try {
-      if (userData == null || userData!['id'] == null) {
-        _showErrorSnackBar('Erro: usuário não encontrado');
-        return;
-      }
-
-      // Criar o grupo usando o service
-      final createdGroup = await _groupsService.createGroup(
-        CreateGroupRequest(name: name),
-        userData!['id']!,
+      // Criar o grupo
+      final response = await _groupsService.createGroup(
+        name: name,
+        memberIds: memberIds.isNotEmpty ? memberIds : null,
       );
 
-      // Variáveis para rastrear membros adicionados
-      List<String> failedToAdd = [];
+      if (response['success'] == true) {
+        // Recarregar lista de grupos
+        await _refreshGroups();
 
-      // Adicionar membros ao grupo se foram especificados
-      if (members.isNotEmpty) {
-        List<String> successfullyAdded = [];
-
-        for (String memberId in members) {
-          try {
-            await _groupsService.addMember(
-              createdGroup.id,
-              AddMemberRequest(userId: memberId),
-              userData!['id']!,
-            );
-            successfullyAdded.add(memberId);
-          } catch (e) {
-            failedToAdd.add(memberId);
+        // Mostrar mensagem de sucesso
+        if (mounted) {
+          String successMessage = 'Grupo "$name" criado com sucesso!';
+          if (memberIds.isNotEmpty) {
+            successMessage += ' ${memberIds.length} membro(s) adicionado(s).';
           }
-        }
 
-        // Mostrar feedback sobre membros que falharam
-        if (failedToAdd.isNotEmpty && mounted) {
-          _showErrorSnackBar(
-            'Alguns membros não puderam ser adicionados: ${failedToAdd.join(', ')}',
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(successMessage),
+              backgroundColor: primaryBlue,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
           );
         }
-      }
-
-      // Recarregar a lista de grupos
-      await _refreshGroups();
-
-      // Mostrar mensagem de sucesso
-      if (mounted) {
-        String successMessage = 'Grupo "$name" criado com sucesso!';
-        if (members.isNotEmpty) {
-          final addedCount = members.length - failedToAdd.length;
-          if (addedCount > 0) {
-            successMessage += ' $addedCount membro(s) adicionado(s).';
-          }
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage),
-            backgroundColor: primaryBlue,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
+      } else {
+        _showErrorSnackBar(response['message'] ?? 'Erro ao criar grupo');
       }
     } catch (e) {
-      _showErrorSnackBar('Erro ao criar grupo: ${e.toString()}');
+      _showErrorSnackBar(e.toString().replaceFirst('Exception: ', ''));
     }
   }
 
@@ -435,14 +389,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Usando as mesmas cores da login page
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230); // #51A3E6
-    final darkBlue = const Color.fromARGB(
-      255,
-      29,
-      56,
-      95,
-    ); // Mesma cor do texto principal da login/ Mesma cor do texto secundário
+    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
     return Scaffold(
       extendBody: true,
@@ -574,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   MediaQuery.of(context).size.height -
                                   kToolbarHeight -
                                   kBottomNavigationBarHeight -
-                                  200, // Espaço para header e padding
+                                  200,
                               child: _buildGroupsList(primaryBlue),
                             )
                             : Column(
@@ -655,15 +603,13 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
       bottomNavigationBar: CustomCircularNavBar(
-        currentIndex: 0, // Home está selecionado por padrão
+        currentIndex: 0,
         onTap: (index) async {
           if (index == 0) {
-            // Home - já estamos na home, não faz nada
+            // Home - já estamos na home
           } else if (index == 1) {
-            // Profile - navegar para página de perfil
+            // Profile
             final result = await Navigator.pushNamed(context, '/profile');
-
-            // If profile was updated, reload user data
             if (result == true) {
               _loadUserData();
             }

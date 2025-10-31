@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/login_request.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
 
@@ -15,17 +14,15 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
+  final _userService = UserService();
 
   bool _isLoading = false;
   bool _obscurePassword = true;
   String _message = '';
-  bool get _isInvalidLogin => _message == 'Invalid email or password.';
 
   @override
   void initState() {
     super.initState();
-    // Limpa a mensagem de erro quando o usuário digita
     _emailController.addListener(_clearErrorMessage);
     _passwordController.addListener(_clearErrorMessage);
   }
@@ -54,26 +51,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() {
       _isLoading = true;
-      _message = ''; // Limpa mensagem anterior
+      _message = '';
     });
 
     try {
-      final loginRequest = LoginRequest(
+      final response = await _userService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      final response = await _authService.login(loginRequest);
-
-      if (response.success) {
+      if (response['success'] == true) {
         if (mounted) {
-          // Navigate to home screen or dashboard
-          Navigator.pushReplacementNamed(context, '/home');
+          setState(() {
+            _message = '';
+          });
+        }
+        final userData = response['data']?['user'];
+        final userName = userData?['user_metadata']?['name'];
+
+        if (mounted) {
+          Future.microtask(() {
+            if (userName == null || userName.toString().trim().isEmpty) {
+              Navigator.pushReplacementNamed(context, '/add-name');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          });
         }
       } else {
         if (mounted) {
           setState(() {
-            _message = 'Invalid email or password.';
+            _message = response['message'] ?? 'Invalid email or password.';
           });
         }
       }
@@ -198,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      if (_isInvalidLogin) ...[
+                      if (_message.isNotEmpty) ...[
                         const SizedBox(height: 4),
                         Center(
                           child: Container(
@@ -209,12 +217,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  _message,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.red.shade600,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
+                                Flexible(
+                                  child: Text(
+                                    _message,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.red.shade600,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],
@@ -301,7 +312,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.pushNamed(context, '/register');
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/register',
+                              );
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,

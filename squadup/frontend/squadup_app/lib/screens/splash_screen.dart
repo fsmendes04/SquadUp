@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Wait for animations to complete then navigate
     await Future.delayed(const Duration(milliseconds: 3500));
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed('/auth');
+      Navigator.of(context).pushReplacementNamed('/register');
     }
   }
 

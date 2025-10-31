@@ -23,6 +23,51 @@ export class UserService {
     private readonly sessionService: SessionService
   ) { }
 
+  async getProfile(accessToken: string) {
+    try {
+      if (!accessToken) {
+        throw new UnauthorizedException('Access token is required');
+      }
+
+      const userClient = this.supabase.getClientWithToken(accessToken);
+
+      // 1. Obter os dados do usuário do token (Auth: inclui email)
+      const user = await this.getUserFromToken(accessToken);
+
+      // 2. Obter os dados do perfil (Tabela 'profiles': inclui name e avatar_url)
+      // Usamos .maybeSingle() para evitar erro se o perfil ainda não existir.
+      const { data: profileData, error: profileError } = await userClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        this.logger.warn(`Failed to fetch profile for user ${user.id}`, profileError.message);
+      }
+
+      const combinedData = {
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        ...profileData,
+      };
+
+      this.logger.log(`Profile retrieved for user: ${user.id}`);
+      return this.sanitizeUserData(combinedData);
+
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error('Error fetching user profile', error);
+      throw new BadRequestException('Unable to fetch user profile');
+    }
+  }
+
+
   async register(email: string, password: string) {
     try {
       if (!this.isValidEmail(email)) {
@@ -65,12 +110,14 @@ export class UserService {
   async updateProfile(
     updateData: UpdateProfileDto,
     userId: string,
-    avatarFile?: Express.Multer.File
+    avatarFile?: Express.Multer.File,
+    accessToken?: string
   ) {
-
     try {
-      const updatePayload: any = {};
+      this.logger.log(`Token recebido para updateProfile: ${accessToken}`);
+      const updatePayload: Record<string, any> = {};
 
+      // --- Validação e sanitização do nome ---
       if (updateData.name !== undefined) {
         const sanitizedName = this.sanitizeString(updateData.name);
 
@@ -81,6 +128,7 @@ export class UserService {
         updatePayload.name = sanitizedName || null;
       }
 
+      // --- Validação do avatar URL ---
       if (updateData.avatar_url !== undefined && !avatarFile) {
         if (!this.isValidAvatarUrl(updateData.avatar_url, userId)) {
           throw new BadRequestException('Invalid avatar URL');
@@ -88,27 +136,105 @@ export class UserService {
         updatePayload.avatar_url = updateData.avatar_url;
       }
 
+      // --- Upload de ficheiro de avatar ---
       if (avatarFile) {
         this.validateAvatarFile(avatarFile);
         await this.handleAvatarUpdate(userId, avatarFile, updatePayload);
       }
 
+      // --- Nenhum campo válido para atualizar ---
       if (Object.keys(updatePayload).length === 0) {
         throw new BadRequestException('No valid fields to update');
       }
 
-      const adminClient = this.supabase.getAdminClient();
-      const { data, error } = await adminClient.auth.admin.updateUserById(userId, {
-        user_metadata: updatePayload,
-      });
+      // --- Atualização através do Supabase (RLS) ---
+      let userClient;
+      if (accessToken) {
+        try {
+          try {
+            const tokenUser = await this.supabase.verifyToken(accessToken);
+            if (tokenUser.id !== userId) {
+              this.logger.warn(`Token user (${tokenUser.id}) does not match target user (${userId})`);
+            }
+          } catch (verifyErr) {
+            this.logger.warn('Could not verify access token for RLS update', verifyErr as Error);
+          }
 
-      if (error) {
-        this.logger.error(`Profile update failed for user: ${userId}`, error.message);
-        throw new BadRequestException('Unable to update profile');
+          userClient = this.supabase.getClientWithToken(accessToken);
+          const profileUpdate: Record<string, any> = {};
+
+          if ('name' in updatePayload) {
+            profileUpdate.name = updatePayload.name ?? null;
+          }
+          if ('avatar_url' in updatePayload) {
+            profileUpdate.avatar_url = updatePayload.avatar_url ?? null;
+          }
+
+          if (Object.keys(profileUpdate).length > 0) {
+            profileUpdate.updated_at = new Date().toISOString();
+
+            // Verifica se o perfil já existe
+            const { data: existingRow, error: selectErr } = await userClient
+              .from('profiles')
+              .select('id')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (selectErr) {
+              this.logger.warn('profiles existence check failed', selectErr.message);
+            }
+
+            // Se não existir, cria o perfil
+            if (!existingRow) {
+              const { error: insertErr } = await userClient
+                .from('profiles')
+                .insert({ id: userId })
+                .single();
+              if (insertErr) {
+                this.logger.warn('profiles insert via RLS failed', insertErr.message);
+              }
+            }
+
+            // Atualiza o perfil
+            const { error: profileError } = await userClient
+              .from('profiles')
+              .update(profileUpdate)
+              .eq('id', userId);
+
+            if (profileError) {
+              this.logger.warn('Profiles table update via RLS failed', {
+                code: (profileError as any).code,
+                message: profileError.message,
+                details: (profileError as any).details,
+                hint: (profileError as any).hint,
+              });
+            }
+          }
+        } catch (profilesErr) {
+          this.logger.warn('Unexpected error updating profiles table via RLS', profilesErr as Error);
+        }
       }
 
-      this.logger.log(`Profile updated successfully for user: ${userId}`);
-      return this.sanitizeUserData(data.user);
+      // --- Busca e retorna o perfil atualizado ---
+      if (!userClient && accessToken) {
+        userClient = this.supabase.getClientWithToken(accessToken);
+      }
+      if (userClient) {
+        const { data: updatedUser, error: fetchErr } = await userClient
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (fetchErr) {
+          this.logger.warn('Failed to fetch updated user profile', fetchErr.message);
+          throw new BadRequestException('Could not retrieve updated profile');
+        }
+
+        this.logger.log(`Profiles updated successfully for user: ${userId}`);
+        // Este retorno devolve o objeto da tabela 'profiles' (com o nome)
+        return this.sanitizeUserData(updatedUser);
+      }
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
@@ -117,6 +243,7 @@ export class UserService {
       throw new BadRequestException('Profile update failed');
     }
   }
+
 
   async login(email: string, password: string) {
     try {

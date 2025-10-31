@@ -70,7 +70,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (response['success'] == true) {
-        // Backend retorna sucesso mas sem sessão (precisa confirmar email)
         setState(() {
           _message =
               response['message'] ??
@@ -135,25 +134,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return 'Por favor, digite sua senha';
     }
 
-    if (value.length < 8) {
-      return 'A senha deve ter pelo menos 8 caracteres';
-    }
-
-    // Validação de senha forte (deve corresponder ao backend)
     final hasUppercase = RegExp(r'[A-Z]').hasMatch(value);
     final hasLowercase = RegExp(r'[a-z]').hasMatch(value);
     final hasDigit = RegExp(r'\d').hasMatch(value);
 
-    if (!hasUppercase) {
-      return 'Senha deve conter letra maiúscula';
-    }
-
-    if (!hasLowercase) {
-      return 'Senha deve conter letra minúscula';
-    }
-
-    if (!hasDigit) {
-      return 'Senha deve conter número';
+    if (!hasUppercase || !hasLowercase || !hasDigit || value.length < 8) {
+      return 'Senha deve conter letras maiúsculas, minúsculas, números e ter ao menos 8 caracteres';
     }
 
     return null;
@@ -376,7 +362,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.pop(context);
+                              Navigator.pushReplacementNamed(context, '/login');
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,

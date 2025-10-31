@@ -36,8 +36,9 @@ export class UserController {
     private readonly sessionService: SessionService,
   ) { }
 
+
   @Post('register')
-  @Throttle({ default: { limit: 6, ttl: 60000 } })
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   async register(@Body() registerDto: RegisterDto) {
     try {
       // Additional input validation
@@ -126,6 +127,7 @@ export class UserController {
   async updateProfile(
     @Body() updateData: UpdateProfileDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -146,7 +148,8 @@ export class UserController {
       const result = await this.userService.updateProfile(
         updateData,
         user.id,
-        file
+        file,
+        token
       );
 
       return {
@@ -172,22 +175,23 @@ export class UserController {
     }
   }
 
+  // UserController.ts
+
   @Get('profile')
   @UseGuards(AuthGuard)
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute
-  async getCurrentUserProfile(@CurrentUser() user: any) {
+  async getCurrentUserProfile(
+    @CurrentUser() user: any,
+    @GetToken() token: string, // <-- ADICIONAR DECORATOR PARA OBTER O TOKEN
+  ) {
     try {
-      const userData = await this.userService.getUserById(user.id);
+      const userData = await this.userService.getProfile(token);
 
       return {
         success: true,
         message: 'User retrieved successfully',
         data: {
-          id: userData.id,
-          email: userData.email,
-          user_metadata: userData.user_metadata,
-          created_at: userData.created_at,
-          updated_at: userData.updated_at
+          ...userData,
         },
       };
     } catch (error) {
@@ -200,29 +204,6 @@ export class UserController {
           message: error.message || 'Failed to retrieve profile',
         },
         statusCode,
-      );
-    }
-  }
-
-  @Post('logout')
-  @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async logout(@GetToken() token: string) {
-    try {
-      await this.userService.logout(token);
-      this.logger.log('User logged out successfully');
-      return {
-        success: true,
-        message: 'Logged out successfully',
-      };
-    } catch (error) {
-      this.logger.error('Logout error', error.message);
-      throw new HttpException(
-        {
-          success: false,
-          message: error.message || 'Logout failed',
-        },
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

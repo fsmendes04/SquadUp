@@ -13,7 +13,7 @@ class UserService {
   }) async {
     try {
       final response = await _apiService.post(
-        ApiService.registerEndpoint,
+        ApiService.userRegister,
         data: {'email': email, 'password': password},
       );
       return _handleResponse(response);
@@ -28,7 +28,7 @@ class UserService {
   }) async {
     try {
       final response = await _apiService.post(
-        ApiService.loginEndpoint,
+        ApiService.userLogin,
         data: {'email': email, 'password': password},
       );
 
@@ -47,7 +47,7 @@ class UserService {
 
   Future<Map<String, dynamic>> logout() async {
     try {
-      final response = await _apiService.post(ApiService.logoutEndpoint);
+      final response = await _apiService.post(ApiService.userLogout);
       final result = _handleResponse(response);
 
       _apiService.removeAuthToken();
@@ -63,7 +63,7 @@ class UserService {
   }) async {
     try {
       final response = await _apiService.post(
-        ApiService.refreshTokenEndpoint,
+        ApiService.userRefreshToken,
         data: {'refresh_token': refreshToken},
       );
 
@@ -81,7 +81,7 @@ class UserService {
 
   Future<Map<String, dynamic>> getProfile() async {
     try {
-      final response = await _apiService.get(ApiService.profileEndpoint);
+      final response = await _apiService.get(ApiService.userProfile);
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -92,28 +92,26 @@ class UserService {
     String? name,
     String? avatarUrl,
   }) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('Usuário não autenticado. Faça login novamente.');
+    }
     try {
       final data = <String, dynamic>{};
-
       if (name != null) {
         data['name'] = name;
       }
-
       if (avatarUrl != null) {
         data['avatar_url'] = avatarUrl;
       }
-
       if (data.isEmpty) {
         throw Exception(
           'At least one field (name or avatarUrl) must be provided',
         );
       }
-
       final response = await _apiService.put(
-        ApiService.profileEndpoint,
+        ApiService.userProfile,
         data: data,
       );
-
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -124,13 +122,14 @@ class UserService {
     String? name,
     required String avatarFilePath,
   }) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('Usuário não autenticado. Faça login novamente.');
+    }
     try {
       final formData = FormData();
-
       if (name != null) {
         formData.fields.add(MapEntry('name', name));
       }
-
       formData.files.add(
         MapEntry(
           'avatar',
@@ -140,12 +139,10 @@ class UserService {
           ),
         ),
       );
-
       final response = await _apiService.putMultipart(
-        ApiService.profileEndpoint,
+        ApiService.userProfile,
         data: formData,
       );
-
       return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -165,8 +162,13 @@ class UserService {
       final data = error.response?.data;
 
       if (data is Map<String, dynamic>) {
-        final message = data['message'] ?? 'An error occurred';
-        return Exception(message);
+        final message = data['message'];
+        if (message is List) {
+          return Exception(message.join('\n'));
+        } else if (message is String) {
+          return Exception(message);
+        }
+        return Exception('Error: [${error.response?.statusCode}');
       }
 
       return Exception('Error: ${error.response?.statusCode}');

@@ -134,6 +134,7 @@ class ApiService {
   static const String userProfile = '$userEndpoint/profile';
 
   static const String groupsEndpoint = '/groups';
+  static const String createGroup = '/groups/create';
   static String groupById(String id) => '$groupsEndpoint/$id';
   static String groupAvatar(String id) => '$groupsEndpoint/$id/avatar';
   static String groupMembers(String id) => '$groupsEndpoint/$id/members';

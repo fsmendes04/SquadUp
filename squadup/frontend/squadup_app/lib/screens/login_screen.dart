@@ -61,22 +61,21 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (response['success'] == true) {
-        if (mounted) {
-          setState(() {
-            _message = '';
-          });
+        if (mounted) setState(() => _message = '');
+
+        final profile = await _userService.getProfile();
+        final data = profile['data'] ?? {};
+        String? name = data['name'];
+        if ((name == null || name.toString().trim().isEmpty) && data['user_metadata'] != null) {
+          name = data['user_metadata']['name'];
         }
-        final userData = response['data']?['user'];
-        final userName = userData?['user_metadata']?['name'];
 
         if (mounted) {
-          Future.microtask(() {
-            if (userName == null || userName.toString().trim().isEmpty) {
-              Navigator.pushReplacementNamed(context, '/add-name');
-            } else {
-              Navigator.pushReplacementNamed(context, '/home');
-            }
-          });
+          if (name == null || name.toString().trim().isEmpty) {
+            Navigator.pushReplacementNamed(context, '/add-name');
+          } else {
+            Navigator.pushReplacementNamed(context, '/home');
+          }
         }
       } else {
         if (mounted) {

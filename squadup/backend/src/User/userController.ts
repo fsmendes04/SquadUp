@@ -175,7 +175,6 @@ export class UserController {
     }
   }
 
-  // UserController.ts
 
   @Get('profile')
   @UseGuards(AuthGuard)
@@ -230,5 +229,26 @@ export class UserController {
         error.status || HttpStatus.UNAUTHORIZED,
       );
     }
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  async logout(@GetToken() token: string) {
+    try {
+      await this.userService.logout(token);
+      return {
+        success: true,
+        message: 'Logout successful',
+      };
+    } catch (error) {
+      this.logger.error('Logout error', error.message);
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Logout failed',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    } 
   }
 }

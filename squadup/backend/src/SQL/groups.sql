@@ -20,3 +20,19 @@ create policy "Allow group deletion for group creator" on public.groups for dele
 -- Policy: Allow all authenticated users to select (read) groups
 create policy "Allow read access to all authenticated users" on public.groups for
 select using (auth.role() = 'authenticated');
+
+-- Dar permissões básicas à tabela groups para usuários autenticados
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.groups TO authenticated;
+
+-- Criar nova policy: usuários só podem ver grupos dos quais são membros
+CREATE POLICY "Allow users to view groups they are members of"
+  ON public.groups
+  FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 
+      FROM public.group_members 
+      WHERE group_members.group_id = groups.id 
+        AND group_members.user_id = auth.uid()
+    )
+  );

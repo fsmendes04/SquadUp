@@ -31,11 +31,8 @@ export class UserService {
 
       const userClient = this.supabase.getClientWithToken(accessToken);
 
-      // 1. Obter os dados do usuário do token (Auth: inclui email)
       const user = await this.getUserFromToken(accessToken);
 
-      // 2. Obter os dados do perfil (Tabela 'profiles': inclui name e avatar_url)
-      // Usamos .maybeSingle() para evitar erro se o perfil ainda não existir.
       const { data: profileData, error: profileError } = await userClient
         .from('profiles')
         .select('*')
@@ -139,7 +136,7 @@ export class UserService {
       // --- Upload de ficheiro de avatar ---
       if (avatarFile) {
         this.validateAvatarFile(avatarFile);
-        await this.handleAvatarUpdate(userId, avatarFile, updatePayload);
+        await this.handleAvatarUpdate(userId, avatarFile, updatePayload, accessToken);
       }
 
       // --- Nenhum campo válido para atualizar ---
@@ -317,7 +314,7 @@ export class UserService {
     }
   }
 
-  async uploadAvatar(file: Express.Multer.File, userId: string): Promise<string> {
+  async uploadAvatar(file: Express.Multer.File, userId: string, accessToken?: string): Promise<string> {
     try {
       const fileExtension = file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
 
@@ -331,8 +328,12 @@ export class UserService {
       const fileName = `avatar_${timestamp}_${randomStr}.${fileExtension}`;
       const filePath = `${userId}/${fileName}`;
 
-      const { error } = await this.supabase.getClient().storage
-        .from('user-uploads')
+      const storageClient = accessToken 
+        ? this.supabase.getClientWithToken(accessToken)
+        : this.supabase.getClient();
+
+      const { error } = await storageClient.storage
+        .from('avatars')
         .upload(filePath, file.buffer, {
           contentType: file.mimetype,
           upsert: false,
@@ -344,8 +345,8 @@ export class UserService {
         throw new BadRequestException('Failed to upload avatar');
       }
 
-      const { data: publicUrlData } = this.supabase.getClient().storage
-        .from('user-uploads')
+      const { data: publicUrlData } = storageClient.storage
+        .from('avatars')
         .getPublicUrl(filePath);
 
       return publicUrlData.publicUrl;
@@ -361,14 +362,24 @@ export class UserService {
   private async handleAvatarUpdate(
     userId: string,
     avatarFile: Express.Multer.File,
-    updatePayload: any
+    updatePayload: any,
+    accessToken?: string
   ): Promise<void> {
     try {
-      const adminClient = this.supabase.getAdminClient();
-      const { data: currentUser, error: getUserError } = await adminClient.auth.admin.getUserById(userId);
+      // Buscar o avatar atual da tabela profiles
+      const profileClient = accessToken 
+        ? this.supabase.getClientWithToken(accessToken)
+        : this.supabase.getAdminClient();
+      
+      const { data: profileData, error: profileError } = await profileClient
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
 
-      if (!getUserError && currentUser?.user?.user_metadata?.avatar_url) {
-        const currentAvatarUrl = currentUser.user.user_metadata.avatar_url;
+      // Se existe um avatar antigo, removê-lo do storage
+      if (!profileError && profileData?.avatar_url) {
+        const currentAvatarUrl = profileData.avatar_url;
 
         try {
           const urlObj = new URL(currentAvatarUrl);
@@ -378,16 +389,20 @@ export class UserService {
 
           if (userIdFromPath === userId) {
             const oldFilePath = `${userId}/${fileName}`;
-            await this.supabase.getClient().storage
-              .from('user-uploads')
+            const storageClient = accessToken 
+              ? this.supabase.getClientWithToken(accessToken)
+              : this.supabase.getClient();
+            await storageClient.storage
+              .from('avatars')
               .remove([oldFilePath]);
+            this.logger.log(`Old avatar removed: ${oldFilePath}`);
           }
         } catch (deleteErr) {
           this.logger.warn('Could not delete old avatar', deleteErr);
         }
       }
 
-      const avatarUrl = await this.uploadAvatar(avatarFile, userId);
+      const avatarUrl = await this.uploadAvatar(avatarFile, userId, accessToken);
       updatePayload.avatar_url = avatarUrl;
     } catch (error) {
       this.logger.error('Avatar update handling failed', error);

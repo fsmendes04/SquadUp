@@ -19,7 +19,7 @@ class GroupsService {
       }
 
       final response = await _apiService.post(
-        ApiService.userGroups,
+        ApiService.createGroup,
         data: data,
       );
       return _handleResponse(response);

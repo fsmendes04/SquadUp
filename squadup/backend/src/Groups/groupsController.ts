@@ -21,7 +21,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '../User/userToken';
-import { CurrentUser } from '../common/decorators';
+import { CurrentUser, GetToken } from '../common/decorators';
 import { GroupsService } from './groupsService';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
@@ -35,18 +35,19 @@ export class GroupsController {
 
   constructor(private readonly groupsService: GroupsService) { }
 
-  @Post()
+  @Post('create')
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async create(
     @Body() createGroupDto: CreateGroupDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
       if (!createGroupDto.name) {
         throw new BadRequestException('Group name is required');
       }
 
-      const group = await this.groupsService.createGroup(createGroupDto, user.id);
+      const group = await this.groupsService.createGroup(createGroupDto, user.id, token);
 
       return {
         success: true,
@@ -69,9 +70,9 @@ export class GroupsController {
 
   @Get()
   @Throttle({ default: { limit: 30, ttl: 60000 } })
-  async findAll() {
+  async findAll(@GetToken() token: string) {
     try {
-      const groups = await this.groupsService.findAllGroups();
+      const groups = await this.groupsService.findAllGroups(token);
 
       return {
         success: true,
@@ -93,9 +94,9 @@ export class GroupsController {
 
   @Get('user')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
-  async findUserGroups(@CurrentUser() user: any) {
+  async findUserGroups(@CurrentUser() user: any, @GetToken() token: string) {
     try {
-      const groups = await this.groupsService.findUserGroups(user.id);
+      const groups = await this.groupsService.findUserGroups(user.id, token);
 
       return {
         success: true,
@@ -120,9 +121,10 @@ export class GroupsController {
   async findOne(
     @Param('id') id: string,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
-      const group = await this.groupsService.findOne(id, user.id);
+      const group = await this.groupsService.findOne(id, user.id, token);
 
       return {
         success: true,
@@ -149,13 +151,14 @@ export class GroupsController {
     @Param('id') id: string,
     @Body() updateGroupDto: UpdateGroupDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
       if (!updateGroupDto.name) {
         throw new BadRequestException('At least one field must be provided for update');
       }
 
-      const group = await this.groupsService.updateGroup(id, updateGroupDto, user.id);
+      const group = await this.groupsService.updateGroup(id, updateGroupDto, user.id, token);
 
       return {
         success: true,
@@ -182,9 +185,10 @@ export class GroupsController {
   async remove(
     @Param('id') id: string,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
-      await this.groupsService.deleteGroup(id, user.id);
+      await this.groupsService.deleteGroup(id, user.id, token);
 
       return {
         success: true,
@@ -210,6 +214,7 @@ export class GroupsController {
     @Param('id') groupId: string,
     @Body() addMemberDto: AddMemberDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
       if (!addMemberDto.userId) {
@@ -220,6 +225,7 @@ export class GroupsController {
         groupId,
         addMemberDto.userId,
         user.id,
+        token,
       );
 
       return {
@@ -248,6 +254,7 @@ export class GroupsController {
     @Param('id') groupId: string,
     @Body() removeMemberDto: RemoveMemberDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
       if (!removeMemberDto.userId) {
@@ -258,6 +265,7 @@ export class GroupsController {
         groupId,
         removeMemberDto.userId,
         user.id,
+        token,
       );
 
       return {
@@ -293,9 +301,10 @@ export class GroupsController {
     )
     file: Express.Multer.File,
     @CurrentUser() user: any,
+    @GetToken() token: string,
   ) {
     try {
-      const result = await this.groupsService.updateGroupAvatar(file, groupId, user.id);
+      const result = await this.groupsService.updateGroupAvatar(file, groupId, user.id, token);
 
       return {
         success: true,

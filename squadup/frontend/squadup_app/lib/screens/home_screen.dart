@@ -7,6 +7,7 @@ import '../widgets/group_card.dart';
 import '../services/user_service.dart';
 import '../services/groups_service.dart';
 import '../models/groups.dart';
+import '../screens/group_home_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -238,11 +239,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: GroupCard(
             group: group,
             onTap: () {
-              // Navegar para a tela específica do grupo
-              Navigator.pushNamed(
+              Navigator.push(
                 context,
-                '/group',
-                arguments: {'groupId': group.id, 'groupName': group.name},
+                MaterialPageRoute(
+                  builder: (context) => GroupHomeScreen(
+                    groupId: group.id,
+                    groupName: group.name,
+                  ),
+                ),
               );
             },
           ),
@@ -266,9 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _getDisplayName() {
     if (_userData != null) {
-      final metadata = _userData!['user_metadata'];
-      if (metadata != null && metadata['name'] != null) {
-        return metadata['name'].toString();
+      // O nome agora vem diretamente do perfil (campo 'name')
+      final name = _userData!['name'];
+      if (name != null && name.toString().trim().isNotEmpty) {
+        return name.toString();
       }
     }
     return 'User';

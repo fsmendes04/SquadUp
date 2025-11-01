@@ -78,7 +78,6 @@ class _AddNameScreenState extends State<AddNameScreen> {
       }
     } finally {
       if (mounted && !mounted) {
-        // A navegação bem-sucedida já saiu da tela.
         setState(() {
           _isLoading = false;
         });

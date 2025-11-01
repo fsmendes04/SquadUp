@@ -279,46 +279,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'User';
   }
 
-  void _showTopDrawer(BuildContext context) {
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (context, animation, secondaryAnimation, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0, -1),
-            end: Offset.zero,
-          ).animate(
-            CurvedAnimation(parent: animation, curve: Curves.easeInOut),
-          ),
-          child: child,
-        );
-      },
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return Align(
-          alignment: Alignment.topCenter,
-          child: Material(
-            color: Colors.transparent,
-            child: CustomDrawerBar(
-              onItemTap: (index) {
-                Navigator.of(context).pop();
-                switch (index) {
-                  case 0: // Definições
-                    // TODO: Implementar navegação para definições
-                    break;
-                  case 1: // Logout
-                    _logout();
-                    break;
-                }
-              },
-            ),
-          ),
-        );
-      },
-    );
+  // Nova abordagem: controlar a drawer bar animada
+  final GlobalKey<CustomDrawerBarState> _drawerKey = GlobalKey<CustomDrawerBarState>();
+
+  void _openDrawer() {
+  _drawerKey.currentState?.toggleMenu();
   }
 
   void _showCreateGroupDialog() {
@@ -397,229 +362,239 @@ class _HomeScreenState extends State<HomeScreen> {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return Scaffold(
-      extendBody: true,
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14.0),
-          child: Column(
-            children: [
-              // Top bar with avatar and notification
-              SizedBox(
-                height: kToolbarHeight,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          'lib/images/logo_v3.png',
-                          height: 40,
-                          width: 40,
-                          fit: BoxFit.contain,
-                        ),
-                        const SizedBox(width: 10),
-                        Text(
-                          'SquadUp',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                            color: darkBlue,
+      return CustomDrawerBar(
+        key: _drawerKey,
+        userName: _getDisplayName(),
+        onItemTap: (index) {
+        switch (index) {
+          case 0:
+            break;
+          case 1:
+            _logout();
+            break;
+        }
+      },
+      child: Scaffold(
+        extendBody: true,
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14.0),
+            child: Column(
+              children: [
+                // Top bar with avatar and notification
+                SizedBox(
+                  height: kToolbarHeight,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Image.asset(
+                            'lib/images/logo_v3.png',
+                            height: 40,
+                            width: 40,
+                            fit: BoxFit.contain,
                           ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        // Notification with badge
-                        Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.notifications_none_outlined,
-                                size: 34,
-                              ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'SquadUp',
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w500,
                               color: darkBlue,
-                              onPressed: () {
-                                // TODO: Implementar navegação para notificações
-                              },
-                              tooltip: 'Notificações',
                             ),
-                            Positioned(
-                              right: 6,
-                              top: 6,
-                              child: Container(
-                                padding: const EdgeInsets.all(4.5),
-                                decoration: BoxDecoration(
-                                  color: primaryBlue,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: theme.scaffoldBackgroundColor,
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: const Text(
-                                  '1',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Builder(
-                          builder:
-                              (context) => IconButton(
-                                icon: const Icon(Icons.menu_rounded, size: 34),
-                                color: darkBlue,
-                                onPressed: () => _showTopDrawer(context),
-                                tooltip: 'Menu',
-                              ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 25),
-              // Greeting
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hi, ${_getDisplayName()}!',
-                      style: GoogleFonts.poppins(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w600,
-                        color: darkBlue,
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 25),
-
-              // Scrollable main content
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _refreshGroups,
-                  color: primaryBlue,
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.only(
-                      bottom: kBottomNavigationBarHeight + 12,
-                    ),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child:
-                        _userGroups.isEmpty &&
-                                !_isLoadingGroups &&
-                                _groupsError == null
-                            ? SizedBox(
-                              height:
-                                  MediaQuery.of(context).size.height -
-                                  kToolbarHeight -
-                                  kBottomNavigationBarHeight -
-                                  200,
-                              child: _buildGroupsList(primaryBlue),
-                            )
-                            : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Section title and add button
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'My Groups',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: darkBlue,
-                                      ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => _showCreateGroupDialog(),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 16,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue,
-                                          borderRadius: BorderRadius.circular(
-                                            15,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: darkBlue.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(
-                                              Icons.add,
-                                              color: Colors.white,
-                                              size: 18,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              'New',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                      Row(
+                        children: [
+                          // Notification with badge
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.notifications_none_outlined,
+                                  size: 34,
                                 ),
-
-                                const SizedBox(height: 20),
-
-                                // Groups list
-                                _buildGroupsList(primaryBlue),
-
-                                const SizedBox(height: 20),
-                              ],
-                            ),
+                                color: darkBlue,
+                                onPressed: () {
+                                  // TODO: Implementar navegação para notificações
+                                },
+                                tooltip: 'Notificações',
+                              ),
+                              Positioned(
+                                right: 6,
+                                top: 6,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4.5),
+                                  decoration: BoxDecoration(
+                                    color: primaryBlue,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: theme.scaffoldBackgroundColor,
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    '1',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.menu_rounded, size: 34),
+                            color: darkBlue,
+                            onPressed: _openDrawer,
+                            tooltip: 'Menu',
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 25),
+                // Greeting
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hi, ${_getDisplayName()}!',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w600,
+                          color: darkBlue,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                // Scrollable main content
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _refreshGroups,
+                    color: primaryBlue,
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.only(
+                        bottom: kBottomNavigationBarHeight + 12,
+                      ),
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child:
+                          _userGroups.isEmpty &&
+                                  !_isLoadingGroups &&
+                                  _groupsError == null
+                              ? SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height -
+                                    kToolbarHeight -
+                                    kBottomNavigationBarHeight -
+                                    200,
+                                child: _buildGroupsList(primaryBlue),
+                              )
+                              : Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Section title and add button
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'My Groups',
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                          color: darkBlue,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => _showCreateGroupDialog(),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primaryBlue,
+                                            borderRadius: BorderRadius.circular(
+                                              15,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: darkBlue.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                                blurRadius: 8,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(
+                                                Icons.add,
+                                                color: Colors.white,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'New',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Groups list
+                                  _buildGroupsList(primaryBlue),
+
+                                  const SizedBox(height: 20),
+                                ],
+                              ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-      bottomNavigationBar: CustomCircularNavBar(
-        currentIndex: 0,
-        onTap: (index) async {
-          if (index == 0) {
-            // Home - já estamos na home
-          } else if (index == 1) {
-            // Profile
-            final result = await Navigator.pushNamed(context, '/profile');
-            if (result == true) {
-              _loadUserData();
+        bottomNavigationBar: CustomCircularNavBar(
+          currentIndex: 0,
+          onTap: (index) async {
+            if (index == 0) {
+              // Home - já estamos na home
+            } else if (index == 1) {
+              // Profile
+              final result = await Navigator.pushNamed(context, '/profile');
+              if (result == true) {
+                _loadUserData();
+              }
             }
-          }
-        },
+          },
+        ),
       ),
     );
   }

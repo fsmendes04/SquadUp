@@ -10,11 +10,20 @@ class UserService {
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
+    required String confirmPassword,
   }) async {
+    // Validação local antes de enviar para o backend
+    if (password != confirmPassword) {
+      throw Exception('Passwords do not match');
+    }
     try {
       final response = await _apiService.post(
         ApiService.userRegister,
-        data: {'email': email, 'password': password},
+        data: {
+          'email': email,
+          'password': password,
+          'confirmPassword': confirmPassword,
+        },
       );
       return _handleResponse(response);
     } on DioException catch (e) {
@@ -40,6 +49,32 @@ class UserService {
       }
 
       return result;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+    Future<Map<String, dynamic>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmNewPassword,
+  }) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('Usuário não autenticado. Faça login novamente.');
+    }
+    if (newPassword != confirmNewPassword) {
+      throw Exception('As novas senhas não coincidem.');
+    }
+    try {
+      final response = await _apiService.put(
+        ApiService.userChangePassword,
+        data: {
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+          'confirmNewPassword': confirmNewPassword,
+        },
+      );
+      return _handleResponse(response);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -153,6 +188,15 @@ class UserService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return response.data as Map<String, dynamic>;
     } else {
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['message'] != null) {
+        final message = data['message'];
+        if (message is List && message.isNotEmpty) {
+          throw Exception(message.first.toString().split('\n').first);
+        } else if (message is String && message.isNotEmpty) {
+          throw Exception(message.split('\n').first);
+        }
+      }
       throw Exception('Unexpected status code: ${response.statusCode}');
     }
   }
@@ -163,10 +207,11 @@ class UserService {
 
       if (data is Map<String, dynamic>) {
         final message = data['message'];
-        if (message is List) {
-          return Exception(message.join('\n'));
-        } else if (message is String) {
-          return Exception(message);
+        if (message is List && message.isNotEmpty) {
+          final first = message.first.toString();
+          return Exception(first.split('\n').first);
+        } else if (message is String && message.isNotEmpty) {
+          return Exception(message.split('\n').first);
         }
         return Exception('Error: [${error.response?.statusCode}');
       }

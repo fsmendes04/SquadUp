@@ -11,6 +11,7 @@ import 'screens/add_name_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/edit_group_screen.dart';
 import 'screens/create_group_screen.dart';
+import 'screens/forgot_password_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,6 +64,7 @@ class MyApp extends StatelessWidget {
         '/create-group': (context) => CreateGroupScreen(
           onCreateGroup: (String name, List<String> members, String? avatarPath) async {},
         ),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
       },
     );
   }

@@ -23,6 +23,63 @@ export class UserService {
     private readonly sessionService: SessionService
   ) { }
 
+  async getUserByEmail(email: string) {
+    try {
+      const adminClient = this.supabase.getAdminClient();
+      const { data: profile, error } = await adminClient
+        .from('profiles')
+        .select('*')
+        .ilike('email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (error) {
+        this.logger.error('Erro ao buscar perfil por email', error.message);
+        throw new BadRequestException('Erro ao buscar usuário por email');
+      }
+      if (!profile) {
+        throw new BadRequestException('Usuário não encontrado com este email');
+      }
+      return this.sanitizeUserData(profile);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Erro inesperado ao buscar usuário por email', error);
+      throw new BadRequestException('Erro ao buscar usuário por email');
+    }
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<any> {
+    const user = await this.getUserById(userId);
+
+    const { error: signInError } = await this.supabase.getClient().auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (signInError) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (!this.isStrongPassword(newPassword)) {
+      throw new BadRequestException(
+        'Password must be at least 8 characters and contain uppercase, lowercase, number and special character'
+      );
+    }
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('New password must be different from the current password');
+    }
+
+    const { error } = await this.supabase.getClient().auth.updateUser({
+      password: newPassword,
+    });
+    if (error) {
+      throw new BadRequestException('Failed to update password');
+    }
+
+    this.logger.log(`Password changed for user: ${userId}`);
+    return { success: true, message: 'Password updated successfully' };
+  }
+
   async getProfile(accessToken: string) {
     try {
       if (!accessToken) {
@@ -75,6 +132,15 @@ export class UserService {
         throw new BadRequestException(
           'Password must be at least 8 characters and contain uppercase, lowercase, number and special character'
         );
+      }
+
+      try {
+        await this.getUserByEmail(email);
+        throw new BadRequestException('Account already exists with this email');
+      } catch (err) {
+        if (!(err instanceof BadRequestException && err.message === 'Usuário não encontrado com este email')) {
+          throw err;
+        }
       }
 
       const { data, error } = await this.supabase.getClient().auth.signUp({

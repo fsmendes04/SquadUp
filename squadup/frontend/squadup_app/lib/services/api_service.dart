@@ -132,6 +132,7 @@ class ApiService {
   static const String userLogout = '$userEndpoint/logout';
   static const String userRefreshToken = '$userEndpoint/refresh';
   static const String userProfile = '$userEndpoint/profile';
+  static const String userChangePassword = '$userEndpoint/change-password';
 
   static const String groupsEndpoint = '/groups';
   static const String createGroup = '/groups/create';

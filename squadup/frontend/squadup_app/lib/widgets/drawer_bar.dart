@@ -3,6 +3,35 @@ import 'package:flutter/physics.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
 
+class _RoundedBorderPainter extends CustomPainter {
+  final double borderRadius;
+  final double borderWidth;
+  final Color borderColor;
+
+  _RoundedBorderPainter({
+    required this.borderRadius,
+    required this.borderWidth,
+    required this.borderColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(borderWidth / 2),
+      Radius.circular(borderRadius - borderWidth / 2),
+    );
+    final paint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = borderWidth;
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
 class DrawerMenuItem {
   final IconData icon;
   final String title;
@@ -110,6 +139,8 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             child: AnimatedBuilder(
               animation: _sidebarAnim,
               builder: (context, child) {
+                final borderRadius = _sidebarAnim.value * 30;
+                final showBorder = (_sidebarAnim.value >= 0.8);
                 return Transform.scale(
                   scale: 1 - (_sidebarAnim.value * 0.1),
                   child: Transform.translate(
@@ -120,10 +151,23 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                         ..setEntry(3, 2, 0.001)
                         ..rotateY((-_sidebarAnim.value * 30) * math.pi / 180),
                       child: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          _sidebarAnim.value * 30,
+                        borderRadius: BorderRadius.circular(borderRadius),
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            child!,
+                            if (showBorder)
+                              IgnorePointer(
+                                child: CustomPaint(
+                                  painter: _RoundedBorderPainter(
+                                    borderRadius: borderRadius,
+                                    borderWidth: 4,
+                                    borderColor: Colors.white,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                        child: child,
                       ),
                     ),
                   ),

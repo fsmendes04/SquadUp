@@ -65,6 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final response = await _userService.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
       );
 
       if (!mounted) return;
@@ -107,54 +108,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         });
       }
     }
-  }
-
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Por favor, digite seu email';
-    }
-
-    final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-    );
-
-    if (!emailRegex.hasMatch(value)) {
-      return 'Por favor, digite um email válido';
-    }
-
-    if (value.length > 254) {
-      return 'Email muito longo';
-    }
-
-    return null;
-  }
-
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Por favor, digite sua senha';
-    }
-
-    final hasUppercase = RegExp(r'[A-Z]').hasMatch(value);
-    final hasLowercase = RegExp(r'[a-z]').hasMatch(value);
-    final hasDigit = RegExp(r'\d').hasMatch(value);
-
-    if (!hasUppercase || !hasLowercase || !hasDigit || value.length < 8) {
-      return 'Senha deve conter letras maiúsculas, minúsculas, números e ter ao menos 8 caracteres';
-    }
-
-    return null;
-  }
-
-  String? _validateConfirmPassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Por favor, confirme sua senha';
-    }
-
-    if (value != _passwordController.text) {
-      return 'As senhas não coincidem';
-    }
-
-    return null;
   }
 
   @override
@@ -214,7 +167,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Email',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        validator: _validateEmail,
                       ),
 
                       const SizedBox(height: 4),
@@ -224,7 +176,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Password',
                         icon: Icons.lock_outline,
                         obscureText: _obscurePassword,
-                        validator: _validatePassword,
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: IconButton(
@@ -250,7 +201,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         label: 'Confirm Password',
                         icon: Icons.lock_outline,
                         obscureText: _obscureConfirmPassword,
-                        validator: _validateConfirmPassword,
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: IconButton(
@@ -298,10 +248,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                             ),
                           ),
-                        ),
+                        ), 
                       ],
 
-                      const SizedBox(height: 40),
+                      if (!_message.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                      ],
+
+                      const SizedBox(height: 20),
 
                       SizedBox(
                         width: 175,

@@ -1,3 +1,4 @@
+import { ChangePasswordDto } from './dto/change-password.dto';
 import {
   Controller,
   Post,
@@ -29,6 +30,37 @@ import { GetToken } from '../common/decorators';
 
 @Controller('user')
 export class UserController {
+
+  @Put('change-password')
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @CurrentUser() user: any
+  ) {
+    try {
+      if (changePasswordDto.newPassword !== changePasswordDto.confirmNewPassword) {
+        throw new BadRequestException('New password and confirmation do not match');
+      }
+      const result = await this.userService.changePassword(
+        user.id,
+        changePasswordDto.currentPassword,
+        changePasswordDto.newPassword
+      );
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      this.logger.error('Change password error', error.message);
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to change password',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
   private readonly logger = new Logger(UserController.name);
 
   constructor(
@@ -46,12 +78,16 @@ export class UserController {
         throw new BadRequestException('Email and password are required');
       }
 
+      // Validate password confirmation
+      if (registerDto.password !== registerDto.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+
       const result = await this.userService.register(
         registerDto.email,
         registerDto.password,
       );
 
-      // Don't return session data with sensitive info
       return {
         success: true,
         message: 'User registered successfully. Please check your email to confirm your account.',

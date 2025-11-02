@@ -4,12 +4,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/group_home_screen.dart';
-import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/add_name_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/edit_group_screen.dart';
+import 'screens/create_group_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,9 +50,8 @@ class MyApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [Locale('en', ''), Locale('pt', '')],
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
-        '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
@@ -59,6 +59,10 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfileScreen(),
         '/edit-profile': (context) => const EditProfileScreen(),
         '/group-home': (context) => const GroupHomeScreen(groupId: '', groupName: ''),
+        '/edit-group': (context) => const EditGroupScreen(groupId: ''),
+        '/create-group': (context) => CreateGroupScreen(
+          onCreateGroup: (String name, List<String> members, String? avatarPath) async {},
+        ),
       },
     );
   }

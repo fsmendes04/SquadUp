@@ -38,7 +38,9 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
 
   bool _isMenuOpen = false;
 
-  static const Color darkBlue = Color.fromARGB(255, 5, 33, 61);
+  //static const Color darkBlue = Color.fromARGB(255, 5, 33, 61);
+  static const Color darkBlue = Color.fromARGB(255, 29, 56, 95);
+
 
   final springDesc = const SpringDescription(
     mass: 0.1,

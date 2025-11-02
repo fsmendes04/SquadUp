@@ -73,7 +73,7 @@ class _GroupCardState extends State<GroupCard> {
         duration: const Duration(milliseconds: 150),
         transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color:
                 _isPressed

@@ -8,6 +8,8 @@ class AvatarGroupWidget extends StatefulWidget {
   final String? avatarUrl;
   final double radius;
   final bool allowEdit;
+  final bool deferredUpload; // novo: se true, não faz upload automático
+  final void Function(String? localPath)? onImageSelected; // novo: callback com path local
   final VoidCallback? onAvatarChanged;
 
   const AvatarGroupWidget({
@@ -16,6 +18,8 @@ class AvatarGroupWidget extends StatefulWidget {
     this.avatarUrl,
     this.radius = 30,
     this.allowEdit = false,
+    this.deferredUpload = false,
+    this.onImageSelected,
     this.onAvatarChanged,
   });
 
@@ -149,7 +153,13 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
         setState(() {
           _selectedImageFile = File(pickedFile.path);
         });
-        await _uploadSelectedAvatar();
+        if (widget.deferredUpload) {
+          if (widget.onImageSelected != null) {
+            widget.onImageSelected!(pickedFile.path);
+          }
+        } else {
+          await _uploadSelectedAvatar();
+        }
       }
     } catch (e) {
       if (mounted) {

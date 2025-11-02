@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
+import '../widgets/bubble_page_route.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -74,7 +76,18 @@ class _LoginScreenState extends State<LoginScreen> {
           if (name == null || name.toString().trim().isEmpty) {
             Navigator.pushReplacementNamed(context, '/add-name');
           } else {
-            Navigator.pushReplacementNamed(context, '/home');
+            // Bubble transition to HomeScreen
+            final RenderBox? buttonBox = _loginButtonKey.currentContext?.findRenderObject() as RenderBox?;
+            final Offset bubbleCenter = buttonBox != null
+                ? buttonBox.localToGlobal(buttonBox.size.center(Offset.zero))
+                : (MediaQuery.of(context).size.center(Offset.zero));
+            Navigator.of(context).pushReplacement(
+              BubblePageRoute(
+                page: const HomeScreen(),
+                bubbleCenter: bubbleCenter,
+                bubbleColor: const Color.fromARGB(255, 17, 80, 138),
+              ),
+            );
           }
         }
       } else {
@@ -98,6 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  final GlobalKey _loginButtonKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -255,6 +270,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 175,
                         height: 55,
                         child: ElevatedButton(
+                          key: _loginButtonKey,
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(
@@ -274,24 +290,23 @@ class _LoginScreenState extends State<LoginScreen> {
                               146,
                             ),
                           ),
-                          child:
-                              _isLoading
-                                  ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : Text(
-                                    "Log In",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
                                   ),
+                                )
+                              : Text(
+                                  "Log In",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
 

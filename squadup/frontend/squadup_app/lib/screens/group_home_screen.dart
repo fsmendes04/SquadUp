@@ -4,6 +4,7 @@ import '../services/groups_service.dart';
 import '../models/groups.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/avatar_group.dart';
+import 'edit_group_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;
@@ -126,7 +127,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
               children: [
                 IconButton(
                   icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(context, _groupDetails?.name),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -140,7 +141,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                 // Nome do grupo
                 Expanded(
                   child: Text(
-                    widget.groupName,
+                    _groupDetails?.name ?? '',
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -154,7 +155,17 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
           ),
           IconButton(
             icon: Icon(Icons.more_vert, color: darkBlue, size: 34),
-            onPressed: _showGroupOptions,
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => EditGroupScreen(groupId: widget.groupId),
+                ),
+              );
+              if (result == true) {
+                await _loadGroupDetails();
+              }
+            },
             tooltip: 'Opções do grupo',
           ),
         ],
@@ -162,7 +173,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
     );
   }
 
-  // 3️⃣ Seção de Avatares dos Membros (estilo atualizado)
   Widget _buildAvatarsSection() {
     if (_groupDetails == null) return const SizedBox.shrink();
 
@@ -469,9 +479,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
     );
   }
 
-  void _showGroupOptions() {
-    _showFeatureSnackBar('Editar grupo');
-  }
 
   void _addMember() {
     ScaffoldMessenger.of(context).showSnackBar(

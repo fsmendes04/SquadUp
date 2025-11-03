@@ -28,7 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final response = await _userService.getProfile();
       // Extrair o campo 'data' da resposta
       final data = response['data'] as Map<String, dynamic>?;
-      
+
       if (mounted) {
         setState(() {
           userData = data;
@@ -75,7 +75,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  
   @override
   Widget build(BuildContext context) {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
@@ -151,9 +150,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ],
                               ),
                               child: AvatarWidget(
-                                key: ValueKey(userData?['avatar_url'] ?? 'no-avatar'),
+                                key: ValueKey(
+                                  userData?['avatar_url'] ?? 'no-avatar',
+                                ),
                                 radius: 60,
-                                allowEdit: false, // Apenas visualização
+                                allowEdit: false,
+                                avatarUrl:
+                                    userData?['avatar_url'], // Passa o avatar carregado
                               ),
                             ),
                             const SizedBox(height: 20),

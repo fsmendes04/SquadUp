@@ -8,6 +8,7 @@ class AvatarWidget extends StatefulWidget {
   final bool allowEdit;
   final VoidCallback? onAvatarChanged;
   final AvatarController? controller;
+  final String? avatarUrl;
 
   const AvatarWidget({
     super.key,
@@ -15,6 +16,7 @@ class AvatarWidget extends StatefulWidget {
     this.allowEdit = false,
     this.onAvatarChanged,
     this.controller,
+    this.avatarUrl,
   });
 
   @override
@@ -46,16 +48,13 @@ class AvatarController {
 }
 
 class _AvatarWidgetState extends State<AvatarWidget> {
-  final UserService _authService = UserService();
-  String? _avatarUrl;
+  final UserService _userService = UserService();
   String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
   bool _isLoading = false;
-  int _cacheBuster = 0; // Para forçar reload da imagem
 
   @override
   void initState() {
     super.initState();
-    _loadAvatar();
     widget.controller?._attach(this);
   }
 
@@ -63,23 +62,6 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   void dispose() {
     widget.controller?._detach();
     super.dispose();
-  }
-
-  Future<void> _loadAvatar() async {
-    try {
-      final response = await _authService.getProfile();
-      // Extrair o campo 'data' da resposta
-      final profile = response['data'] as Map<String, dynamic>?;
-      
-      if (mounted && profile != null) {
-        setState(() {
-          _avatarUrl = profile['avatar_url'];
-          _cacheBuster++; // Incrementar para forçar reload
-        });
-      }
-    } catch (e) {
-      // Silently fail - avatar will show default icon
-    }
   }
 
   Future<void> _showImageSourceDialog() async {
@@ -210,11 +192,13 @@ class _AvatarWidgetState extends State<AvatarWidget> {
 
     try {
       // Upload do avatar e atualização do perfil
-      await _authService.updateProfileWithAvatar(
+      await _userService.updateProfileWithAvatar(
         avatarFilePath: _selectedImagePath!,
       );
 
-      await _loadAvatar(); // Recarregar avatar
+      // Notificar que o avatar foi alterado
+      widget.onAvatarChanged?.call();
+
       setState(() {
         _selectedImagePath = null; // Limpar seleção após upload bem-sucedido
       });
@@ -309,9 +293,10 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                               width: (innerRadius - borderWidth) * 2,
                               height: (innerRadius - borderWidth) * 2,
                             )
-                            : (_avatarUrl != null)
+                            : (widget.avatarUrl != null &&
+                                widget.avatarUrl!.isNotEmpty)
                             ? Image.network(
-                              '$_avatarUrl?v=$_cacheBuster',
+                              widget.avatarUrl!,
                               fit: BoxFit.cover,
                               width: (innerRadius - borderWidth) * 2,
                               height: (innerRadius - borderWidth) * 2,

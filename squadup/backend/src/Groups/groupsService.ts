@@ -16,7 +16,7 @@ export class GroupsService {
   private readonly logger = new Logger(GroupsService.name);
   private readonly MAX_NAME_LENGTH = 100;
   private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  private readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  private readonly MAX_FILE_SIZE = 5 * 1024 * 1024;
   private readonly MAX_MEMBERS_PER_GROUP = 50;
 
   constructor(private readonly supabaseService: SupabaseService) { }
@@ -109,18 +109,15 @@ export class GroupsService {
 
   async findUserGroups(userId: string, token: string): Promise<GroupWithMembers[]> {
     try {
-      this.logger.log(`[findUserGroups] userId: ${userId}`);
       if (!userId) {
         throw new BadRequestException('User ID is required');
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      this.logger.log('[findUserGroups] Antes do select group_members');
       const { data: groupMembers, error } = await client
         .from('group_members')
         .select('group_id')
         .eq('user_id', userId);
-      this.logger.log(`[findUserGroups] Depois do select group_members, raw: ${JSON.stringify(groupMembers)}, error: ${JSON.stringify(error)}`);
 
       if (error) {
         this.logger.error(`Failed to fetch group_members for user ${userId}`, error.message);
@@ -128,20 +125,15 @@ export class GroupsService {
       }
 
       if (!groupMembers || groupMembers.length === 0) {
-        this.logger.log('[findUserGroups] No groups found for user');
         return [];
       }
 
-      // Buscar os grupos manualmente
       const groupIds = groupMembers.map((gm: any) => gm.group_id);
-      this.logger.log(`[findUserGroups] groupIds: ${JSON.stringify(groupIds)}`);
 
-      this.logger.log('[findUserGroups] Antes do select groups');
       const { data: groups, error: groupsError } = await client
         .from('groups')
         .select('*')
         .in('id', groupIds);
-      this.logger.log(`[findUserGroups] Depois do select groups, found: ${JSON.stringify(groups)}, error: ${JSON.stringify(groupsError)}`);
 
       if (groupsError) {
         this.logger.error(`Failed to fetch groups for user ${userId}`, groupsError.message);
@@ -149,13 +141,11 @@ export class GroupsService {
       }
 
       if (!groups || groups.length === 0) {
-        this.logger.log('[findUserGroups] No groups found after fetching by ids');
         return [];
       }
 
       const groupsWithMembers: GroupWithMembers[] = [];
       for (const group of groups) {
-        this.logger.log(`[findUserGroups] Processing group: ${JSON.stringify(group)}`);
         const members = await this.getGroupMembers(group.id, token);
         groupsWithMembers.push({
           ...group,
@@ -164,7 +154,6 @@ export class GroupsService {
         });
       }
 
-      this.logger.log(`[findUserGroups] groupsWithMembers: ${JSON.stringify(groupsWithMembers)}`);
       return groupsWithMembers;
 
     } catch (error) {
@@ -193,7 +182,6 @@ export class GroupsService {
         throw new NotFoundException(`Group with ID ${id} not found`);
       }
 
-      // Verificar se o usuário é membro
       const isMember = await this.isUserMember(id, userId, token);
       if (!isMember) {
         throw new ForbiddenException('You are not a member of this group');
@@ -217,13 +205,11 @@ export class GroupsService {
 
   async updateGroup(id: string, updateGroupDto: UpdateGroupDto, userId: string, token: string): Promise<Group> {
     try {
-      // Verificar permissões
       const isAdmin = await this.isUserAdmin(id, userId, token);
       if (!isAdmin) {
         throw new ForbiddenException('Only administrators can update the group');
       }
 
-      // Validar e sanitizar dados
       const updatePayload: any = { updated_at: new Date().toISOString() };
 
       if (updateGroupDto.name !== undefined) {
@@ -240,7 +226,7 @@ export class GroupsService {
         updatePayload.name = sanitizedName;
       }
 
-      if (Object.keys(updatePayload).length === 1) { // Apenas updated_at
+      if (Object.keys(updatePayload).length === 1) {
         throw new BadRequestException('No valid fields to update');
       }
 
@@ -271,14 +257,12 @@ export class GroupsService {
 
   async deleteGroup(id: string, userId: string, token: string): Promise<void> {
     try {
-      // Verificar permissões
       const isAdmin = await this.isUserAdmin(id, userId, token);
       if (!isAdmin) {
         throw new ForbiddenException('Only administrators can delete the group');
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      // Verificar se é o criador
       const { data: group } = await client
         .from('groups')
         .select('created_by, avatar_url')
@@ -289,12 +273,10 @@ export class GroupsService {
         throw new ForbiddenException('Only the group creator can delete the group');
       }
 
-      // Deletar avatar se existir
       if (group?.avatar_url) {
         await this.deleteGroupAvatar(id, group.avatar_url);
       }
 
-      // Deletar membros primeiro (foreign key constraint)
       const { error: membersError } = await client
         .from('group_members')
         .delete()
@@ -305,7 +287,6 @@ export class GroupsService {
         throw new BadRequestException('Unable to delete group members');
       }
 
-      // Deletar o grupo
       const { error: groupError } = await client
         .from('groups')
         .delete()
@@ -329,19 +310,16 @@ export class GroupsService {
 
   async addMember(groupId: string, userIdToAdd: string, requesterId: string, token: string): Promise<GroupMember> {
     try {
-      // Validações básicas
       if (userIdToAdd === requesterId) {
         throw new BadRequestException('Cannot add yourself as a member');
       }
 
-      // Verificar permissões
       const isAdmin = await this.isUserAdmin(groupId, requesterId, token);
       if (!isAdmin) {
         throw new ForbiddenException('Only administrators can add members');
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      // Verificar se já é membro
       const { data: existingMember } = await client
         .from('group_members')
         .select('id')
@@ -353,7 +331,6 @@ export class GroupsService {
         throw new BadRequestException('User is already a member of the group');
       }
 
-      // Verificar limite de membros
       const { count } = await client
         .from('group_members')
         .select('*', { count: 'exact', head: true })
@@ -363,7 +340,6 @@ export class GroupsService {
         throw new BadRequestException(`Group has reached maximum capacity of ${this.MAX_MEMBERS_PER_GROUP} members`);
       }
 
-      // Adicionar membro
       const { data: member, error } = await client
         .from('group_members')
         .insert({
@@ -393,7 +369,6 @@ export class GroupsService {
 
   async removeMember(groupId: string, userIdToRemove: string, requesterId: string, token: string): Promise<void> {
     try {
-      // Verificar permissões
       const isAdmin = await this.isUserAdmin(groupId, requesterId, token);
       const isSelfRemoval = userIdToRemove === requesterId;
 
@@ -402,7 +377,6 @@ export class GroupsService {
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      // Verificar se o usuário a ser removido existe no grupo
       const { data: memberToRemove } = await client
         .from('group_members')
         .select('role')
@@ -414,7 +388,6 @@ export class GroupsService {
         throw new NotFoundException('User is not a member of this group');
       }
 
-      // Não permitir remover o criador
       const { data: group } = await client
         .from('groups')
         .select('created_by')
@@ -425,7 +398,6 @@ export class GroupsService {
         throw new ForbiddenException('The group creator cannot be removed. Delete the group instead.');
       }
 
-      // Admin não pode se auto-remover se for o último admin
       if (isSelfRemoval && memberToRemove.role === 'admin') {
         const { count } = await client
           .from('group_members')
@@ -438,7 +410,6 @@ export class GroupsService {
         }
       }
 
-      // Remover membro
       const { error } = await client
         .from('group_members')
         .delete()
@@ -463,13 +434,11 @@ export class GroupsService {
 
   async uploadGroupAvatar(file: Express.Multer.File, groupId: string, userId: string, token: string): Promise<string> {
     try {
-      // Validar permissões
       const isAdmin = await this.isUserAdmin(groupId, userId, token);
       if (!isAdmin) {
         throw new ForbiddenException('Only administrators can update group avatar');
       }
 
-      // Validar arquivo
       this.validateAvatarFile(file);
 
       const fileExtension = file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
@@ -484,7 +453,6 @@ export class GroupsService {
       const fileName = `avatar_${timestamp}_${randomStr}.${fileExtension}`;
       const filePath = `${groupId}/${fileName}`;
 
-      // Upload usando admin client
       const adminClient = this.supabaseService.getAdminClient();
       const { error: uploadError } = await adminClient.storage
         .from('group-avatars')
@@ -499,7 +467,6 @@ export class GroupsService {
         throw new BadRequestException('Unable to upload avatar');
       }
 
-      // Obter URL pública
       const client = this.supabaseService.getClientWithToken(token);
       const { data: publicUrlData } = client.storage
         .from('group-avatars')
@@ -582,24 +549,16 @@ export class GroupsService {
     }
   }
 
-  // groups.service.ts
-
-  // ... (cerca da linha 727)
-
   private async getGroupMembers(groupId: string, token: string): Promise<GroupMember[]> {
     try {
       const client = this.supabaseService.getClientWithToken(token);
 
-      // *** ALTERAÇÃO CRÍTICA: Chamar a Stored Procedure ***
-      // Isto evita a RLS na tabela e usa a lógica de segurança da função SQL.
       const { data: rawMembers, error: rpcError } = await client.rpc('get_group_members_list', {
-        group_id_in: groupId, // Nome do argumento na função SQL
+        group_id_in: groupId,
       });
 
       if (rpcError) {
-        // Capturar o erro de permissão lançado pela função SQL
         this.logger.error(`RPC failed to fetch members for group ${groupId}`, rpcError.message);
-        // Trata a ForbiddenException lançada pela função SQL
         if (rpcError.message.includes('User is not a member of group')) {
           throw new ForbiddenException('You are not authorized to view these group members');
         }
@@ -610,27 +569,24 @@ export class GroupsService {
         return [];
       }
 
-      // O próximo passo é obter os perfis, que ainda é necessário.
-
-      // 1. Obter a lista de user_ids dos membros
       const userIds = rawMembers.map((m: any) => m.user_id);
 
-      // 2. Buscar os perfis (Aqui, o RLS na tabela 'profiles' deve permitir SELECT para todos)
-      // Usamos uma consulta separada para aproveitar a junção RPC para a consulta principal.
-      const { data: profiles, error: profileError } = await client
+      const adminClient = this.supabaseService.getAdminClient();
+      const { data: profiles, error: profileError } = await adminClient
         .from('profiles')
         .select(`id, name, avatar_url`)
         .in('id', userIds);
 
       if (profileError) {
         this.logger.error(`Failed to fetch profiles for members of group ${groupId}`, profileError.message);
-        // Não falhamos totalmente, apenas ignoramos os perfis
-        return [];
+        const membersWithoutProfiles = rawMembers.map((member: any) => ({
+          ...member, name: null, avatar_url: null
+        }));
+        return membersWithoutProfiles;
       }
 
-      const profileMap = new Map(profiles.map(p => [p.id, p]));
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
 
-      // 3. Mapear e combinar
       return rawMembers.map((member: any) => {
         const profile = profileMap.get(member.user_id);
         return {
@@ -652,7 +608,6 @@ export class GroupsService {
       throw new BadRequestException('Failed to fetch group members');
     }
   }
-  // ...
 
   private async deleteGroupAvatar(groupId: string, avatarUrl: string): Promise<void> {
     try {

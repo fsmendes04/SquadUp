@@ -42,8 +42,14 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         _error = null;
       });
 
-  final response = await _groupsService.getGroupById(widget.groupId);
-  final groupDetails = GroupWithMembers.fromJson(response['data']);
+      final response = await _groupsService.getGroupById(widget.groupId);
+      final groupDetails = GroupWithMembers.fromJson(response['data']);
+
+      // Debug: Verificar avatares dos membros
+      debugPrint('=== Group Members Debug ===');
+      for (var member in groupDetails.members) {
+        debugPrint('Member: ${member.name} - Avatar: ${member.avatarUrl}');
+      }
 
       if (mounted) {
         setState(() {
@@ -101,7 +107,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                           _buildTopBar(),
                           const SizedBox(height: 25),
                           _buildAvatarsSection(),
-                          const SizedBox(height: 24),
                           _buildActivitySection(),
                           const SizedBox(height: 24),
                           _buildNavigationCards(),
@@ -115,7 +120,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
     );
   }
 
-  // 1️⃣ Top Bar com título do grupo
   Widget _buildTopBar() {
     return SizedBox(
       height: kToolbarHeight,
@@ -159,7 +163,8 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => EditGroupScreen(groupId: widget.groupId),
+                  builder:
+                      (context) => EditGroupScreen(groupId: widget.groupId),
                 ),
               );
               if (result == true) {
@@ -240,22 +245,13 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Avatar usando UserAvatarDisplay
-                    UserAvatarDisplay(avatarUrl: member.avatarUrl, radius: 29),
-                    const SizedBox(height: 4),
-                    // Nome do usuário
-                    SizedBox(
-                      width: 60,
-                      child: Text(
-                        member.name ?? 'Usuário',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: darkBlue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
+                    // Avatar usando AvatarWidget (sem edição, radius menor)
+                    AvatarWidget(
+                      radius: 30,
+                      allowEdit: false,
+                      avatarUrl: member.avatarUrl, // Avatar vem do backend
+                      key: ValueKey(
+                        '${member.userId}_${member.avatarUrl ?? 'no-avatar'}',
                       ),
                     ),
                   ],
@@ -478,7 +474,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
       ),
     );
   }
-
 
   void _addMember() {
     ScaffoldMessenger.of(context).showSnackBar(

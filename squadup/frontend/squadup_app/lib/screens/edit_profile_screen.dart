@@ -21,6 +21,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _message = '';
   bool _isSuccessMessage = false;
   Map<String, String?>? userData;
+  String? _currentAvatarUrl; // Avatar atual do usuário
 
   @override
   void initState() {
@@ -49,9 +50,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final response = await _userService.getProfile();
       final user = response['data'] as Map<String, dynamic>?;
-      
+
       setState(() {
         userData = user?.map((key, value) => MapEntry(key, value?.toString()));
+        _currentAvatarUrl = user?['avatar_url']; // Armazena avatar atual
         _nameController.text = user?['name'] ?? '';
         _isLoadingUserData = false;
       });
@@ -120,6 +122,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _message = successMessage;
             _isSuccessMessage = true;
           });
+
+          // Recarregar dados do usuário para pegar o novo avatar
+          await _loadUserData();
 
           // Update local userData
           setState(() {
@@ -271,9 +276,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ],
                           ),
                           child: AvatarWidget(
+                            key: ValueKey(_currentAvatarUrl ?? 'no-avatar'),
                             radius: 60,
                             allowEdit: true,
                             controller: _avatarController,
+                            avatarUrl:
+                                _currentAvatarUrl, // Passa o avatar carregado
                             onAvatarChanged: () {
                               // Avatar foi selecionado (não salvo ainda)
                               setState(() {

@@ -59,11 +59,18 @@ class MyApp extends StatelessWidget {
         '/add-name': (context) => const AddNameScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/edit-profile': (context) => const EditProfileScreen(),
-        '/group-home': (context) => const GroupHomeScreen(groupId: '', groupName: ''),
+        '/group-home':
+            (context) => const GroupHomeScreen(groupId: '', groupName: ''),
         '/edit-group': (context) => const EditGroupScreen(groupId: ''),
-        '/create-group': (context) => CreateGroupScreen(
-          onCreateGroup: (String name, List<String> members, String? avatarPath) async {},
-        ),
+        '/create-group':
+            (context) => CreateGroupScreen(
+              onCreateGroup:
+                  (
+                    String name,
+                    List<String> members,
+                    String? avatarPath,
+                  ) async {},
+            ),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
       },
     );

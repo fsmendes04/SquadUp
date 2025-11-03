@@ -7,9 +7,7 @@ class ExpensesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Expenses'),
-      ),
+      appBar: AppBar(title: const Text('Expenses')),
       body: Center(
         child: Text(
           'Expenses Screen - Coming Soon!',

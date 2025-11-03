@@ -109,49 +109,62 @@ export class GroupsService {
 
   async findUserGroups(userId: string, token: string): Promise<GroupWithMembers[]> {
     try {
+      this.logger.log(`[findUserGroups] userId: ${userId}`);
       if (!userId) {
         throw new BadRequestException('User ID is required');
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      const { data: userGroups, error } = await client
+      this.logger.log('[findUserGroups] Antes do select group_members');
+      const { data: groupMembers, error } = await client
         .from('group_members')
-        .select(`
-          groups (
-            id,
-            name,
-            created_at,
-            updated_at,
-            created_by,
-            avatar_url
-          )
-        `)
+        .select('group_id')
         .eq('user_id', userId);
+      this.logger.log(`[findUserGroups] Depois do select group_members, raw: ${JSON.stringify(groupMembers)}, error: ${JSON.stringify(error)}`);
 
       if (error) {
-        this.logger.error(`Failed to fetch groups for user ${userId}`, error.message);
+        this.logger.error(`Failed to fetch group_members for user ${userId}`, error.message);
         throw new BadRequestException('Unable to fetch user groups');
       }
 
-      if (!userGroups || userGroups.length === 0) {
+      if (!groupMembers || groupMembers.length === 0) {
+        this.logger.log('[findUserGroups] No groups found for user');
+        return [];
+      }
+
+      // Buscar os grupos manualmente
+      const groupIds = groupMembers.map((gm: any) => gm.group_id);
+      this.logger.log(`[findUserGroups] groupIds: ${JSON.stringify(groupIds)}`);
+
+      this.logger.log('[findUserGroups] Antes do select groups');
+      const { data: groups, error: groupsError } = await client
+        .from('groups')
+        .select('*')
+        .in('id', groupIds);
+      this.logger.log(`[findUserGroups] Depois do select groups, found: ${JSON.stringify(groups)}, error: ${JSON.stringify(groupsError)}`);
+
+      if (groupsError) {
+        this.logger.error(`Failed to fetch groups for user ${userId}`, groupsError.message);
+        throw new BadRequestException('Unable to fetch user groups');
+      }
+
+      if (!groups || groups.length === 0) {
+        this.logger.log('[findUserGroups] No groups found after fetching by ids');
         return [];
       }
 
       const groupsWithMembers: GroupWithMembers[] = [];
-
-      for (const userGroup of userGroups) {
-        if (userGroup.groups) {
-          const groupData = Array.isArray(userGroup.groups) ? userGroup.groups[0] : userGroup.groups;
-          const group = groupData as Group;
-          const members = await this.getGroupMembers(group.id, token);
-          groupsWithMembers.push({
-            ...group,
-            avatar_url: group.avatar_url || null,
-            members,
-          });
-        }
+      for (const group of groups) {
+        this.logger.log(`[findUserGroups] Processing group: ${JSON.stringify(group)}`);
+        const members = await this.getGroupMembers(group.id, token);
+        groupsWithMembers.push({
+          ...group,
+          avatar_url: group.avatar_url || null,
+          members,
+        });
       }
 
+      this.logger.log(`[findUserGroups] groupsWithMembers: ${JSON.stringify(groupsWithMembers)}`);
       return groupsWithMembers;
 
     } catch (error) {
@@ -569,39 +582,57 @@ export class GroupsService {
     }
   }
 
+  // groups.service.ts
+
+  // ... (cerca da linha 727)
+
   private async getGroupMembers(groupId: string, token: string): Promise<GroupMember[]> {
     try {
       const client = this.supabaseService.getClientWithToken(token);
-      
-      // Use a join query to get member info and profile data in one query
-      const { data: members, error } = await client
-        .from('group_members')
-        .select(`
-          id,
-          group_id,
-          user_id,
-          joined_at,
-          role,
-          profiles:user_id (
-            name,
-            avatar_url
-          )
-        `)
-        .eq('group_id', groupId)
-        .order('joined_at', { ascending: true });
 
-      if (error) {
-        this.logger.error(`Failed to fetch members for group ${groupId}`, error.message);
+      // *** ALTERAÇÃO CRÍTICA: Chamar a Stored Procedure ***
+      // Isto evita a RLS na tabela e usa a lógica de segurança da função SQL.
+      const { data: rawMembers, error: rpcError } = await client.rpc('get_group_members_list', {
+        group_id_in: groupId, // Nome do argumento na função SQL
+      });
+
+      if (rpcError) {
+        // Capturar o erro de permissão lançado pela função SQL
+        this.logger.error(`RPC failed to fetch members for group ${groupId}`, rpcError.message);
+        // Trata a ForbiddenException lançada pela função SQL
+        if (rpcError.message.includes('User is not a member of group')) {
+          throw new ForbiddenException('You are not authorized to view these group members');
+        }
         throw new BadRequestException('Unable to fetch group members');
       }
 
-      if (!members || members.length === 0) {
+      if (!rawMembers || rawMembers.length === 0) {
         return [];
       }
 
-      // Map the response to include profile data
-      return members.map((member: any) => {
-        const profile = Array.isArray(member.profiles) ? member.profiles[0] : member.profiles;
+      // O próximo passo é obter os perfis, que ainda é necessário.
+
+      // 1. Obter a lista de user_ids dos membros
+      const userIds = rawMembers.map((m: any) => m.user_id);
+
+      // 2. Buscar os perfis (Aqui, o RLS na tabela 'profiles' deve permitir SELECT para todos)
+      // Usamos uma consulta separada para aproveitar a junção RPC para a consulta principal.
+      const { data: profiles, error: profileError } = await client
+        .from('profiles')
+        .select(`id, name, avatar_url`)
+        .in('id', userIds);
+
+      if (profileError) {
+        this.logger.error(`Failed to fetch profiles for members of group ${groupId}`, profileError.message);
+        // Não falhamos totalmente, apenas ignoramos os perfis
+        return [];
+      }
+
+      const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+      // 3. Mapear e combinar
+      return rawMembers.map((member: any) => {
+        const profile = profileMap.get(member.user_id);
         return {
           id: member.id,
           group_id: member.group_id,
@@ -614,13 +645,14 @@ export class GroupsService {
       });
 
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       this.logger.error('Unexpected error fetching group members', error);
       throw new BadRequestException('Failed to fetch group members');
     }
   }
+  // ...
 
   private async deleteGroupAvatar(groupId: string, avatarUrl: string): Promise<void> {
     try {

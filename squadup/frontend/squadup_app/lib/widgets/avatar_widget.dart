@@ -230,97 +230,62 @@ class _AvatarWidgetState extends State<AvatarWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double outerRadius = widget.radius;
-    final double borderWidth = 2;
-    final double innerRadius = outerRadius - borderWidth;
-    final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+    final double radius = widget.radius;
 
     return Stack(
       children: [
-        // Outer gradient border
         Container(
-          width: outerRadius * 2,
-          height: outerRadius * 2,
-          decoration: BoxDecoration(
+          width: radius * 2,
+          height: radius * 2,
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [primaryBlue.withOpacity(0.8), primaryBlue],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
           ),
-          child: Center(
-            // White border
-            child: Container(
-              width: innerRadius * 2,
-              height: innerRadius * 2,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              child: Center(
-                // Inner avatar/photo/placeholder
-                child: Container(
-                  width: (innerRadius - borderWidth) * 2,
-                  height: (innerRadius - borderWidth) * 2,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [primaryBlue.withOpacity(0.7), primaryBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+          child: ClipOval(
+            child:
+                _isLoading
+                    ? Center(
+                      child: SizedBox(
+                        width: widget.radius,
+                        height: widget.radius,
+                        child: const CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.grey,
+                          ),
+                        ),
+                      ),
+                    )
+                    : (_selectedImagePath != null)
+                    ? Image.file(
+                      File(_selectedImagePath!),
+                      fit: BoxFit.cover,
+                      width: radius * 2,
+                      height: radius * 2,
+                    )
+                    : (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
+                    ? Image.network(
+                      widget.avatarUrl!,
+                      fit: BoxFit.cover,
+                      width: radius * 2,
+                      height: radius * 2,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            Icons.person,
+                            size: widget.radius * 0.8,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                    )
+                    : Center(
+                      child: Icon(
+                        Icons.person,
+                        size: widget.radius * 0.8,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                  child: ClipOval(
-                    child:
-                        _isLoading
-                            ? Center(
-                              child: SizedBox(
-                                width: widget.radius,
-                                height: widget.radius,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : (_selectedImagePath != null)
-                            ? Image.file(
-                              File(_selectedImagePath!),
-                              fit: BoxFit.cover,
-                              width: (innerRadius - borderWidth) * 2,
-                              height: (innerRadius - borderWidth) * 2,
-                            )
-                            : (widget.avatarUrl != null &&
-                                widget.avatarUrl!.isNotEmpty)
-                            ? Image.network(
-                              widget.avatarUrl!,
-                              fit: BoxFit.cover,
-                              width: (innerRadius - borderWidth) * 2,
-                              height: (innerRadius - borderWidth) * 2,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.person,
-                                    size: widget.radius * 0.8,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              },
-                            )
-                            : Center(
-                              child: Icon(
-                                Icons.person,
-                                size: widget.radius * 0.8,
-                                color: Colors.white,
-                              ),
-                            ),
-                  ),
-                ),
-              ),
-            ),
           ),
         ),
         if (widget.allowEdit && !_isLoading)

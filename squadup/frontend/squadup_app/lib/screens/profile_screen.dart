@@ -8,12 +8,12 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State {
   final _userService = UserService();
-  Map<String, dynamic>? userData;
+  Map? userData;
   bool _isLoading = true;
   bool _profileUpdated = false;
 
@@ -23,12 +23,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
+  Future _loadUserData() async {
     try {
       final response = await _userService.getProfile();
       // Extrair o campo 'data' da resposta
-      final data = response['data'] as Map<String, dynamic>?;
-
+      final data = response['data'] as Map?;
       if (mounted) {
         setState(() {
           userData = data;
@@ -57,24 +56,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return userData?['email']?.split('@')[0] ?? 'User';
   }
 
-  Future<void> _logout() async {
-    try {
-      await _userService.logout();
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/login');
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error logging out: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
@@ -89,305 +70,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
       child: Scaffold(
         extendBody: true,
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      children: [
-                        // Top bar with back button
-                        SizedBox(
-                          height: kToolbarHeight,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Profile',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: darkBlue,
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 22),
-                                color: darkBlue,
-                                onPressed: () async {
-                                  final result = await Navigator.pushNamed(
-                                    context,
-                                    '/edit-profile',
-                                  );
-
-                                  // If profile was updated, reload user data
-                                  if (result == true) {
-                                    _profileUpdated = true;
-                                    _loadUserData();
-                                  }
-                                },
-                                tooltip: 'Edit profile',
-                              ),
-                            ],
-                          ),
+        backgroundColor: darkBlue,
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Stack(
+                  children: [
+                    // App Bar Background with dark blue
+                    Container(
+                      height: 220,
+                      decoration: BoxDecoration(
+                        color: darkBlue,
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
                         ),
-
-                        const SizedBox(height: 30),
-
-                        // Profile Picture and Name
-                        Column(
-                          children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: primaryBlue.withValues(alpha: 0.3),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
-                              child: AvatarWidget(
-                                key: ValueKey(
-                                  userData?['avatar_url'] ?? 'no-avatar',
-                                ),
-                                radius: 60,
-                                allowEdit: false,
-                                avatarUrl:
-                                    userData?['avatar_url'], // Passa o avatar carregado
-                              ),
+                      ),
+                    ),
+                    // Main Content
+                    SafeArea(
+                      child: Column(
+                        children: [
+                          // Top bar with back button and settings
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15.0,
+                              vertical: 10,
                             ),
-                            const SizedBox(height: 20),
-                            Text(
-                              _getDisplayName(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w600,
-                                color: darkBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              userData?['email'] ?? 'No email',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: darkBlue.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // User Information Cards
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: EdgeInsets.only(
-                              bottom: kBottomNavigationBarHeight + 20,
-                            ),
-                            child: Column(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // App Settings
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                      ),
-                                      child: Text(
-                                        'App Settings',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: darkBlue,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _buildActionRow(
-                                      Icons.notifications_outlined,
-                                      'Notifications',
-                                      'Manage your notifications',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Notifications settings coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    _buildActionRow(
-                                      Icons.privacy_tip_outlined,
-                                      'Privacy',
-                                      'Privacy and security settings',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Privacy settings coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    _buildActionRow(
-                                      Icons.help_outline,
-                                      'Help & Support',
-                                      'Get help and contact support',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Help & Support coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios_new,
+                                    size: 32,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(context, _profileUpdated);
+                                  },
+                                  tooltip: 'Back',
                                 ),
-
-                                const SizedBox(height: 30),
-
-                                // Logout Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                            title: Text(
-                                              'Logout',
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w600,
-                                                color: darkBlue,
-                                              ),
-                                            ),
-                                            content: Text(
-                                              'Are you sure you want to logout?',
-                                              style: GoogleFonts.poppins(
-                                                color: darkBlue.withValues(
-                                                  alpha: 0.8,
-                                                ),
-                                              ),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed:
-                                                    () =>
-                                                        Navigator.pop(context),
-                                                child: Text(
-                                                  'Cancel',
-                                                  style: GoogleFonts.poppins(
-                                                    color: darkBlue.withValues(
-                                                      alpha: 0.7,
-                                                    ),
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ),
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  _logout();
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  'Logout',
-                                                  style: GoogleFonts.poppins(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 2,
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 32,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: () async {
+                                    final result = await Navigator.pushNamed(
+                                      context,
+                                      '/edit-profile',
+                                    );
+                                    // If profile was updated, reload user data
+                                    if (result == true) {
+                                      _profileUpdated = true;
+                                      _loadUserData();
+                                    }
+                                  },
+                                  tooltip: 'Settings',
+                                ),
+                              ],
+                            ),
+                          ),
+                          // White Card Container with all content
+                          Expanded(
+                            child: Stack(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 90),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(30),
+                                      topRight: Radius.circular(30),
                                     ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                        blurRadius: 20,
+                                        offset: const Offset(0, 8),
+                                      ),
+                                    ],
+                                  ),
+                                  child: SingleChildScrollView(
+                                    padding: EdgeInsets.only(
+                                      bottom: kBottomNavigationBarHeight + 20,
+                                      left: 20,
+                                      right: 20,
+                                      top: 90,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                        const Icon(Icons.logout, size: 20),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Logout',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                        // User Info Section
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  _getDisplayName(),
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: darkBlue,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  userData?['email'] ??
+                                                      'No email',
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w400,
+                                                    color: darkBlue.withValues(
+                                                      alpha: 0.6,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            _buildStatColumn('0', 'Groups'),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 30),
+                                        // Weekly XP Chart
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Weekly XP',
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: darkBlue,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 20),
+                                            _buildWeeklyChart(primaryBlue),
+                                          ],
                                         ),
                                       ],
+                                    ),
+                                  ),
+                                ),
+                                // Avatar positioned on top
+                                Positioned(
+                                  left: 24,
+                                  top: 20,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 4,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          blurRadius: 15,
+                                          offset: const Offset(0, 5),
+                                        ),
+                                      ],
+                                    ),
+                                    child: AvatarWidget(
+                                      key: ValueKey(
+                                        userData?['avatar_url'] ?? 'no-avatar',
+                                      ),
+                                      radius: 65,
+                                      allowEdit: false,
+                                      avatarUrl: userData?['avatar_url'],
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-        ),
+                  ],
+                ),
         bottomNavigationBar: CustomCircularNavBar(
           currentIndex: 1, // Profile está selecionado
           onTap: (index) {
@@ -402,116 +284,73 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
       ),
-    ); // End of Scaffold
-  } // End of WillPopScope
-
-  Widget _buildActionRow(
-    IconData icon,
-    String title,
-    String subtitle,
-    VoidCallback onTap,
-  ) {
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-
-    return _SettingsCard(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      onTap: onTap,
-      darkBlue: darkBlue,
-      primaryBlue: primaryBlue,
     );
   }
-}
 
-class _SettingsCard extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color darkBlue;
-  final Color primaryBlue;
-
-  const _SettingsCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    required this.darkBlue,
-    required this.primaryBlue,
-  });
-
-  @override
-  State<_SettingsCard> createState() => _SettingsCardState();
-}
-
-class _SettingsCardState extends State<_SettingsCard> {
-  bool _isPressed = false;
-
-  void _onTapDown(TapDownDetails details) {
-    setState(() {
-      _isPressed = true;
-    });
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    setState(() {
-      _isPressed = false;
-    });
-    widget.onTap();
-  }
-
-  void _onTapCancel() {
-    setState(() {
-      _isPressed = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color:
-                _isPressed
-                    ? Colors.grey.withValues(alpha: 0.05)
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              // Title and subtitle (sem ícone)
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: widget.darkBlue,
-                    height: 1.2,
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Arrow indicator
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 24,
-                color: const Color.fromARGB(255, 29, 56, 95),
-              ),
-            ],
+  Widget _buildStatColumn(String value, String label) {
+    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: darkBlue,
           ),
         ),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+            color: darkBlue.withValues(alpha: 0.6),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeeklyChart(Color primaryBlue) {
+    final List weekData = [15, 25, 10, 15, 12, 18, 5];
+    final List days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final maxValue = weekData.reduce((a, b) => a > b ? a : b);
+
+    return SizedBox(
+      height: 120,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: List.generate(7, (index) {
+          final height = (weekData[index] / maxValue) * 100;
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                width: 32,
+                height: height,
+                decoration: BoxDecoration(
+                  color: primaryBlue.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                days[index],
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: const Color.fromARGB(
+                    255,
+                    29,
+                    56,
+                    95,
+                  ).withValues(alpha: 0.6),
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
 import '../widgets/bubble_page_route.dart';
@@ -68,7 +69,8 @@ class _LoginScreenState extends State<LoginScreen> {
         final profile = await _userService.getProfile();
         final data = profile['data'] ?? {};
         String? name = data['name'];
-        if ((name == null || name.toString().trim().isEmpty) && data['user_metadata'] != null) {
+        if ((name == null || name.toString().trim().isEmpty) &&
+            data['user_metadata'] != null) {
           name = data['user_metadata']['name'];
         }
 
@@ -77,10 +79,15 @@ class _LoginScreenState extends State<LoginScreen> {
             Navigator.pushReplacementNamed(context, '/add-name');
           } else {
             // Bubble transition to HomeScreen
-            final RenderBox? buttonBox = _loginButtonKey.currentContext?.findRenderObject() as RenderBox?;
-            final Offset bubbleCenter = buttonBox != null
-                ? buttonBox.localToGlobal(buttonBox.size.center(Offset.zero))
-                : (MediaQuery.of(context).size.center(Offset.zero));
+            final RenderBox? buttonBox =
+                _loginButtonKey.currentContext?.findRenderObject()
+                    as RenderBox?;
+            final Offset bubbleCenter =
+                buttonBox != null
+                    ? buttonBox.localToGlobal(
+                      buttonBox.size.center(Offset.zero),
+                    )
+                    : (MediaQuery.of(context).size.center(Offset.zero));
             Navigator.of(context).pushReplacement(
               BubblePageRoute(
                 page: const HomeScreen(),
@@ -124,11 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(
-                  right: 30.0,
-                  left: 30.0,
-                  top: 50,
-                ),
+                // Valores fixos alterados para responsivos (.w e .h)
+                padding: EdgeInsets.only(right: 30.w, left: 30.w, top: 50.h),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -136,41 +140,51 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Logo principal - usando o logotipo da empresa
                       SizedBox(
-                        height: 190,
+                        // Altura fixa alterada para responsiva (.h)
+                        height: 190.h,
                         child: Center(
                           child: Image.asset(
                             'lib/images/logo_v3.png',
-                            height: 150, // Reduced height
-                            width: 290, // Reduced width
+                            // Altura e largura fixas alteradas para responsivas (.h e .w)
+                            height: 150.h,
+                            width: 290.w,
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 10.h,
+                      ), // Altura fixa alterada para responsiva (.h)
 
                       Text(
                         "Welcome Back",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 30,
+                          // Tamanho de fonte fixo alterado para responsivo (.sp)
+                          fontSize: 30.sp,
                           fontWeight: FontWeight.w600,
                           color: const Color.fromARGB(221, 0, 0, 0),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 10.h,
+                      ), // Altura fixa alterada para responsiva (.h)
 
                       Text(
                         "Log in to your Account",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          // Tamanho de fonte fixo alterado para responsivo (.sp)
+                          fontSize: 16.sp,
                           color: const Color.fromARGB(255, 130, 130, 130),
                         ),
                       ),
-                      const SizedBox(height: 40),
-
+                      SizedBox(
+                        height: 40.h,
+                      ), // Altura fixa alterada para responsiva (.h)
+                      // SquadUpInput (O componente customizado deve usar .w/.h internamente)
                       SquadUpInput(
                         controller: _emailController,
                         label: 'Email',
@@ -189,8 +203,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
 
-                      const SizedBox(height: 4),
-
+                      SizedBox(
+                        height: 4.h,
+                      ), // Altura fixa alterada para responsiva (.h)
+                      // SquadUpInput para Password
                       SquadUpInput(
                         controller: _passwordController,
                         label: 'Password',
@@ -203,7 +219,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+                          // Padding fixo alterado para responsivo (.w)
+                          padding: EdgeInsets.only(right: 8.w),
                           child: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -221,12 +238,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       if (_message.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(
+                          height: 4.h,
+                        ), // Altura fixa alterada para responsiva (.h)
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
+                            // Padding fixo alterado para responsivo (.w e .h)
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 12.w,
+                              vertical: 4.h,
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -237,7 +257,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     style: GoogleFonts.poppins(
                                       color: Colors.red.shade600,
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 13,
+                                      // Tamanho de fonte fixo alterado para responsivo (.sp)
+                                      fontSize: 13.sp,
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -248,42 +269,48 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
 
-                      const SizedBox(height: 8),                   
+                      SizedBox(
+                        height: 8.h,
+                      ), // Altura fixa alterada para responsiva (.h)
 
                       Align(
                         alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 10.0),
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.pushReplacementNamed(
-                                  context,
-                                  '/forgot-password',
-                                );
-                              },
-                              style: TextButton.styleFrom(
-                                padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: Text(
-                                "Forgot Password?",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: const Color.fromARGB(255, 0, 0, 0),
-                                  fontWeight: FontWeight.w400,
-                                ),
+                        child: Padding(
+                          // Padding fixo alterado para responsivo (.w)
+                          padding: EdgeInsets.only(left: 10.w),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/forgot-password',
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              "Forgot Password?",
+                              style: GoogleFonts.poppins(
+                                // Tamanho de fonte fixo alterado para responsivo (.sp)
+                                fontSize: 14.sp,
+                                color: const Color.fromARGB(255, 0, 0, 0),
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                           ),
+                        ),
                       ),
 
-                      const SizedBox(height: 40),
-
+                      SizedBox(
+                        height: 40.h,
+                      ), // Altura fixa alterada para responsiva (.h)
                       // Botão de login
                       SizedBox(
-                        width: 175,
-                        height: 55,
+                        // Largura e altura fixas alteradas para responsivas (.w e .h)
+                        width: 175.w,
+                        height: 55.h,
                         child: ElevatedButton(
                           key: _loginButtonKey,
                           onPressed: _isLoading ? null : _login,
@@ -305,28 +332,32 @@ class _LoginScreenState extends State<LoginScreen> {
                               146,
                             ),
                           ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
+                          child:
+                              _isLoading
+                                  ? SizedBox(
+                                    // Largura e altura fixas alteradas para responsivas (.w e .h)
+                                    width: 20.w,
+                                    height: 20.h,
+                                    child: const CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                  : Text(
+                                    "Log In",
+                                    style: GoogleFonts.poppins(
+                                      // Tamanho de fonte fixo alterado para responsivo (.sp)
+                                      fontSize: 18.sp,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
                                   ),
-                                )
-                              : Text(
-                                  "Log In",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
                         ),
                       ),
 
-                      const SizedBox(height: 40),
-
+                      SizedBox(
+                        height: 40.h,
+                      ), // Altura fixa alterada para responsiva (.h)
                       // Link para registro
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -334,7 +365,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             "Don't have an account? ",
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              // Tamanho de fonte fixo alterado para responsivo (.sp)
+                              fontSize: 16.sp,
                               fontWeight: FontWeight.w400,
                               color: Colors.black87,
                             ),
@@ -354,7 +386,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               "Sign Up",
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                // Tamanho de fonte fixo alterado para responsivo (.sp)
+                                fontSize: 16.sp,
                                 fontWeight: FontWeight.w600,
                                 color: const Color.fromARGB(255, 19, 85, 146),
                               ),
@@ -363,7 +396,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 16.h,
+                      ), // Altura fixa alterada para responsiva (.h)
                     ],
                   ),
                 ),

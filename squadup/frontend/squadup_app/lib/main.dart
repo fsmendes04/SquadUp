@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/group_home_screen.dart';
 import 'screens/login_screen.dart';
@@ -41,37 +42,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'SquadUp',
-      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-      localizationsDelegates: [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('en', ''), Locale('pt', '')],
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/add-name': (context) => const AddNameScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/edit-profile': (context) => const EditProfileScreen(),
-        '/group-home':
-            (context) => const GroupHomeScreen(groupId: '', groupName: ''),
-        '/edit-group': (context) => const EditGroupScreen(groupId: ''),
-        '/create-group':
-            (context) => CreateGroupScreen(
-              onCreateGroup:
-                  (
-                    String name,
-                    List<String> members,
-                    String? avatarPath,
-                  ) async {},
-            ),
-        '/forgot-password': (context) => const ForgotPasswordScreen(),
+    return ScreenUtilInit(
+      designSize: const Size(375, 812),
+      minTextAdapt: true,
+      splitScreenMode: true,
+      builder: (context, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'SquadUp',
+          theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en', ''), Locale('pt', '')],
+          initialRoute: '/login',
+          routes: {
+            '/login': (context) => const LoginScreen(),
+            '/register': (context) => const RegisterScreen(),
+            '/home': (context) => const HomeScreen(),
+            '/add-name': (context) => const AddNameScreen(),
+            '/profile': (context) => const ProfileScreen(),
+            '/edit-profile': (context) => const EditProfileScreen(),
+            '/group-home':
+                (context) => const GroupHomeScreen(groupId: '', groupName: ''),
+            '/edit-group': (context) => const EditGroupScreen(groupId: ''),
+            '/create-group':
+                (context) => CreateGroupScreen(
+                  onCreateGroup:
+                      (
+                        String name,
+                        List<String> members,
+                        String? avatarPath,
+                      ) async {},
+                ),
+            '/forgot-password': (context) => const ForgotPasswordScreen(),
+          },
+        );
       },
     );
   }

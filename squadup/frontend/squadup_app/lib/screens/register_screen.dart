@@ -248,12 +248,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ],
                             ),
                           ),
-                        ), 
+                        ),
                       ],
 
-                      if (!_message.isNotEmpty) ...[
-                        const SizedBox(height: 20),
-                      ],
+                      if (!_message.isNotEmpty) ...[const SizedBox(height: 20)],
 
                       const SizedBox(height: 20),
 

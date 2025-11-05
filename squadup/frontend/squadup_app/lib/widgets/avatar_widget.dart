@@ -47,6 +47,8 @@ class AvatarController {
   }
 }
 
+final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+
 class _AvatarWidgetState extends State<AvatarWidget> {
   final UserService _userService = UserService();
   String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
@@ -296,14 +298,14 @@ class _AvatarWidgetState extends State<AvatarWidget> {
               onTap: _showImageSourceDialog,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: primaryBlue, // Fundo azul
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
-                padding: EdgeInsets.all(widget.radius * 0.15),
+                padding: EdgeInsets.all(widget.radius * 0.1),
                 child: Icon(
-                  Icons.camera_alt,
-                  size: widget.radius * 0.3,
+                  Icons.add, // Ícone de 'mais'
+                  size: widget.radius * 0.3, // Um pouco maior para destaque
                   color: Colors.white,
                 ),
               ),

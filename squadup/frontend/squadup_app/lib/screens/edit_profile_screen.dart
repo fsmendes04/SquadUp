@@ -175,12 +175,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-    final lightGray = const Color.fromARGB(255, 248, 249, 250);
 
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) async {
-        // Verificar se há mudanças não salvas
         if (_avatarController.hasUnsavedChanges()) {
           final shouldDiscard = await showDialog<bool>(
             context: context,
@@ -211,395 +209,434 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child:
-              _isLoadingUserData
-                  ? const Center(child: CircularProgressIndicator())
-                  : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
-                      children: [
-                        // Top bar with back button and save button
-                        SizedBox(
-                          height: kToolbarHeight,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 22,
-                                ),
-                                color: darkBlue,
-                                onPressed: () => Navigator.pop(context),
-                                tooltip: 'Back',
-                              ),
-                              Text(
-                                'Edit Profile',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: darkBlue,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _isLoading ? null : _saveProfile,
-                                child: Text(
-                                  'Save',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color:
-                                        _isLoading
-                                            ? darkBlue.withValues(alpha: 0.5)
-                                            : primaryBlue,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+        backgroundColor: Colors.grey[100],
+        body:
+            _isLoadingUserData
+                ? const Center(child: CircularProgressIndicator())
+                : LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
                         ),
-
-                        const SizedBox(height: 30),
-
-                        // Profile Picture with edit capability
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryBlue.withValues(alpha: 0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8),
+                        child: Stack(
+                          children: [
+                            // Blue header
+                            Container(
+                              height: 200.0,
+                              width: double.infinity,
+                              color: darkBlue,
+                            ),
+                            // Back and Save buttons
+                            Padding(
+                              padding: EdgeInsets.only(
+                                top: MediaQuery.of(context).padding.top + 10,
+                                left: 15,
+                                right: 15,
                               ),
-                            ],
-                          ),
-                          child: AvatarWidget(
-                            key: ValueKey(_currentAvatarUrl ?? 'no-avatar'),
-                            radius: 60,
-                            allowEdit: true,
-                            controller: _avatarController,
-                            avatarUrl:
-                                _currentAvatarUrl, // Passa o avatar carregado
-                            onAvatarChanged: () {
-                              // Avatar foi selecionado (não salvo ainda)
-                              setState(() {
-                                _message = '';
-                              });
-                            },
-                          ),
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // Edit Form
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Form(
-                              key: _formKey,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Personal Information Section
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(20),
-                                    decoration: BoxDecoration(
-                                      color: lightGray,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(
-                                            alpha: 0.05,
-                                          ),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.arrow_back_ios,
+                                      size: 32,
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Personal Information',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                            color: darkBlue,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 20),
-
-                                        // Name Field
-                                        Text(
-                                          'Name',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: darkBlue,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        TextFormField(
-                                          controller: _nameController,
-                                          textCapitalization:
-                                              TextCapitalization.words,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: darkBlue,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: 'Enter your full name',
-                                            hintStyle: GoogleFonts.poppins(
-                                              fontSize: 16,
-                                              color: darkBlue.withValues(
-                                                alpha: 0.5,
+                                    onPressed: () => Navigator.pop(context),
+                                    color: Colors.white,
+                                    tooltip: 'Back',
+                                  ),
+                                  TextButton(
+                                    onPressed: _isLoading ? null : _saveProfile,
+                                    child: Text(
+                                      'Save',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // White card elevated
+                            Positioned(
+                              top: 230.0,
+                              left: 15.0,
+                              right: 15.0,
+                              child: Material(
+                                elevation: 3.0,
+                                borderRadius: BorderRadius.circular(16.0),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24.0,
+                                    vertical: 50.0,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16.0),
+                                    color: Colors.white,
+                                  ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(height: 90),
+                                      Form(
+                                        key: _formKey,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Personal Information',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600,
+                                                color: darkBlue,
                                               ),
                                             ),
-                                            filled: true,
-                                            fillColor: Colors.white,
-                                            border: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
+                                            const SizedBox(height: 20),
+                                            Text(
+                                              'Name',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                                color: darkBlue,
                                               ),
                                             ),
-                                            enabledBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide(
-                                                color: Colors.grey.shade300,
+                                            const SizedBox(height: 8),
+                                            TextFormField(
+                                              controller: _nameController,
+                                              textCapitalization:
+                                                  TextCapitalization.words,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                                color: darkBlue,
                                               ),
-                                            ),
-                                            focusedBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide(
-                                                color: primaryBlue,
-                                                width: 2,
-                                              ),
-                                            ),
-                                            errorBorder: OutlineInputBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              borderSide: BorderSide(
-                                                color: Colors.red.shade400,
-                                              ),
-                                            ),
-                                            focusedErrorBorder:
-                                                OutlineInputBorder(
+                                              decoration: InputDecoration(
+                                                hintText:
+                                                    'Enter your full name',
+                                                hintStyle: GoogleFonts.poppins(
+                                                  fontSize: 16,
+                                                  color: darkBlue.withOpacity(
+                                                    0.5,
+                                                  ),
+                                                ),
+                                                filled: true,
+                                                fillColor: Colors.white,
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  borderSide: BorderSide(
+                                                    color: Colors.grey.shade300,
+                                                  ),
+                                                ),
+                                                enabledBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            Colors
+                                                                .grey
+                                                                .shade300,
+                                                      ),
+                                                    ),
+                                                focusedBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color: primaryBlue,
+                                                        width: 2,
+                                                      ),
+                                                    ),
+                                                errorBorder: OutlineInputBorder(
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   borderSide: BorderSide(
                                                     color: Colors.red.shade400,
-                                                    width: 2,
                                                   ),
                                                 ),
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 16,
-                                                ),
-                                          ),
-                                          validator: (value) {
-                                            if (value == null ||
-                                                value.trim().isEmpty) {
-                                              return 'Please enter your name';
-                                            }
-                                            if (value.trim().length < 2) {
-                                              return 'Name must be at least 2 characters long';
-                                            }
-                                            if (value.trim().length > 50) {
-                                              return 'Name must be less than 50 characters';
-                                            }
-                                            // Check for valid characters (letters, spaces, hyphens, apostrophes)
-                                            if (!RegExp(
-                                              r"^[a-zA-ZÀ-ÿ\s\-']+$",
-                                            ).hasMatch(value.trim())) {
-                                              return 'Name can only contain letters, spaces, hyphens, and apostrophes';
-                                            }
-                                            return null;
-                                          },
-                                        ),
-
-                                        const SizedBox(height: 20),
-
-                                        // Email Field (Read-only)
-                                        Text(
-                                          'Email',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                            color: darkBlue,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 16,
-                                            vertical: 16,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.shade100,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                            border: Border.all(
-                                              color: Colors.grey.shade300,
-                                            ),
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Expanded(
-                                                child: Text(
-                                                  userData?['email'] ??
-                                                      'No email',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                    color: darkBlue.withValues(
-                                                      alpha: 0.7,
+                                                focusedErrorBorder:
+                                                    OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            12,
+                                                          ),
+                                                      borderSide: BorderSide(
+                                                        color:
+                                                            Colors.red.shade400,
+                                                        width: 2,
+                                                      ),
                                                     ),
-                                                  ),
-                                                ),
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 16,
+                                                    ),
                                               ),
-                                              Icon(
-                                                Icons.lock_outline,
-                                                size: 20,
-                                                color: darkBlue.withValues(
-                                                  alpha: 0.5,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  if (_message.isNotEmpty) ...[
-                                    const SizedBox(height: 20),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color:
-                                            _isSuccessMessage
-                                                ? Colors.green.shade50
-                                                : Colors.red.shade50,
-                                        borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(
-                                          color:
-                                              _isSuccessMessage
-                                                  ? Colors.green.shade200
-                                                  : Colors.red.shade200,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            _isSuccessMessage
-                                                ? Icons.check_circle_outline
-                                                : Icons.error_outline,
-                                            color:
-                                                _isSuccessMessage
-                                                    ? Colors.green.shade600
-                                                    : Colors.red.shade600,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              _message,
+                                              validator: (value) {
+                                                if (value == null ||
+                                                    value.trim().isEmpty) {
+                                                  return 'Please enter your name';
+                                                }
+                                                if (value.trim().length < 2) {
+                                                  return 'Name must be at least 2 characters long';
+                                                }
+                                                if (value.trim().length > 50) {
+                                                  return 'Name must be less than 50 characters';
+                                                }
+                                                if (!RegExp(
+                                                  r"^[a-zA-ZÀ-ÿ\s\-']+$",
+                                                ).hasMatch(value.trim())) {
+                                                  return 'Name can only contain letters, spaces, hyphens, and apostrophes';
+                                                }
+                                                return null;
+                                              },
+                                            ),
+                                            const SizedBox(height: 20),
+                                            Text(
+                                              'Email',
                                               style: GoogleFonts.poppins(
-                                                color:
-                                                    _isSuccessMessage
-                                                        ? Colors.green.shade700
-                                                        : Colors.red.shade600,
+                                                fontSize: 16,
                                                 fontWeight: FontWeight.w500,
-                                                fontSize: 14,
+                                                color: darkBlue,
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-
-                                  const SizedBox(height: 30),
-
-                                  // Save Button
-                                  SizedBox(
-                                    width: double.infinity,
-                                    height: 55,
-                                    child: ElevatedButton(
-                                      onPressed:
-                                          _isLoading ? null : _saveProfile,
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: primaryBlue,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            15,
-                                          ),
-                                        ),
-                                        elevation: 2,
-                                        disabledBackgroundColor: primaryBlue
-                                            .withValues(alpha: 0.6),
-                                        shadowColor: primaryBlue.withValues(
-                                          alpha: 0.3,
-                                        ),
-                                      ),
-                                      child:
-                                          _isLoading
-                                              ? const SizedBox(
-                                                width: 20,
-                                                height: 20,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color: Colors.white,
-                                                      strokeWidth: 2,
-                                                    ),
-                                              )
-                                              : Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  const Icon(
-                                                    Icons.save_outlined,
-                                                    size: 20,
+                                            const SizedBox(height: 8),
+                                            Container(
+                                              width: double.infinity,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 16,
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    'Save Changes',
-                                                    style: GoogleFonts.poppins(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade100,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                border: Border.all(
+                                                  color: Colors.grey.shade300,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      userData?['email'] ??
+                                                          'No email',
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            color: darkBlue
+                                                                .withOpacity(
+                                                                  0.7,
+                                                                ),
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.lock_outline,
+                                                    size: 20,
+                                                    color: darkBlue.withOpacity(
+                                                      0.5,
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                    ),
+                                            ),
+                                            if (_message.isNotEmpty) ...[
+                                              const SizedBox(height: 20),
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      _isSuccessMessage
+                                                          ? Colors.green.shade50
+                                                          : Colors.red.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color:
+                                                        _isSuccessMessage
+                                                            ? Colors
+                                                                .green
+                                                                .shade200
+                                                            : Colors
+                                                                .red
+                                                                .shade200,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      _isSuccessMessage
+                                                          ? Icons
+                                                              .check_circle_outline
+                                                          : Icons.error_outline,
+                                                      color:
+                                                          _isSuccessMessage
+                                                              ? Colors
+                                                                  .green
+                                                                  .shade600
+                                                              : Colors
+                                                                  .red
+                                                                  .shade600,
+                                                      size: 20,
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Text(
+                                                        _message,
+                                                        style: GoogleFonts.poppins(
+                                                          color:
+                                                              _isSuccessMessage
+                                                                  ? Colors
+                                                                      .green
+                                                                      .shade700
+                                                                  : Colors
+                                                                      .red
+                                                                      .shade600,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                            const SizedBox(height: 30),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              height: 55,
+                                              child: ElevatedButton(
+                                                onPressed:
+                                                    _isLoading
+                                                        ? null
+                                                        : _saveProfile,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: primaryBlue,
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          15,
+                                                        ),
+                                                  ),
+                                                  elevation: 2,
+                                                  disabledBackgroundColor:
+                                                      primaryBlue.withOpacity(
+                                                        0.6,
+                                                      ),
+                                                  shadowColor: primaryBlue
+                                                      .withOpacity(0.3),
+                                                ),
+                                                child:
+                                                    _isLoading
+                                                        ? const SizedBox(
+                                                          width: 20,
+                                                          height: 20,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                                strokeWidth: 2,
+                                                              ),
+                                                        )
+                                                        : Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            const Icon(
+                                                              Icons
+                                                                  .save_outlined,
+                                                              size: 20,
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 8,
+                                                            ),
+                                                            Text(
+                                                              'Save Changes',
+                                                              style: GoogleFonts.poppins(
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-
-                                  const SizedBox(height: 40),
-                                ],
+                                ),
                               ),
                             ),
-                          ),
+                            // Avatar centralizado sobre o card
+                            Positioned(
+                              top: 110.0,
+                              left:
+                                  (MediaQuery.of(context).size.width / 2 -
+                                      120.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 4,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                child: AvatarWidget(
+                                  key: ValueKey(
+                                    _currentAvatarUrl ?? 'no-avatar',
+                                  ),
+                                  radius: 110,
+                                  allowEdit: true,
+                                  controller: _avatarController,
+                                  avatarUrl: _currentAvatarUrl,
+                                  onAvatarChanged: () {
+                                    setState(() {
+                                      _message = '';
+                                    });
+                                  },
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-        ),
+                      ),
+                    );
+                  },
+                ),
       ),
     );
   }

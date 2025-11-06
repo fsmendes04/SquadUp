@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../widgets/navigation_bar.dart';
 import '../widgets/drawer_bar.dart';
 import '../widgets/group_card.dart';
@@ -24,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<GroupWithMembers> _userGroups = [];
   bool _isLoadingGroups = true;
   String? _groupsError;
-  
+
   // Search functionality
   String _searchQuery = '';
   bool _isSearching = false;
@@ -118,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGroupsList(Color primaryBlue) {
+    final loc = AppLocalizations.of(context)!;
     if (_isLoadingGroups) {
       return const Center(
         child: Padding(
@@ -135,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              _groupsError!,
+              loc.errorLoadingGroups,
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -150,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               child: Text(
-                'Tentar novamente',
+                loc.tryAgain,
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
               ),
             ),
@@ -185,10 +187,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const SizedBox(height: 32),
-
-            // Subtitle
             Text(
-              'You\'re not part of any group yet',
+              loc.notPartOfAnyGroup,
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -196,11 +196,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 8),
-
             Text(
-              'Create or join a group to get started!',
+              loc.createOrJoinGroup,
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -208,12 +206,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               textAlign: TextAlign.center,
             ),
-
             const SizedBox(height: 40),
-
-            // Botão de ação
             GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed('/create-group').then((_) async { await _refreshGroups(); }),
+              onTap:
+                  () => Navigator.of(context).pushNamed('/create-group').then((
+                    _,
+                  ) async {
+                    await _refreshGroups();
+                  }),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 32,
@@ -227,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Create Group',
+                      loc.createGroup,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -250,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Logo com gradiente e sombra (apenas opacidade)
             SizedBox(
               width: 300,
               height: 300,
@@ -268,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              'No groups found',
+              loc.noGroupsFound,
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -287,21 +286,22 @@ class _HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         final group = groupsToShow[index];
         return GroupCard(
-            group: group,
-            onTap: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GroupHomeScreen(
-                    groupId: group.id,
-                    groupName: group.name,
-                  ),
-                ),
-              );
-              if (result != null) {
-                await _refreshGroups();
-              }
-            },
+          group: group,
+          onTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => GroupHomeScreen(
+                      groupId: group.id,
+                      groupName: group.name,
+                    ),
+              ),
+            );
+            if (result != null) {
+              await _refreshGroups();
+            }
+          },
         );
       },
     );
@@ -331,18 +331,19 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'User';
   }
 
-  final GlobalKey<CustomDrawerBarState> _drawerKey = GlobalKey<CustomDrawerBarState>();
+  final GlobalKey<CustomDrawerBarState> _drawerKey =
+      GlobalKey<CustomDrawerBarState>();
 
   void _openDrawer() {
-  _drawerKey.currentState?.toggleMenu();
+    _drawerKey.currentState?.toggleMenu();
   }
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-
+    final loc = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(loc?.logoutError ?? message),
         backgroundColor: Colors.red[600],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -357,14 +358,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-      return CustomDrawerBar(
-        key: _drawerKey,
-        userName: _getDisplayName(),
-        onItemTap: (index) {
+    return CustomDrawerBar(
+      key: _drawerKey,
+      userName: _getDisplayName(),
+      onItemTap: (index) async {
         switch (index) {
           case 0:
+            await Navigator.pushNamed(context, '/settings');
             break;
           case 1:
+            await Navigator.pushNamed(context, '/language');
+            break;
+          case 2:
             _logout();
             break;
         }
@@ -387,7 +392,6 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               child: Column(
                 children: [
-                  // Top bar with avatar and notification
                   SizedBox(
                     height: kToolbarHeight,
                     child: Row(
@@ -474,7 +478,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Hi, ${_getDisplayName()}!',
+                          AppLocalizations.of(
+                            context,
+                          )!.hiUser(_getDisplayName()),
                           style: GoogleFonts.poppins(
                             fontSize: 24,
                             fontWeight: FontWeight.w600,
@@ -512,17 +518,20 @@ class _HomeScreenState extends State<HomeScreen> {
                                 : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-
                                     // Section title and add button
                                     if (!_isSearching) ...[
                                       AnimatedContainer(
-                                        duration: const Duration(milliseconds: 300),
+                                        duration: const Duration(
+                                          milliseconds: 300,
+                                        ),
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              'My Groups',
+                                              AppLocalizations.of(
+                                                context,
+                                              )!.myGroups,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.w600,
@@ -530,29 +539,41 @@ class _HomeScreenState extends State<HomeScreen> {
                                               ),
                                             ),
                                             GestureDetector(
-                                              onTap: () => Navigator.of(context).pushNamed('/create-group').then((_) async { await _refreshGroups(); }),
+                                              onTap:
+                                                  () => Navigator.of(context)
+                                                      .pushNamed(
+                                                        '/create-group',
+                                                      )
+                                                      .then((_) async {
+                                                        await _refreshGroups();
+                                                      }),
                                               child: Container(
-                                                padding: const EdgeInsets.symmetric(
-                                                  horizontal: 16,
-                                                  vertical: 8,
-                                                ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 8,
+                                                    ),
                                                 decoration: BoxDecoration(
                                                   color: primaryBlue,
-                                                  borderRadius: BorderRadius.circular(
-                                                    15,
-                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(15),
                                                   boxShadow: [
                                                     BoxShadow(
-                                                      color: darkBlue.withValues(
-                                                        alpha: 0.3,
-                                                      ),
+                                                      color: darkBlue
+                                                          .withValues(
+                                                            alpha: 0.3,
+                                                          ),
                                                       blurRadius: 8,
-                                                      offset: const Offset(0, 2),
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
                                                 child: Row(
-                                                  mainAxisSize: MainAxisSize.min,
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
                                                   children: [
                                                     const Icon(
                                                       Icons.add,
@@ -561,12 +582,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                                     ),
                                                     const SizedBox(width: 4),
                                                     Text(
-                                                      'New',
-                                                      style: GoogleFonts.poppins(
-                                                        fontSize: 14,
-                                                        fontWeight: FontWeight.w600,
-                                                        color: Colors.white,
-                                                      ),
+                                                      AppLocalizations.of(
+                                                        context,
+                                                      )!.newGroup,
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: Colors.white,
+                                                          ),
                                                     ),
                                                   ],
                                                 ),
@@ -592,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       },
                                     ),
 
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 14),
 
                                     // Groups list
                                     _buildGroupsList(primaryBlue),

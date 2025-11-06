@@ -21,10 +21,11 @@ class _RoundedBorderPainter extends CustomPainter {
       rect.deflate(borderWidth / 2),
       Radius.circular(borderRadius - borderWidth / 2),
     );
-    final paint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = borderWidth;
+    final paint =
+        Paint()
+          ..color = borderColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = borderWidth;
     canvas.drawRRect(rrect, paint);
   }
 
@@ -61,15 +62,15 @@ class CustomDrawerBar extends StatefulWidget {
 }
 
 class CustomDrawerBarState extends State<CustomDrawerBar>
-  with TickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _sidebarAnim;
 
   bool _isMenuOpen = false;
+  bool _darkMode = false;
 
   //static const Color darkBlue = Color.fromARGB(255, 5, 33, 61);
   static const Color darkBlue = Color.fromARGB(255, 29, 56, 95);
-
 
   final springDesc = const SpringDescription(
     mass: 0.1,
@@ -79,9 +80,9 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
 
   final List<DrawerMenuItem> _menuItems = [
     DrawerMenuItem(icon: Icons.settings, title: 'Settings', index: 0),
-    DrawerMenuItem(icon: Icons.logout, title: 'Logout', index: 1),
+    DrawerMenuItem(icon: Icons.language, title: 'Language', index: 1),
+    DrawerMenuItem(icon: Icons.logout, title: 'Logout', index: 2),
   ];
-
 
   @override
   void initState() {
@@ -93,10 +94,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
     );
 
     _sidebarAnim = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
   }
 
@@ -121,7 +119,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
 
   void _onMenuItemTap(DrawerMenuItem item) {
     widget.onItemTap(item.index);
-  toggleMenu();
+    toggleMenu();
   }
 
   @override
@@ -130,9 +128,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
       body: Stack(
         children: [
           // Solid dark blue background for the whole screen
-          Container(
-            color: darkBlue,
-          ),
+          Container(color: darkBlue),
 
           // Main content with animation (direita)
           RepaintBoundary(
@@ -147,9 +143,12 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                     offset: Offset(-_sidebarAnim.value * 265, 0),
                     child: Transform(
                       alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..setEntry(3, 2, 0.001)
-                        ..rotateY((-_sidebarAnim.value * 30) * math.pi / 180),
+                      transform:
+                          Matrix4.identity()
+                            ..setEntry(3, 2, 0.001)
+                            ..rotateY(
+                              (-_sidebarAnim.value * 30) * math.pi / 180,
+                            ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(borderRadius),
                         child: Stack(
@@ -173,10 +172,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                   ),
                 );
               },
-              child: IgnorePointer(
-                ignoring: _isMenuOpen,
-                child: widget.child,
-              ),
+              child: IgnorePointer(ignoring: _isMenuOpen, child: widget.child),
             ),
           ),
 
@@ -184,9 +180,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
           if (_isMenuOpen)
             GestureDetector(
               onTap: toggleMenu,
-              child: Container(
-                color: Colors.transparent,
-              ),
+              child: Container(color: Colors.transparent),
             ),
 
           // Side Menu (direita)
@@ -198,10 +192,13 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                   alignment: Alignment.centerRight,
                   child: Transform(
                     alignment: Alignment.center,
-                    transform: Matrix4.identity()
-                      ..setEntry(3, 2, 0.001)
-                      ..rotateY(((1 - _sidebarAnim.value) * 30) * math.pi / 180)
-                      ..translate((1 - _sidebarAnim.value) * 300),
+                    transform:
+                        Matrix4.identity()
+                          ..setEntry(3, 2, 0.001)
+                          ..rotateY(
+                            ((1 - _sidebarAnim.value) * 30) * math.pi / 180,
+                          )
+                          ..translate((1 - _sidebarAnim.value) * 300),
                     child: child,
                   ),
                 );
@@ -226,9 +223,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
         bottom: MediaQuery.of(context).padding.bottom + 20,
       ),
       constraints: const BoxConstraints(maxWidth: 288),
-      decoration: const BoxDecoration(
-        color: darkBlue,
-      ),
+      decoration: const BoxDecoration(color: darkBlue),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -296,13 +291,47 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             ),
           ),
 
+          // Interruptor para alternar entre dark/light mode (sem lógica)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 45),
+            child: Row(
+              children: [
+                Icon(
+                  _darkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _darkMode ? 'Dark Mode' : 'Light Mode',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Switch(
+                  value: _darkMode,
+                  onChanged: (val) {
+                    setState(() {
+                      _darkMode = val;
+                    });
+                  },
+                  activeColor: Colors.white,
+                  inactiveTrackColor: Colors.white.withOpacity(0.3),
+                  inactiveThumbColor: Colors.grey[400],
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildMenuItem(DrawerMenuItem item) {
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       // Sem destaque visual para o item selecionado
@@ -313,11 +342,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(
-                item.icon,
-                color: Colors.white,
-                size: 24,
-              ),
+              Icon(item.icon, color: Colors.white, size: 24),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(

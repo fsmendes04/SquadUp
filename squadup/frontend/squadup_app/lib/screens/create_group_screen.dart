@@ -5,7 +5,12 @@ import '../widgets/avatar_group.dart';
 import '../services/groups_service.dart';
 
 class CreateGroupScreen extends StatefulWidget {
-  final Future<void> Function(String name, List<String> members, String? avatarPath) onCreateGroup;
+  final Future<void> Function(
+    String name,
+    List<String> members,
+    String? avatarPath,
+  )
+  onCreateGroup;
 
   const CreateGroupScreen({super.key, required this.onCreateGroup});
 
@@ -61,7 +66,9 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             avatarFilePath: _avatarPath!,
           );
           if (avatarResp['success'] != true) {
-            throw Exception(avatarResp['message'] ?? 'Erro ao fazer upload do avatar');
+            throw Exception(
+              avatarResp['message'] ?? 'Erro ao fazer upload do avatar',
+            );
           }
         }
         if (mounted) {
@@ -83,7 +90,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Create New Group', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+        title: Text(
+          'Create New Group',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: darkBlue,
         elevation: 0,
@@ -98,21 +108,17 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
-                child: AvatarGroupWidget(
-                  groupId: 'new',
-                  avatarUrl: null,
-                  allowEdit: true,
-                  deferredUpload: true,
-                  onImageSelected: (path) {
-                    setState(() {
-                      _avatarPath = path;
-                    });
-                  },
-                  radius: 48,
+                child: GroupAvatarDisplay(avatarUrl: _avatarPath, radius: 90),
+              ),
+              const SizedBox(height: 30),
+              Text(
+                'Group Name',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
                 ),
               ),
-              const SizedBox(height: 20),
-              Text('Group Name *', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: darkBlue)),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _groupNameController,
@@ -127,8 +133,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                 },
                 decoration: InputDecoration(
                   hintText: 'e.g., College Friends',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
-                  prefixIcon: Icon(Icons.groups_rounded, color: darkBlue, size: 20),
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
+                  prefixIcon: Icon(
+                    Icons.groups_rounded,
+                    color: darkBlue,
+                    size: 20,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: Colors.grey.withOpacity(0.3)),
@@ -149,23 +162,41 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     borderRadius: BorderRadius.circular(16),
                     borderSide: const BorderSide(color: Colors.red, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   filled: true,
                   fillColor: Colors.grey[50],
                 ),
               ),
               const SizedBox(height: 20),
-              Text('Group Members', style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: darkBlue)),
+              Text(
+                'Group Members',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
+                ),
+              ),
               const SizedBox(height: 10),
               TextFormField(
                 controller: _membersController,
                 maxLines: 3,
                 decoration: InputDecoration(
-                  hintText: 'Enter user IDs separated by commas\ne.g., user1, user2, user3',
-                  hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
+                  hintText:
+                      'Enter user IDs separated by commas\ne.g., user1, user2, user3',
+                  hintStyle: GoogleFonts.poppins(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                  ),
                   prefixIcon: Padding(
                     padding: const EdgeInsets.only(bottom: 40),
-                    child: Icon(Icons.person_add_rounded, color: darkBlue, size: 20),
+                    child: Icon(
+                      Icons.person_add_rounded,
+                      color: darkBlue,
+                      size: 20,
+                    ),
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -179,7 +210,10 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide(color: primaryBlue, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                   filled: true,
                   fillColor: Colors.grey[50],
                 ),
@@ -191,20 +225,31 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                   backgroundColor: darkBlue,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 0,
                   shadowColor: darkBlue,
                 ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : Text(
+                          'Create',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )
-                    : Text('Create', style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
               ),
             ],
           ),

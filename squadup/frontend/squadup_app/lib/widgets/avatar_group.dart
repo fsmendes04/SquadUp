@@ -9,8 +9,10 @@ class AvatarGroupWidget extends StatefulWidget {
   final double radius;
   final bool allowEdit;
   final bool deferredUpload; // novo: se true, não faz upload automático
-  final void Function(String? localPath)? onImageSelected; // novo: callback com path local
+  final void Function(String? localPath)?
+  onImageSelected; // novo: callback com path local
   final VoidCallback? onAvatarChanged;
+  final bool showBlueBorder;
 
   const AvatarGroupWidget({
     super.key,
@@ -21,6 +23,7 @@ class AvatarGroupWidget extends StatefulWidget {
     this.deferredUpload = false,
     this.onImageSelected,
     this.onAvatarChanged,
+    this.showBlueBorder = true,
   });
 
   @override
@@ -236,145 +239,93 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final double outerRadius = widget.radius;
-    final double borderWidth = 2;
-    final double innerRadius = outerRadius - borderWidth;
+    final double radius = widget.radius;
     final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
+    final bool hasImage =
+        (_selectedImageFile != null) ||
+        (_avatarUrl != null && _avatarUrl!.isNotEmpty);
+    const String defaultGroupAvatarAsset = 'lib/images/avatar_group2.png';
     return Stack(
       children: [
-        // Outer gradient border
-        Container(
-          width: outerRadius * 2,
-          height: outerRadius * 2,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [primaryBlue.withOpacity(0.8), primaryBlue],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Center(
-            // White border
-            child: Container(
-              width: innerRadius * 2,
-              height: innerRadius * 2,
+        hasImage
+            ? Container(
+              width: radius * 2,
+              height: radius * 2,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
               ),
-              child: Center(
-                child: Container(
-                  width: (innerRadius - borderWidth) * 2,
-                  height: (innerRadius - borderWidth) * 2,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [primaryBlue.withOpacity(0.7), primaryBlue],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: ClipOval(
-                    child:
-                        _isLoading
-                            ? Center(
-                              child: SizedBox(
-                                width: widget.radius,
-                                height: widget.radius,
-                                child: const CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
-                                ),
-                              ),
-                            )
-                            : (_selectedImageFile != null)
-                            ? Image.file(
-                              _selectedImageFile!,
-                              fit: BoxFit.cover,
-                              width: (innerRadius - borderWidth) * 2,
-                              height: (innerRadius - borderWidth) * 2,
-                            )
-                            : (_avatarUrl != null && _avatarUrl!.isNotEmpty)
-                            ? Image.network(
-                              _avatarUrl!,
-                              fit: BoxFit.cover,
-                              width: (innerRadius - borderWidth) * 2,
-                              height: (innerRadius - borderWidth) * 2,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Center(
-                                  child: Icon(
-                                    Icons.groups,
-                                    size: widget.radius * 0.8,
-                                    color: Colors.white,
-                                  ),
-                                );
-                              },
-                              loadingBuilder: (
-                                context,
-                                child,
-                                loadingProgress,
-                              ) {
-                                if (loadingProgress == null) return child;
-                                return Center(
-                                  child: CircularProgressIndicator(
-                                    value:
-                                        loadingProgress.expectedTotalBytes !=
-                                                null
-                                            ? loadingProgress
-                                                    .cumulativeBytesLoaded /
-                                                loadingProgress
-                                                    .expectedTotalBytes!
-                                            : null,
-                                    strokeWidth: 2,
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
-                                  ),
-                                );
-                              },
-                            )
-                            : Center(
-                              child: Icon(
-                                Icons.groups,
-                                size: widget.radius * 0.8,
-                                color: Colors.white,
+              child: ClipOval(
+                child:
+                    _isLoading
+                        ? Center(
+                          child: SizedBox(
+                            width: widget.radius,
+                            height: widget.radius,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
                             ),
-                  ),
+                          ),
+                        )
+                        : (_selectedImageFile != null)
+                        ? Image.file(
+                          _selectedImageFile!,
+                          fit: BoxFit.cover,
+                          width: radius * 2,
+                          height: radius * 2,
+                        )
+                        : Image.network(
+                          _avatarUrl!,
+                          fit: BoxFit.cover,
+                          width: radius * 2,
+                          height: radius * 2,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              defaultGroupAvatarAsset,
+                              fit: BoxFit.cover,
+                              width: radius * 2,
+                              height: radius * 2,
+                            );
+                          },
+                        ),
+              ),
+            )
+            : Container(
+              width: radius * 2,
+              height: radius * 2,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  defaultGroupAvatarAsset,
+                  fit: BoxFit.cover,
+                  width: radius * 2,
+                  height: radius * 2,
                 ),
               ),
             ),
-          ),
-        ),
-        // Edit button
         if (widget.allowEdit && !_isLoading)
           Positioned(
             bottom: 0,
-            right: 0,
+            right: 10,
             child: GestureDetector(
               onTap: _showImageSourceDialog,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: primaryBlue, // Fundo azul
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
-                padding: EdgeInsets.all(widget.radius * 0.15),
+                padding: EdgeInsets.all(widget.radius * 0.1),
                 child: Icon(
-                  Icons.camera_alt,
-                  size: widget.radius * 0.3,
+                  Icons.add_a_photo, // Ícone de 'mais'
+                  size: widget.radius * 0.2,
                   color: Colors.white,
                 ),
               ),
@@ -385,7 +336,6 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
   }
 }
 
-// Widget simples para exibir avatar de grupo apenas (sem edição)
 class GroupAvatarDisplay extends StatelessWidget {
   final String? avatarUrl;
   final double radius;
@@ -400,89 +350,24 @@ class GroupAvatarDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double outerRadius = radius;
-    final double borderWidth = 2;
-    final double innerRadius = outerRadius - borderWidth;
-    final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-
+    const String defaultGroupAvatarAsset = 'lib/images/avatar_group2.png';
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        width: outerRadius * 2,
-        height: outerRadius * 2,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [primaryBlue.withOpacity(0.8), primaryBlue],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Container(
-            width: innerRadius * 2,
-            height: innerRadius * 2,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: Center(
-              child: Container(
-                width: (innerRadius - borderWidth) * 2,
-                height: (innerRadius - borderWidth) * 2,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [primaryBlue.withOpacity(0.7), primaryBlue],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      child: CircleAvatar(
+        radius: radius,
+        backgroundColor: Colors.grey[300],
+        backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
+        child:
+            avatarUrl == null
+                ? ClipOval(
+                  child: Image.asset(
+                    defaultGroupAvatarAsset,
+                    fit: BoxFit.cover,
+                    width: radius * 2,
+                    height: radius * 2,
                   ),
-                ),
-                child: ClipOval(
-                  child:
-                      (avatarUrl != null && avatarUrl!.isNotEmpty)
-                          ? Image.network(
-                            avatarUrl!,
-                            fit: BoxFit.cover,
-                            width: (innerRadius - borderWidth) * 2,
-                            height: (innerRadius - borderWidth) * 2,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Center(
-                                child: Icon(
-                                  Icons.groups,
-                                  size: radius,
-                                  color: Colors.white,
-                                ),
-                              );
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: SizedBox(
-                                  width: radius * 0.6,
-                                  height: radius * 0.6,
-                                  child: const CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          )
-                          : Center(
-                            child: Icon(
-                              Icons.groups,
-                              size: radius,
-                              color: Colors.white,
-                            ),
-                          ),
-                ),
-              ),
-            ),
-          ),
-        ),
+                )
+                : null,
       ),
     );
   }

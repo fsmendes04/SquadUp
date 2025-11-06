@@ -19,7 +19,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isLoading = false;
   bool _isLoadingUserData = true;
   String _message = '';
-  bool _isSuccessMessage = false;
   Map<String, String?>? userData;
   String? _currentAvatarUrl; // Avatar atual do usuário
 
@@ -41,7 +40,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_message.isNotEmpty) {
       setState(() {
         _message = '';
-        _isSuccessMessage = false;
       });
     }
   }
@@ -85,7 +83,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         if (!avatarSuccess) {
           setState(() {
             _message = 'Erro ao fazer upload do avatar. Tente novamente.';
-            _isSuccessMessage = false;
             _isLoading = false;
           });
           return;
@@ -120,7 +117,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
           setState(() {
             _message = successMessage;
-            _isSuccessMessage = true;
           });
 
           // Recarregar dados do usuário para pegar o novo avatar
@@ -151,7 +147,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
           setState(() {
             _message = errorMessage;
-            _isSuccessMessage = false;
           });
         }
       }
@@ -159,7 +154,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         setState(() {
           _message = 'Erro inesperado. Tente novamente.';
-          _isSuccessMessage = false;
         });
       }
     } finally {
@@ -173,7 +167,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
     return PopScope(
@@ -222,9 +215,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         child: Stack(
                           children: [
-                            // Blue header
+                            // Blue header (aumentado)
                             Container(
-                              height: 200.0,
+                              height: 320.0,
                               width: double.infinity,
                               color: darkBlue,
                             ),
@@ -253,7 +246,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     child: Text(
                                       'Save',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 18,
+                                        fontSize: 22,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
@@ -264,7 +257,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                             // White card elevated
                             Positioned(
-                              top: 230.0,
+                              top: 240.0,
                               left: 15.0,
                               right: 15.0,
                               child: Material(
@@ -282,22 +275,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const SizedBox(height: 90),
+                                      const SizedBox(height: 110),
                                       Form(
                                         key: _formKey,
                                         child: Column(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              'Personal Information',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.w600,
-                                                color: darkBlue,
+                                            Center(
+                                              child: Text(
+                                                'Personal Information',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: darkBlue,
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(height: 20),
+                                            const SizedBox(height: 30),
                                             Text(
                                               'Name',
                                               style: GoogleFonts.poppins(
@@ -331,7 +326,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   borderSide: BorderSide(
-                                                    color: Colors.grey.shade300,
+                                                    color: darkBlue,
                                                   ),
                                                 ),
                                                 enabledBorder:
@@ -341,10 +336,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                             12,
                                                           ),
                                                       borderSide: BorderSide(
-                                                        color:
-                                                            Colors
-                                                                .grey
-                                                                .shade300,
+                                                        color: darkBlue,
+                                                        width: 1.5,
                                                       ),
                                                     ),
                                                 focusedBorder:
@@ -354,7 +347,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                             12,
                                                           ),
                                                       borderSide: BorderSide(
-                                                        color: primaryBlue,
+                                                        color: darkBlue,
                                                         width: 2,
                                                       ),
                                                     ),
@@ -362,7 +355,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                   borderSide: BorderSide(
-                                                    color: Colors.red.shade400,
+                                                    color: darkBlue,
                                                   ),
                                                 ),
                                                 focusedErrorBorder:
@@ -372,8 +365,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                             12,
                                                           ),
                                                       borderSide: BorderSide(
-                                                        color:
-                                                            Colors.red.shade400,
+                                                        color: darkBlue,
                                                         width: 2,
                                                       ),
                                                     ),
@@ -455,137 +447,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                 ],
                                               ),
                                             ),
-                                            if (_message.isNotEmpty) ...[
-                                              const SizedBox(height: 20),
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 12,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      _isSuccessMessage
-                                                          ? Colors.green.shade50
-                                                          : Colors.red.shade50,
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  border: Border.all(
-                                                    color:
-                                                        _isSuccessMessage
-                                                            ? Colors
-                                                                .green
-                                                                .shade200
-                                                            : Colors
-                                                                .red
-                                                                .shade200,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    Icon(
-                                                      _isSuccessMessage
-                                                          ? Icons
-                                                              .check_circle_outline
-                                                          : Icons.error_outline,
-                                                      color:
-                                                          _isSuccessMessage
-                                                              ? Colors
-                                                                  .green
-                                                                  .shade600
-                                                              : Colors
-                                                                  .red
-                                                                  .shade600,
-                                                      size: 20,
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Text(
-                                                        _message,
-                                                        style: GoogleFonts.poppins(
-                                                          color:
-                                                              _isSuccessMessage
-                                                                  ? Colors
-                                                                      .green
-                                                                      .shade700
-                                                                  : Colors
-                                                                      .red
-                                                                      .shade600,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                          fontSize: 14,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                            const SizedBox(height: 30),
+                                            const SizedBox(height: 40),
                                             SizedBox(
                                               width: double.infinity,
-                                              height: 55,
-                                              child: ElevatedButton(
-                                                onPressed:
-                                                    _isLoading
-                                                        ? null
-                                                        : _saveProfile,
+                                              child: ElevatedButton.icon(
                                                 style: ElevatedButton.styleFrom(
-                                                  backgroundColor: primaryBlue,
+                                                  backgroundColor: darkBlue,
                                                   foregroundColor: Colors.white,
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 14,
+                                                      ),
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                          15,
+                                                          10,
                                                         ),
                                                   ),
                                                   elevation: 2,
-                                                  disabledBackgroundColor:
-                                                      primaryBlue.withOpacity(
-                                                        0.6,
-                                                      ),
-                                                  shadowColor: primaryBlue
-                                                      .withOpacity(0.3),
                                                 ),
-                                                child:
-                                                    _isLoading
-                                                        ? const SizedBox(
-                                                          width: 20,
-                                                          height: 20,
-                                                          child:
-                                                              CircularProgressIndicator(
-                                                                color:
-                                                                    Colors
-                                                                        .white,
-                                                                strokeWidth: 2,
-                                                              ),
-                                                        )
-                                                        : Row(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
-                                                          children: [
-                                                            const Icon(
-                                                              Icons
-                                                                  .save_outlined,
-                                                              size: 20,
-                                                            ),
-                                                            const SizedBox(
-                                                              width: 8,
-                                                            ),
-                                                            Text(
-                                                              'Save Changes',
-                                                              style: GoogleFonts.poppins(
-                                                                fontSize: 16,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
+                                                icon: const Icon(
+                                                  Icons.lock_reset,
+                                                  size: 22,
+                                                ),
+                                                label: Text(
+                                                  'Change Password',
+                                                  style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.pushNamed(
+                                                    context,
+                                                    '/change-password',
+                                                  );
+                                                },
                                               ),
                                             ),
+                                            // ...nenhuma caixa de mensagem de erro ou sucesso...
                                           ],
                                         ),
                                       ),
@@ -596,7 +496,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             ),
                             // Avatar centralizado sobre o card
                             Positioned(
-                              top: 110.0,
+                              top: 130.0,
                               left:
                                   (MediaQuery.of(context).size.width / 2 -
                                       120.0),

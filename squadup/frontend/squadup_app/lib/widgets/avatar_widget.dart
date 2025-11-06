@@ -51,7 +51,7 @@ final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
 class _AvatarWidgetState extends State<AvatarWidget> {
   final UserService _userService = UserService();
-  String? _selectedImagePath; // Para armazenar o caminho da imagem selecionada
+  String? _selectedImagePath;
   bool _isLoading = false;
 
   @override
@@ -91,7 +91,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Escolher foto do perfil',
+                  'Select Image Source',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -171,20 +171,9 @@ class _AvatarWidgetState extends State<AvatarWidget> {
       });
 
       widget.onAvatarChanged?.call(); // Notifica que houve uma mudança pendente
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Imagem selecionada. Clique em "Save" para salvar as alterações.',
-          ),
-          backgroundColor: Colors.orange,
-          duration: Duration(seconds: 2),
-        ),
-      );
     }
   }
 
-  // Método para fazer upload do avatar selecionado (será chamado pelo EditProfileScreen)
   Future<bool> uploadSelectedAvatar() async {
     if (_selectedImagePath == null) return true; // Nada para fazer upload
 
@@ -216,7 +205,6 @@ class _AvatarWidgetState extends State<AvatarWidget> {
     }
   }
 
-  // Método para descartar mudanças pendentes
   void discardChanges() {
     if (mounted) {
       setState(() {
@@ -225,7 +213,6 @@ class _AvatarWidgetState extends State<AvatarWidget> {
     }
   }
 
-  // Verifica se há mudanças pendentes
   bool hasUnsavedChanges() {
     return _selectedImagePath != null;
   }
@@ -234,66 +221,78 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   Widget build(BuildContext context) {
     final double radius = widget.radius;
 
+    final bool hasImage =
+        (_selectedImagePath != null) ||
+        (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty);
+    const String defaultAvatarAsset = 'lib/images/avatar2.png';
     return Stack(
       children: [
-        Container(
-          width: radius * 2,
-          height: radius * 2,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
-          child: ClipOval(
-            child:
-                _isLoading
-                    ? Center(
-                      child: SizedBox(
-                        width: widget.radius,
-                        height: widget.radius,
-                        child: const CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.grey,
+        hasImage
+            ? Container(
+              width: radius * 2,
+              height: radius * 2,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: ClipOval(
+                child:
+                    _isLoading
+                        ? Center(
+                          child: SizedBox(
+                            width: widget.radius,
+                            height: widget.radius,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
                           ),
+                        )
+                        : (_selectedImagePath != null)
+                        ? Image.file(
+                          File(_selectedImagePath!),
+                          fit: BoxFit.cover,
+                          width: radius * 2,
+                          height: radius * 2,
+                        )
+                        : Image.network(
+                          widget.avatarUrl!,
+                          fit: BoxFit.cover,
+                          width: radius * 2,
+                          height: radius * 2,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              defaultAvatarAsset,
+                              fit: BoxFit.cover,
+                              width: radius * 2,
+                              height: radius * 2,
+                            );
+                          },
                         ),
-                      ),
-                    )
-                    : (_selectedImagePath != null)
-                    ? Image.file(
-                      File(_selectedImagePath!),
-                      fit: BoxFit.cover,
-                      width: radius * 2,
-                      height: radius * 2,
-                    )
-                    : (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty)
-                    ? Image.network(
-                      widget.avatarUrl!,
-                      fit: BoxFit.cover,
-                      width: radius * 2,
-                      height: radius * 2,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            Icons.person,
-                            size: widget.radius * 0.8,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    )
-                    : Center(
-                      child: Icon(
-                        Icons.person,
-                        size: widget.radius * 0.8,
-                        color: Colors.grey,
-                      ),
-                    ),
-          ),
-        ),
+              ),
+            )
+            : Container(
+              width: radius * 2,
+              height: radius * 2,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  defaultAvatarAsset,
+                  fit: BoxFit.cover,
+                  width: radius * 2,
+                  height: radius * 2,
+                ),
+              ),
+            ),
         if (widget.allowEdit && !_isLoading)
           Positioned(
             bottom: 0,
-            right: 0,
+            right: 10,
             child: GestureDetector(
               onTap: _showImageSourceDialog,
               child: Container(
@@ -304,8 +303,8 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                 ),
                 padding: EdgeInsets.all(widget.radius * 0.1),
                 child: Icon(
-                  Icons.add, // Ícone de 'mais'
-                  size: widget.radius * 0.3, // Um pouco maior para destaque
+                  Icons.add_a_photo, // Ícone de 'mais'
+                  size: widget.radius * 0.2,
                   color: Colors.white,
                 ),
               ),
@@ -316,7 +315,6 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   }
 }
 
-// Widget simples para exibir avatar apenas (sem edição)
 class UserAvatarDisplay extends StatelessWidget {
   final String? avatarUrl;
   final double radius;
@@ -331,6 +329,7 @@ class UserAvatarDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const String defaultAvatarAsset = 'lib/images/avatar2.png';
     return GestureDetector(
       onTap: onTap,
       child: CircleAvatar(
@@ -339,10 +338,13 @@ class UserAvatarDisplay extends StatelessWidget {
         backgroundImage: avatarUrl != null ? NetworkImage(avatarUrl!) : null,
         child:
             avatarUrl == null
-                ? Icon(
-                  Icons.person,
-                  size: radius * 0.8,
-                  color: Colors.grey[600],
+                ? ClipOval(
+                  child: Image.asset(
+                    defaultAvatarAsset,
+                    fit: BoxFit.cover,
+                    width: radius * 2,
+                    height: radius * 2,
+                  ),
                 )
                 : null,
       ),

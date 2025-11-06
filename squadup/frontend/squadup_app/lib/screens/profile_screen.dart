@@ -125,7 +125,7 @@ class _ProfileScreenState extends State {
                         ),
                         // White card (ajustado para não cortar)
                         Positioned(
-                          top: 140.0,
+                          top: 165.0,
                           left: 15.0,
                           right: 15.0,
                           child: Material(
@@ -134,7 +134,7 @@ class _ProfileScreenState extends State {
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24.0,
-                                vertical: 32.0,
+                                vertical: 20.0,
                               ),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16.0),
@@ -199,8 +199,8 @@ class _ProfileScreenState extends State {
                         ),
                         // Avatar
                         Positioned(
-                          top: 75.0,
-                          left: (MediaQuery.of(context).size.width / 2 - 80.0),
+                          top: 90.0,
+                          left: (MediaQuery.of(context).size.width / 2 - 85.0),
                           child: Container(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -217,7 +217,7 @@ class _ProfileScreenState extends State {
                               key: ValueKey(
                                 userData?['avatar_url'] ?? 'no-avatar',
                               ),
-                              radius: 75,
+                              radius: 80,
                               allowEdit: false,
                               avatarUrl: userData?['avatar_url'],
                             ),
@@ -263,19 +263,19 @@ class _ProfileScreenState extends State {
                               'Dinner',
                               Icons.restaurant,
                               '\$45.50',
-                              primaryBlue,
+                              primaryBlue.withValues(alpha: 0.8),
                             ),
                             _buildExpenseCard(
                               'Movies',
                               Icons.movie,
                               '\$28.00',
-                              primaryBlue,
+                              primaryBlue.withValues(alpha: 0.8),
                             ),
                             _buildExpenseCard(
                               'Gas',
                               Icons.local_gas_station,
                               '\$35.20',
-                              primaryBlue,
+                              primaryBlue.withValues(alpha: 0.8),
                             ),
                           ],
                         ),

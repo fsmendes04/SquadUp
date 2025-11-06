@@ -58,7 +58,7 @@ class _GroupCardState extends State<GroupCard> {
   bool get _isActive {
     if (widget.group.updatedAt == null) return false;
     final difference = DateTime.now().difference(widget.group.updatedAt!);
-    return difference.inHours < 24; // Ativo se teve atividade nas últimas 24h
+    return difference.inHours < 24;
   }
 
   @override
@@ -83,9 +83,12 @@ class _GroupCardState extends State<GroupCard> {
           ),
           child: Row(
             children: [
-              // Avatar do grupo
-              GroupAvatarDisplay(avatarUrl: widget.group.avatarUrl, radius: 31),
-              const SizedBox(width: 16),
+              AvatarGroupWidget(
+                groupId: widget.group.id,
+                avatarUrl: widget.group.avatarUrl,
+                radius: 33,
+              ),
+              const SizedBox(width: 20),
 
               // Group info
               Expanded(
@@ -96,7 +99,7 @@ class _GroupCardState extends State<GroupCard> {
                     Text(
                       widget.group.name,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: 19,
                         fontWeight: FontWeight.w600,
                         color: darkBlue,
                         height: 1.2,
@@ -166,8 +169,8 @@ class _GroupCardState extends State<GroupCard> {
               // Subtle arrow indicator
               Icon(
                 Icons.chevron_right_rounded,
-                size: 20,
-                color: Colors.grey[400],
+                size: 28,
+                color: Colors.grey[600],
               ),
             ],
           ),

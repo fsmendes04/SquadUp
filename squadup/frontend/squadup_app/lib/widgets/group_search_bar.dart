@@ -5,11 +5,7 @@ class GroupSearchBar extends StatefulWidget {
   final void Function(String)? onChanged;
   final void Function(bool)? onSearchingChanged;
 
-  const GroupSearchBar({
-    super.key,
-    this.onChanged,
-    this.onSearchingChanged,
-  });
+  const GroupSearchBar({super.key, this.onChanged, this.onSearchingChanged});
 
   @override
   State<GroupSearchBar> createState() => _GroupSearchBarState();
@@ -76,31 +72,26 @@ class _GroupSearchBarState extends State<GroupSearchBar> {
         controller: _controller,
         focusNode: _focusNode,
         onTap: _onTap,
-        style: GoogleFonts.poppins(
-          fontSize: 14,
-          color: darkBlue,
-        ),
+        style: GoogleFonts.poppins(fontSize: 14, color: darkBlue),
         decoration: InputDecoration(
           hintText: 'Search groups...',
           hintStyle: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 17,
             color: darkBlue,
+            fontWeight: FontWeight.w500,
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: darkBlue,
-            size: 22,
-          ),
-          suffixIcon: _searchQuery.isNotEmpty || _isSearching
-              ? IconButton(
-                  icon: Icon(
-                    _searchQuery.isNotEmpty ? Icons.clear : Icons.close,
-                    color: darkBlue,
-                    size: 20,
-                  ),
-                  onPressed: _onClose,
-                )
-              : null,
+          prefixIcon: Icon(Icons.search, color: darkBlue, size: 30),
+          suffixIcon:
+              _searchQuery.isNotEmpty || _isSearching
+                  ? IconButton(
+                    icon: Icon(
+                      _searchQuery.isNotEmpty ? Icons.clear : Icons.close,
+                      color: darkBlue,
+                      size: 28,
+                    ),
+                    onPressed: _onClose,
+                  )
+                  : null,
           filled: true,
           fillColor: Colors.transparent,
           contentPadding: const EdgeInsets.symmetric(

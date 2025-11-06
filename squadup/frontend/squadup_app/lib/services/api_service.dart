@@ -140,4 +140,9 @@ class ApiService {
   static String groupAvatar(String id) => '$groupsEndpoint/$id/avatar';
   static String groupMembers(String id) => '$groupsEndpoint/$id/members';
   static const String userGroups = '$groupsEndpoint/user';
+
+  static const String expensesEndpoint = '/expenses';
+  static String expenseById(String id) => '$expensesEndpoint/$id';
+  static String expensesByGroup(String groupId) =>
+      '$expensesEndpoint/group/$groupId';
 }

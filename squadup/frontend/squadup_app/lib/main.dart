@@ -15,6 +15,7 @@ import 'screens/create_group_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/language_screen.dart';
+import 'screens/expenses_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -68,6 +69,7 @@ class MyApp extends StatelessWidget {
             '/forgot-password': (context) => const ForgotPasswordScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/language': (context) => const LanguageScreen(),
+            '/expenses': (context) => const ExpensesScreen(),
           },
         );
       },

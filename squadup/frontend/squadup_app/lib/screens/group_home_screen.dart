@@ -110,8 +110,9 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                           _buildTopBar(),
                           const SizedBox(height: 25),
                           _buildAvatarsSection(),
-                          _buildActivitySection(),
                           _buildCalendarSection(),
+                          const SizedBox(height: 24),
+                          _buildActivitySection(),
                           _buildNavigationCards(),
                           const SizedBox(height: 32),
                         ],
@@ -125,7 +126,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
 
   Widget _buildTopBar() {
     return SizedBox(
-      height: kToolbarHeight + 16, // espaço extra para avatar maior
+      height: kToolbarHeight + 10, // espaço extra para avatar maior
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -230,13 +231,11 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         'icon': Icons.payment,
         'title': 'Despesa',
         'description': 'João pagou €45.00',
-        'time': '2h atrás',
       },
       {
         'icon': Icons.credit_card,
         'title': 'Foto',
         'description': 'Ana adicionou uma nova foto',
-        'time': 'Há 2 dias',
       },
     ];
 
@@ -259,7 +258,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 140,
+          height: 90,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: activities.length,
@@ -273,10 +272,11 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                 ),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: isSelected ? 220 : 100,
+                  width: isSelected ? 220 : 70,
+                  height: 70,
                   decoration: BoxDecoration(
                     color: darkBlue,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -286,80 +286,57 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                           _selectedActivityIndex = isSelected ? null : index;
                         });
                       },
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(12),
                         child:
                             isSelected
                                 ? Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Icon(
                                           activity['icon'] as IconData,
                                           color: Colors.white,
                                           size: 28,
                                         ),
-                                        // Só mostra o time se expandido
-                                        Text(
-                                          activity['time'] as String,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            color: Colors.white54,
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            activity['title'] as String,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      activity['title'] as String,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
+                                    const SizedBox(height: 6),
+                                    Flexible(
+                                      child: Text(
+                                        activity['description'] as String,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 12,
+                                          color: Colors.white70,
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    // Só mostra a description se expandido
-                                    Text(
-                                      activity['description'] as String,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: Colors.white70,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 )
-                                : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      activity['icon'] as IconData,
-                                      color: Colors.white,
-                                      size: 28,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    Text(
-                                      activity['title'] as String,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    // Não mostra time nem description aqui
-                                  ],
+                                : Center(
+                                  child: Icon(
+                                    activity['icon'] as IconData,
+                                    color: Colors.white,
+                                    size: 28,
+                                  ),
                                 ),
                       ),
                     ),
@@ -388,7 +365,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 24),
         Container(
           decoration: BoxDecoration(
             color: primaryBlue.withValues(alpha: 0.4),
@@ -398,7 +374,6 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Dia e data grande no canto superior esquerdo
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,7 +608,16 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () => _showFeatureSnackBar('Despesas'),
+                onTap: () async {
+                  await Navigator.pushNamed(
+                    context,
+                    '/expenses',
+                    arguments: {
+                      'groupId': widget.groupId,
+                      'groupName': widget.groupName,
+                    },
+                  );
+                },
               ),
             ),
           ],

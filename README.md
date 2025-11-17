@@ -11,7 +11,7 @@ SquadUp does it all. For real friends only.
 ## Technologies
 
 <div align="left">
-  <img src="https://skillicons.dev/icons?i=flutter,dart,nestjs,typescript,postgresql,supabase" />
+  <img src="https://skillicons.dev/icons?i=flutter,dart,nestjs,typescript,postgresql,supabase,nodejs" />
 </div>
 
 <br/>

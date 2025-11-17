@@ -316,8 +316,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                     'Enter your full name',
                                                 hintStyle: GoogleFonts.poppins(
                                                   fontSize: 16,
-                                                  color: darkBlue.withOpacity(
-                                                    0.5,
+                                                  color: darkBlue.withValues(
+                                                    alpha: 0.5,
                                                   ),
                                                 ),
                                                 filled: true,
@@ -431,8 +431,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                             fontWeight:
                                                                 FontWeight.w500,
                                                             color: darkBlue
-                                                                .withOpacity(
-                                                                  0.7,
+                                                                .withValues(
+                                                                  alpha: 0.7,
                                                                 ),
                                                           ),
                                                     ),
@@ -440,8 +440,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                                   Icon(
                                                     Icons.lock_outline,
                                                     size: 20,
-                                                    color: darkBlue.withOpacity(
-                                                      0.5,
+                                                    color: darkBlue.withValues(
+                                                      alpha: 0.5,
                                                     ),
                                                   ),
                                                 ],
@@ -509,7 +509,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.1,
+                                      ),
                                       blurRadius: 10,
                                       offset: const Offset(0, 5),
                                     ),

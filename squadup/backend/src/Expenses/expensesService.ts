@@ -20,7 +20,6 @@ export class ExpensesService {
     try {
       const { group_id, payer_id, amount, description, category, expense_date, participant_ids } = createExpenseDto;
 
-      // Validações de entrada
       if (!group_id || !payer_id) {
         throw new BadRequestException('Group ID and Payer ID are required');
       }
@@ -404,16 +403,30 @@ export class ExpensesService {
   private async validateGroupMembership(groupId: string, userId: string, token: string): Promise<void> {
     try {
       const client = this.supabaseService.getClientWithToken(token);
-      const { data: membership, error } = await client
+
+      // Debug: Log what we're checking
+      this.logger.debug(`Validating membership: groupId=${groupId}, userId=${userId}`);
+
+      // Debug: Verify token and get auth.uid()
+      const { data: { user }, error: authError } = await client.auth.getUser();
+      if (authError || !user) {
+        this.logger.error(`Token verification failed: ${authError?.message || 'User not found'}`);
+        throw new ForbiddenException('Invalid authentication token');
+      }
+      this.logger.debug(`Token auth.uid() = ${user.id}`);
+
+      const { data: memberships, error } = await client
         .from('group_members')
         .select('id')
         .eq('group_id', groupId)
-        .eq('user_id', userId)
-        .single();
+        .eq('user_id', userId);
 
-      if (error || !membership) {
+      if (error || !memberships || memberships.length === 0) {
+        this.logger.error(`Membership check failed: groupId=${groupId}, userId=${userId}, error=${error?.message}`);
         throw new ForbiddenException('User is not a member of this group');
       }
+
+      this.logger.debug(`Membership validated successfully for user ${userId} in group ${groupId}`);
     } catch (error) {
       if (error instanceof ForbiddenException) {
         throw error;

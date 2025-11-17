@@ -207,7 +207,7 @@ class _ProfileScreenState extends State {
                               border: Border.all(color: Colors.white, width: 4),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 10,
                                   offset: const Offset(0, 5),
                                 ),
@@ -340,13 +340,13 @@ class _ProfileScreenState extends State {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(7.0),
           gradient: LinearGradient(
-            colors: [primaryBlue, primaryBlue.withOpacity(0.7)],
+            colors: [primaryBlue, primaryBlue.withValues(alpha: 0.7)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: primaryBlue.withOpacity(0.3),
+              color: primaryBlue.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),

@@ -144,7 +144,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                   child: AvatarGroupWidget(
                     groupId: widget.groupId,
                     avatarUrl: _groupDetails?.avatarUrl,
-                    radius: 33,
+                    radius: 31,
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -205,7 +205,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                   children: [
                     // Avatar usando AvatarWidget (sem edição, radius menor)
                     AvatarWidget(
-                      radius: 30,
+                      radius: 28,
                       allowEdit: false,
                       avatarUrl: member.avatarUrl, // Avatar vem do backend
                       key: ValueKey(
@@ -414,7 +414,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -478,8 +478,13 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                                         hasEvent
                                             ? darkBlue
                                             : isToday
-                                            ? Colors.white.withOpacity(0.2)
-                                            : Colors.transparent,
+                                            ? primaryBlue
+                                            : const Color.fromARGB(
+                                              0,
+                                              238,
+                                              29,
+                                              29,
+                                            ),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Center(
@@ -599,7 +604,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Despesas',
+                      'Expenses',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,

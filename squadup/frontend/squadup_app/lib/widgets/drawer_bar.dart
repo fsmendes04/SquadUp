@@ -233,7 +233,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             child: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundColor: Colors.white.withValues(alpha: 0.2),
                   foregroundColor: Colors.white,
                   radius: 24,
                   child: const Icon(Icons.person_outline, size: 28),
@@ -320,7 +320,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                     });
                   },
                   activeColor: Colors.white,
-                  inactiveTrackColor: Colors.white.withOpacity(0.3),
+                  inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
                   inactiveThumbColor: Colors.grey[400],
                 ),
               ],

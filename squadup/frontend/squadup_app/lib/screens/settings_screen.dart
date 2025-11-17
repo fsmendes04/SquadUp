@@ -76,7 +76,7 @@ class SettingsScreen extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: darkBlue.withOpacity(0.8),
+          color: darkBlue.withValues(alpha: 0.8),
           letterSpacing: 1.1,
         ),
       ),
@@ -102,7 +102,7 @@ class SettingsScreen extends StatelessWidget {
             children: [
               Container(
                 decoration: BoxDecoration(
-                  color: darkBlue.withOpacity(0.08),
+                  color: darkBlue.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 padding: const EdgeInsets.all(10),
@@ -121,7 +121,7 @@ class SettingsScreen extends StatelessWidget {
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color: darkBlue.withOpacity(0.5),
+                color: darkBlue.withValues(alpha: 0.5),
                 size: 18,
               ),
             ],

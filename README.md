@@ -1,4 +1,4 @@
-# SquadUp
+# SquadUp (In Development)
 
 **SquadUp** is the only app your friend squad will ever need:  
 Split expenses, plan events, make silly bets, chat, compete in rankings, and keep the memories — all in one beautiful, fast, cross-platform app.

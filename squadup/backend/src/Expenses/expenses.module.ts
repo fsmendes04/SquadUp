@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { ExpensesController } from './expenses.controller';
-import { ExpensesService } from './expenses.service';
+import { ExpensesController } from './expensesController';
+import { ExpensesService } from './expensesService';
 import { SupabaseService } from '../Supabase/supabaseService';
 import { UserModule } from '../User/user.module';
 

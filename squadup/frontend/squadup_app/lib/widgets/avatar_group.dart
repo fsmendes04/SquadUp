@@ -1,69 +1,55 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/user_service.dart';
+import '../services/groups_service.dart';
 
-class AvatarWidget extends StatefulWidget {
+class AvatarGroupWidget extends StatefulWidget {
+  final String groupId;
+  final String? avatarUrl;
   final double radius;
   final bool allowEdit;
+  final bool deferredUpload; // novo: se true, não faz upload automático
+  final void Function(String? localPath)?
+  onImageSelected; // novo: callback com path local
   final VoidCallback? onAvatarChanged;
-  final AvatarController? controller;
-  final String? avatarUrl;
+  final bool showBlueBorder;
 
-  const AvatarWidget({
+  const AvatarGroupWidget({
     super.key,
+    required this.groupId,
+    this.avatarUrl,
     this.radius = 30,
     this.allowEdit = false,
+    this.deferredUpload = false,
+    this.onImageSelected,
     this.onAvatarChanged,
-    this.controller,
-    this.avatarUrl,
+    this.showBlueBorder = true,
   });
 
   @override
-  State<AvatarWidget> createState() => _AvatarWidgetState();
+  State<AvatarGroupWidget> createState() => _AvatarGroupWidgetState();
 }
 
-class AvatarController {
-  _AvatarWidgetState? _state;
-
-  void _attach(_AvatarWidgetState state) {
-    _state = state;
-  }
-
-  void _detach() {
-    _state = null;
-  }
-
-  Future<bool> uploadSelectedAvatar() async {
-    return await _state?.uploadSelectedAvatar() ?? true;
-  }
-
-  void discardChanges() {
-    _state?.discardChanges();
-  }
-
-  bool hasUnsavedChanges() {
-    return _state?.hasUnsavedChanges() ?? false;
-  }
-}
-
-final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-
-class _AvatarWidgetState extends State<AvatarWidget> {
-  final UserService _userService = UserService();
-  String? _selectedImagePath;
+class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
+  final GroupsService _groupsService = GroupsService();
+  String? _avatarUrl;
+  File? _selectedImageFile;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    widget.controller?._attach(this);
+    _avatarUrl = widget.avatarUrl;
   }
 
   @override
-  void dispose() {
-    widget.controller?._detach();
-    super.dispose();
+  void didUpdateWidget(AvatarGroupWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.avatarUrl != oldWidget.avatarUrl) {
+      setState(() {
+        _avatarUrl = widget.avatarUrl;
+      });
+    }
   }
 
   Future<void> _showImageSourceDialog() async {
@@ -91,7 +77,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Select Image Source',
+                  'Escolher foto do grupo',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -157,74 +143,109 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(
-      source: source,
-      maxWidth: 800,
-      maxHeight: 800,
-      imageQuality: 80,
-    );
+    try {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(
+        source: source,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 80,
+      );
 
-    if (pickedFile != null && mounted) {
-      setState(() {
-        _selectedImagePath = pickedFile.path;
-      });
-
-      widget.onAvatarChanged?.call(); // Notifica que houve uma mudança pendente
+      if (pickedFile != null && mounted) {
+        setState(() {
+          _selectedImageFile = File(pickedFile.path);
+        });
+        if (widget.deferredUpload) {
+          if (widget.onImageSelected != null) {
+            widget.onImageSelected!(pickedFile.path);
+          }
+        } else {
+          await _uploadSelectedAvatar();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao selecionar imagem: ${e.toString()}'),
+            backgroundColor: Colors.red[600],
+          ),
+        );
+      }
     }
   }
 
-  Future<bool> uploadSelectedAvatar() async {
-    if (_selectedImagePath == null) return true; // Nada para fazer upload
+  Future<void> _uploadSelectedAvatar() async {
+    if (_selectedImageFile == null) return;
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Upload do avatar e atualização do perfil
-      await _userService.updateProfileWithAvatar(
-        avatarFilePath: _selectedImagePath!,
+      final response = await _groupsService.uploadGroupAvatar(
+        groupId: widget.groupId,
+        avatarFilePath: _selectedImageFile!.path,
       );
 
-      // Notificar que o avatar foi alterado
-      widget.onAvatarChanged?.call();
+      if (response['success'] == true && response['data'] != null) {
+        final data = response['data'];
+        final newAvatarUrl = data['avatar_url'] as String?;
 
-      setState(() {
-        _selectedImagePath = null; // Limpar seleção após upload bem-sucedido
-      });
-      return true;
+        if (mounted) {
+          setState(() {
+            _avatarUrl = newAvatarUrl;
+            _selectedImageFile = null;
+            _isLoading = false;
+          });
+
+          // Callback para notificar mudança
+          if (widget.onAvatarChanged != null) {
+            widget.onAvatarChanged!();
+          }
+
+          // Mostrar sucesso
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] ?? 'Avatar atualizado com sucesso!',
+              ),
+              backgroundColor: Colors.green[600],
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } else {
+        throw Exception(response['message'] ?? 'Erro ao fazer upload');
+      }
     } catch (e) {
-      return false;
-    } finally {
       if (mounted) {
         setState(() {
+          _selectedImageFile = null;
           _isLoading = false;
         });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     }
-  }
-
-  void discardChanges() {
-    if (mounted) {
-      setState(() {
-        _selectedImagePath = null;
-      });
-    }
-  }
-
-  bool hasUnsavedChanges() {
-    return _selectedImagePath != null;
   }
 
   @override
   Widget build(BuildContext context) {
     final double radius = widget.radius;
+    final Color primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     final bool hasImage =
-        (_selectedImagePath != null) ||
-        (widget.avatarUrl != null && widget.avatarUrl!.isNotEmpty);
-    const String defaultAvatarAsset = 'lib/images/avatar2.png';
+        (_selectedImageFile != null) ||
+        (_avatarUrl != null && _avatarUrl!.isNotEmpty);
+    const String defaultGroupAvatarAsset = 'lib/images/avatar_group2.png';
     return Stack(
       children: [
         hasImage
@@ -250,21 +271,21 @@ class _AvatarWidgetState extends State<AvatarWidget> {
                             ),
                           ),
                         )
-                        : (_selectedImagePath != null)
+                        : (_selectedImageFile != null)
                         ? Image.file(
-                          File(_selectedImagePath!),
+                          _selectedImageFile!,
                           fit: BoxFit.cover,
                           width: radius * 2,
                           height: radius * 2,
                         )
                         : Image.network(
-                          widget.avatarUrl!,
+                          _avatarUrl!,
                           fit: BoxFit.cover,
                           width: radius * 2,
                           height: radius * 2,
                           errorBuilder: (context, error, stackTrace) {
                             return Image.asset(
-                              defaultAvatarAsset,
+                              defaultGroupAvatarAsset,
                               fit: BoxFit.cover,
                               width: radius * 2,
                               height: radius * 2,
@@ -282,7 +303,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
               ),
               child: ClipOval(
                 child: Image.asset(
-                  defaultAvatarAsset,
+                  defaultGroupAvatarAsset,
                   fit: BoxFit.cover,
                   width: radius * 2,
                   height: radius * 2,
@@ -315,12 +336,12 @@ class _AvatarWidgetState extends State<AvatarWidget> {
   }
 }
 
-class UserAvatarDisplay extends StatelessWidget {
+class GroupAvatarDisplay extends StatelessWidget {
   final String? avatarUrl;
   final double radius;
   final VoidCallback? onTap;
 
-  const UserAvatarDisplay({
+  const GroupAvatarDisplay({
     super.key,
     this.avatarUrl,
     this.radius = 25,
@@ -329,7 +350,7 @@ class UserAvatarDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const String defaultAvatarAsset = 'lib/images/avatar2.png';
+    const String defaultGroupAvatarAsset = 'lib/images/avatar_group2.png';
     return GestureDetector(
       onTap: onTap,
       child: CircleAvatar(
@@ -340,7 +361,7 @@ class UserAvatarDisplay extends StatelessWidget {
             avatarUrl == null
                 ? ClipOval(
                   child: Image.asset(
-                    defaultAvatarAsset,
+                    defaultGroupAvatarAsset,
                     fit: BoxFit.cover,
                     width: radius * 2,
                     height: radius * 2,

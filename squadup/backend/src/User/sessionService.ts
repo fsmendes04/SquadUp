@@ -49,7 +49,10 @@ export class SessionService {
         throw new BadRequestException('Token is required');
       }
 
-      const { error: signOutError } = await this.supabase.getClient().auth.signOut();
+      const { error: signOutError } = await this.supabase
+        .getClient()
+        .auth
+        .signOut({ scope: 'global' });
 
       if (signOutError) {
         this.logger.error('Failed to revoke session', signOutError);

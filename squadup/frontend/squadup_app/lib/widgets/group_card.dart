@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'avatar_group_widget.dart';
+import 'package:squadup_app/models/groups.dart';
+import 'avatar_group.dart';
 
 class GroupCard extends StatefulWidget {
-  final Map<String, dynamic> group;
+  final GroupWithMembers group;
   final VoidCallback onTap;
 
   const GroupCard({super.key, required this.group, required this.onTap});
@@ -34,10 +35,35 @@ class _GroupCardState extends State<GroupCard> {
     });
   }
 
+  String _getLastActivity() {
+    final now = DateTime.now();
+    final difference =
+        widget.group.updatedAt != null
+            ? now.difference(widget.group.updatedAt!)
+            : now.difference(widget.group.createdAt);
+
+    if (difference.inMinutes < 1) {
+      return 'Agora';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} min atrás';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h atrás';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d atrás';
+    } else {
+      return '${(difference.inDays / 7).floor()}sem atrás';
+    }
+  }
+
+  bool get _isActive {
+    if (widget.group.updatedAt == null) return false;
+    final difference = DateTime.now().difference(widget.group.updatedAt!);
+    return difference.inHours < 24;
+  }
+
   @override
   Widget build(BuildContext context) {
     final darkBlue = const Color(0xFF1D385F);
-    final isActive = widget.group['isActive'] as bool;
 
     return GestureDetector(
       onTapDown: _onTapDown,
@@ -47,7 +73,7 @@ class _GroupCardState extends State<GroupCard> {
         duration: const Duration(milliseconds: 150),
         transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color:
                 _isPressed
@@ -57,55 +83,94 @@ class _GroupCardState extends State<GroupCard> {
           ),
           child: Row(
             children: [
-              GroupAvatarDisplay(
-                avatarUrl: widget.group['avatar_url'],
-                radius: 31,
+              AvatarGroupWidget(
+                groupId: widget.group.id,
+                avatarUrl: widget.group.avatarUrl,
+                radius: 33,
               ),
+              const SizedBox(width: 20),
 
-              const SizedBox(width: 16),
-
-              // Group info - estilo Instagram post
+              // Group info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Nome do grupo
                     Text(
-                      widget.group['name'],
+                      widget.group.name,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: 19,
                         fontWeight: FontWeight.w600,
                         color: darkBlue,
                         height: 1.2,
                       ),
                       overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-
                     const SizedBox(height: 2),
+
+                    // Informações adicionais (membros + última atividade)
+                    Row(
+                      children: [
+                        // Número de membros
+                        Icon(
+                          Icons.people_outline,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.group.memberCount}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Última atividade
+                        Icon(
+                          Icons.access_time,
+                          size: 14,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            _getLastActivity(),
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
 
-              // Activity indicator dot
-              if (isActive)
+              // Activity indicator dot (verde se ativo nas últimas 24h)
+              if (_isActive)
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2ECC71),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF2ECC71),
                     shape: BoxShape.circle,
                   ),
                 ),
-
               const SizedBox(width: 8),
 
               // Subtle arrow indicator
               Icon(
                 Icons.chevron_right_rounded,
-                size: 20,
-                color: Colors.grey[400],
+                size: 28,
+                color: Colors.grey[600],
               ),
             ],
           ),

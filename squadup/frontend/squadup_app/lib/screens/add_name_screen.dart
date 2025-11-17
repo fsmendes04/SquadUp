@@ -13,7 +13,7 @@ class AddNameScreen extends StatefulWidget {
 class _AddNameScreenState extends State<AddNameScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _authService = AuthService();
+  final _userService = UserService();
 
   bool _isLoading = false;
   String _message = '';
@@ -22,7 +22,6 @@ class _AddNameScreenState extends State<AddNameScreen> {
   @override
   void initState() {
     super.initState();
-    // Clear error message when user types
     _nameController.addListener(_clearErrorMessage);
   }
 
@@ -54,29 +53,36 @@ class _AddNameScreenState extends State<AddNameScreen> {
 
     try {
       final name = _nameController.text.trim();
-      final success = await _authService.updateUserName(name);
+      final result = await _userService.updateProfile(
+        name: name,
+      ); // Armazene o resultado
 
-      if (success) {
+      if (result['success'] == true) {
         if (mounted) {
-          // Navigate to home screen after successful name update
           Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
-        if (mounted) {
-          setState(() {
-            _message = 'Failed to update name. Please try again.';
-            _isSuccessMessage = false;
-          });
-        }
+        throw Exception(result['message'] ?? 'Failed to update profile.');
       }
     } catch (e) {
       if (mounted) {
+        String errorMessage = 'Unexpected error. Please try again.';
+        if (e is Exception) {
+          errorMessage = e.toString().replaceFirst('Exception: ', '');
+        }
+
         setState(() {
-          _message = 'Unexpected error. Please try again.';
+          _message = errorMessage;
           _isSuccessMessage = false;
         });
       }
     } finally {
+      if (mounted && !mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      // Se não navegou, o finally deve desativar o loading.
       if (mounted) {
         setState(() {
           _isLoading = false;

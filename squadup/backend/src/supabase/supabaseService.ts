@@ -8,18 +8,19 @@ export class SupabaseService {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_KEY;
-    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseAnonKey = process.env.SUPABASE_ANON_KEY; // ✅ Anon key
+    const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // ✅ Admin key
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('SUPABASE_URL and SUPABASE_KEY must be defined in environment variables');
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error('SUPABASE_URL and SUPABASE_ANON_KEY must be defined');
     }
 
     if (!supabaseServiceRoleKey) {
-      throw new Error('SUPABASE_SERVICE_ROLE_KEY must be defined in environment variables');
+      throw new Error('SUPABASE_SERVICE_ROLE_KEY must be defined');
     }
 
-    this.client = createClient(supabaseUrl, supabaseKey);
+    this.client = createClient(supabaseUrl, supabaseAnonKey);
+
     this.adminClient = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
@@ -52,5 +53,24 @@ export class SupabaseService {
     const { data: { user }, error } = await this.client.auth.getUser(token);
     if (error || !user) throw error || new Error('User not found');
     return user;
+  }
+
+  getClientWithToken(accessToken: string): SupabaseClient {
+    const supabaseUrl = process.env.SUPABASE_URL!;
+    const anonKey = process.env.SUPABASE_ANON_KEY!;
+
+    return createClient(supabaseUrl, anonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          apikey: anonKey,
+        },
+      },
+    });
   }
 }

@@ -8,12 +8,12 @@ class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  State createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
-  final _authService = AuthService();
-  Map<String, String?>? userData;
+class _ProfileScreenState extends State {
+  final _userService = UserService();
+  Map? userData;
   bool _isLoading = true;
   bool _profileUpdated = false;
 
@@ -23,40 +23,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _loadUserData();
   }
 
-  Future<void> _loadUserData() async {
+  Future _loadUserData() async {
     try {
-      final user = await _authService.getStoredUser();
-      setState(() {
-        userData = user;
-        _isLoading = false;
-      });
+      final response = await _userService.getProfile();
+      final data = response['data'] as Map?;
+      if (mounted) {
+        setState(() {
+          userData = data;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _logout() async {
-    await _authService.logout();
-    if (mounted) {
-      Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading profile: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   String _getDisplayName() {
-    if (userData != null) {
-      if (userData!['name'] != null && userData!['name']!.isNotEmpty) {
-        return userData!['name']!;
-      }
+    if (userData?['name'] != null && userData!['name'].toString().isNotEmpty) {
+      return userData!['name'];
     }
-    return 'User';
+    return userData?['email']?.split('@')[0] ?? 'User';
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+    const darkBlue = Color.fromARGB(255, 29, 56, 95);
 
     return PopScope(
       canPop: true,
@@ -67,425 +69,379 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
       child: Scaffold(
         extendBody: true,
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child:
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    child: Column(
+        backgroundColor: Colors.grey[100],
+        body:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    Stack(
                       children: [
-                        // Top bar with back button
-                        SizedBox(
-                          height: kToolbarHeight,
+                        // Background container
+                        SizedBox(height: 350.0, width: double.infinity),
+                        // Blue header
+                        Container(
+                          height: 200.0,
+                          width: double.infinity,
+                          color: darkBlue,
+                        ),
+                        // Back and Edit buttons com padding lateral
+                        Padding(
+                          padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).padding.top + 10,
+                            left: 15,
+                            right: 15,
+                          ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Profile',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
-                                  color: darkBlue,
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back_ios,
+                                  size: 32,
                                 ),
+                                onPressed: () {
+                                  Navigator.pop(context, _profileUpdated);
+                                },
+                                color: Colors.white,
                               ),
                               IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 22),
-                                color: darkBlue,
+                                icon: const Icon(Icons.edit_outlined, size: 32),
                                 onPressed: () async {
                                   final result = await Navigator.pushNamed(
                                     context,
                                     '/edit-profile',
                                   );
-
-                                  // If profile was updated, reload user data
                                   if (result == true) {
                                     _profileUpdated = true;
                                     _loadUserData();
                                   }
                                 },
-                                tooltip: 'Edit profile',
+                                color: Colors.white,
                               ),
                             ],
                           ),
                         ),
-
-                        const SizedBox(height: 30),
-
-                        // Profile Picture and Name
-                        Column(
-                          children: [
-                            Container(
+                        // White card (ajustado para não cortar)
+                        Positioned(
+                          top: 165.0,
+                          left: 15.0,
+                          right: 15.0,
+                          child: Material(
+                            elevation: 3.0,
+                            borderRadius: BorderRadius.circular(16.0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24.0,
+                                vertical: 20.0,
+                              ),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: primaryBlue.withValues(alpha: 0.3),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 8),
+                                borderRadius: BorderRadius.circular(16.0),
+                                color: Colors.white,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(height: 90),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          _getDisplayName(),
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 20.0,
+                                            color: Colors.black87,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.group,
+                                        color: darkBlue,
+                                        size: 22,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2.0),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          userData?['email'] ?? 'No email',
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w400,
+                                            fontSize: 15.0,
+                                            color: Colors.grey[700],
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        '2', // Troque por userData?['groupsCount'] se disponível
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 17.0,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              child: AvatarWidget(
-                                radius: 60,
-                                allowEdit: false, // Apenas visualização
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              _getDisplayName(),
-                              style: GoogleFonts.poppins(
-                                fontSize: 28,
-                                fontWeight: FontWeight.w600,
-                                color: darkBlue,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              userData?['email'] ?? 'No email',
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w400,
-                                color: darkBlue.withValues(alpha: 0.7),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 40),
-
-                        // User Information Cards
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: EdgeInsets.only(
-                              bottom: kBottomNavigationBarHeight + 20,
-                            ),
-                            child: Column(
-                              children: [
-                                // App Settings
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                      ),
-                                      child: Text(
-                                        'App Settings',
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: darkBlue,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    _buildActionRow(
-                                      Icons.notifications_outlined,
-                                      'Notifications',
-                                      'Manage your notifications',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Notifications settings coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    _buildActionRow(
-                                      Icons.privacy_tip_outlined,
-                                      'Privacy',
-                                      'Privacy and security settings',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Privacy settings coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    _buildActionRow(
-                                      Icons.help_outline,
-                                      'Help & Support',
-                                      'Get help and contact support',
-                                      () {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: const Text(
-                                              'Help & Support coming soon!',
-                                            ),
-                                            backgroundColor: primaryBlue,
-                                            behavior: SnackBarBehavior.floating,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            margin: const EdgeInsets.all(16),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-
-                                const SizedBox(height: 30),
-
-                                // Logout Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                            title: Text(
-                                              'Logout',
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w600,
-                                                color: darkBlue,
-                                              ),
-                                            ),
-                                            content: Text(
-                                              'Are you sure you want to logout?',
-                                              style: GoogleFonts.poppins(
-                                                color: darkBlue.withValues(
-                                                  alpha: 0.8,
-                                                ),
-                                              ),
-                                            ),
-                                            actions: [
-                                              TextButton(
-                                                onPressed:
-                                                    () =>
-                                                        Navigator.pop(context),
-                                                child: Text(
-                                                  'Cancel',
-                                                  style: GoogleFonts.poppins(
-                                                    color: darkBlue.withValues(
-                                                      alpha: 0.7,
-                                                    ),
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ),
-                                              ElevatedButton(
-                                                onPressed: () {
-                                                  Navigator.pop(context);
-                                                  _logout();
-                                                },
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          8,
-                                                        ),
-                                                  ),
-                                                ),
-                                                child: Text(
-                                                  'Logout',
-                                                  style: GoogleFonts.poppins(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 16,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      elevation: 2,
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Icon(Icons.logout, size: 20),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Logout',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ),
                           ),
                         ),
+                        // Avatar
+                        Positioned(
+                          top: 90.0,
+                          left: (MediaQuery.of(context).size.width / 2 - 85.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 4),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: AvatarWidget(
+                              key: ValueKey(
+                                userData?['avatar_url'] ?? 'no-avatar',
+                              ),
+                              radius: 80,
+                              allowEdit: false,
+                              avatarUrl: userData?['avatar_url'],
+                            ),
+                          ),
+                        ),
+                        // ...removido, agora está dentro do card branco...
                       ],
                     ),
-                  ),
-        ),
+                    const SizedBox(height: 35.0),
+                    // Recent expenses section
+                    Padding(
+                      padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Recent Expenses',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'see all',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15.0,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 15.0),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 15.0, right: 5.0),
+                      child: SizedBox(
+                        height: 125.0,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            _buildExpenseCard(
+                              'Dinner',
+                              Icons.restaurant,
+                              '\$45.50',
+                              primaryBlue.withValues(alpha: 0.8),
+                            ),
+                            _buildExpenseCard(
+                              'Movies',
+                              Icons.movie,
+                              '\$28.00',
+                              primaryBlue.withValues(alpha: 0.8),
+                            ),
+                            _buildExpenseCard(
+                              'Gas',
+                              Icons.local_gas_station,
+                              '\$35.20',
+                              primaryBlue.withValues(alpha: 0.8),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 25.0),
+                    // Statistics section
+                    Padding(
+                      padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Statistics',
+                            style: GoogleFonts.poppins(
+                              fontSize: 17.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'this month',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15.0,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 15.0),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                      child: _buildStatisticsCard(darkBlue),
+                    ),
+                    SizedBox(height: kBottomNavigationBarHeight + 30),
+                  ],
+                ),
         bottomNavigationBar: CustomCircularNavBar(
-          currentIndex: 1, // Profile está selecionado
+          currentIndex: 1,
           onTap: (index) {
             if (index == 0) {
-              Navigator.pop(
-                context,
-                _profileUpdated,
-              ); // Volta para home with update flag
-            } else if (index == 1) {
-              // Profile - já estamos no perfil, não faz nada
+              Navigator.pop(context, _profileUpdated);
             }
           },
         ),
       ),
-    ); // End of Scaffold
-  } // End of WillPopScope
-
-  Widget _buildActionRow(
-    IconData icon,
-    String title,
-    String subtitle,
-    VoidCallback onTap,
-  ) {
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-
-    return _SettingsCard(
-      icon: icon,
-      title: title,
-      subtitle: subtitle,
-      onTap: onTap,
-      darkBlue: darkBlue,
-      primaryBlue: primaryBlue,
     );
   }
-}
 
-class _SettingsCard extends StatefulWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final Color darkBlue;
-  final Color primaryBlue;
-
-  const _SettingsCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    required this.darkBlue,
-    required this.primaryBlue,
-  });
-
-  @override
-  State<_SettingsCard> createState() => _SettingsCardState();
-}
-
-class _SettingsCardState extends State<_SettingsCard> {
-  bool _isPressed = false;
-
-  void _onTapDown(TapDownDetails details) {
-    setState(() {
-      _isPressed = true;
-    });
-  }
-
-  void _onTapUp(TapUpDetails details) {
-    setState(() {
-      _isPressed = false;
-    });
-    widget.onTap();
-  }
-
-  void _onTapCancel() {
-    setState(() {
-      _isPressed = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: _onTapCancel,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-          decoration: BoxDecoration(
-            color:
-                _isPressed
-                    ? Colors.grey.withValues(alpha: 0.05)
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+  Widget _buildExpenseCard(
+    String title,
+    IconData icon,
+    String amount,
+    Color primaryBlue,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: Container(
+        height: 100.0,
+        width: 125.0,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7.0),
+          gradient: LinearGradient(
+            colors: [primaryBlue, primaryBlue.withValues(alpha: 0.7)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
-          child: Row(
+          boxShadow: [
+            BoxShadow(
+              color: primaryBlue.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Title and subtitle (sem ícone)
-              Expanded(
-                child: Text(
-                  widget.title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: widget.darkBlue,
-                    height: 1.2,
+              Icon(icon, color: Colors.white, size: 32),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Arrow indicator
-              Icon(
-                Icons.chevron_right_rounded,
-                size: 24,
-                color: const Color.fromARGB(255, 29, 56, 95),
+                  const SizedBox(height: 4),
+                  Text(
+                    amount,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16.0,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStatisticsCard(Color primaryBlue) {
+    return Material(
+      elevation: 4.0,
+      borderRadius: BorderRadius.circular(7.0),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(7.0),
+          color: Colors.white,
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('Total Spent', '\$431.45', primaryBlue),
+                _buildStatItem('Groups', '2', primaryBlue),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('Expenses', '12', primaryBlue),
+                _buildStatItem('Avg/Day', '\$14.38', primaryBlue),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, Color primaryBlue) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.poppins(
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: primaryBlue,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 13.0,
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

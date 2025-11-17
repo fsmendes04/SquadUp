@@ -1,0 +1,12 @@
+{
+  "myGroups": "Meus Grupos",
+  "newGroup": "Novo",
+  "noGroupsFound": "Nenhum grupo encontrado",
+  "notPartOfAnyGroup": "Você ainda não faz parte de nenhum grupo",
+  "createOrJoinGroup": "Crie ou entre em um grupo para começar!",
+  "createGroup": "Criar Grupo",
+  "hiUser": "Olá, {user}!",
+  "tryAgain": "Tentar novamente",
+  "errorLoadingGroups": "Erro ao carregar grupos",
+  "logoutError": "Erro ao fazer logout"
+}

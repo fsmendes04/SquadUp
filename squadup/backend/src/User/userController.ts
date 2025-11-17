@@ -1,3 +1,4 @@
+import { ChangePasswordDto } from './dto/change-password.dto';
 import {
   Controller,
   Post,
@@ -29,6 +30,37 @@ import { GetToken } from '../common/decorators';
 
 @Controller('user')
 export class UserController {
+
+  @Put('change-password')
+  @UseGuards(AuthGuard)
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @CurrentUser() user: any
+  ) {
+    try {
+      if (changePasswordDto.newPassword !== changePasswordDto.confirmNewPassword) {
+        throw new BadRequestException('New password and confirmation do not match');
+      }
+      const result = await this.userService.changePassword(
+        user.id,
+        changePasswordDto.currentPassword,
+        changePasswordDto.newPassword
+      );
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      this.logger.error('Change password error', error.message);
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to change password',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
   private readonly logger = new Logger(UserController.name);
 
   constructor(
@@ -36,8 +68,9 @@ export class UserController {
     private readonly sessionService: SessionService,
   ) { }
 
+
   @Post('register')
-  @Throttle({ default: { limit: 6, ttl: 60000 } })
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   async register(@Body() registerDto: RegisterDto) {
     try {
       // Additional input validation
@@ -45,12 +78,16 @@ export class UserController {
         throw new BadRequestException('Email and password are required');
       }
 
+      // Validate password confirmation
+      if (registerDto.password !== registerDto.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+
       const result = await this.userService.register(
         registerDto.email,
         registerDto.password,
       );
 
-      // Don't return session data with sensitive info
       return {
         success: true,
         message: 'User registered successfully. Please check your email to confirm your account.',
@@ -126,6 +163,7 @@ export class UserController {
   async updateProfile(
     @Body() updateData: UpdateProfileDto,
     @CurrentUser() user: any,
+    @GetToken() token: string,
     @UploadedFile(
       new ParseFilePipe({
         validators: [
@@ -146,7 +184,8 @@ export class UserController {
       const result = await this.userService.updateProfile(
         updateData,
         user.id,
-        file
+        file,
+        token
       );
 
       return {
@@ -172,22 +211,22 @@ export class UserController {
     }
   }
 
+
   @Get('profile')
   @UseGuards(AuthGuard)
   @Throttle({ default: { limit: 30, ttl: 60000 } }) // 30 requests per minute
-  async getCurrentUserProfile(@CurrentUser() user: any) {
+  async getCurrentUserProfile(
+    @CurrentUser() user: any,
+    @GetToken() token: string, // <-- ADICIONAR DECORATOR PARA OBTER O TOKEN
+  ) {
     try {
-      const userData = await this.userService.getUserById(user.id);
+      const userData = await this.userService.getProfile(token);
 
       return {
         success: true,
         message: 'User retrieved successfully',
         data: {
-          id: userData.id,
-          email: userData.email,
-          user_metadata: userData.user_metadata,
-          created_at: userData.created_at,
-          updated_at: userData.updated_at
+          ...userData,
         },
       };
     } catch (error) {
@@ -200,29 +239,6 @@ export class UserController {
           message: error.message || 'Failed to retrieve profile',
         },
         statusCode,
-      );
-    }
-  }
-
-  @Post('logout')
-  @UseGuards(AuthGuard)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
-  async logout(@GetToken() token: string) {
-    try {
-      await this.userService.logout(token);
-      this.logger.log('User logged out successfully');
-      return {
-        success: true,
-        message: 'Logged out successfully',
-      };
-    } catch (error) {
-      this.logger.error('Logout error', error.message);
-      throw new HttpException(
-        {
-          success: false,
-          message: error.message || 'Logout failed',
-        },
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -249,5 +265,26 @@ export class UserController {
         error.status || HttpStatus.UNAUTHORIZED,
       );
     }
+  }
+
+  @Post('logout')
+  @UseGuards(AuthGuard)
+  async logout(@GetToken() token: string) {
+    try {
+      await this.userService.logout(token);
+      return {
+        success: true,
+        message: 'Logout successful',
+      };
+    } catch (error) {
+      this.logger.error('Logout error', error.message);
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Logout failed',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    } 
   }
 }

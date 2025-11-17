@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/login_request.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
+import '../widgets/bubble_page_route.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,17 +16,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
-
+  final _userService = UserService();
   bool _isLoading = false;
   bool _obscurePassword = true;
   String _message = '';
-  bool get _isInvalidLogin => _message == 'Invalid email or password.';
 
   @override
   void initState() {
     super.initState();
-    // Limpa a mensagem de erro quando o usuário digita
     _emailController.addListener(_clearErrorMessage);
     _passwordController.addListener(_clearErrorMessage);
   }
@@ -54,33 +52,68 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() {
       _isLoading = true;
-      _message = ''; // Limpa mensagem anterior
+      _message = '';
     });
 
     try {
-      final loginRequest = LoginRequest(
+      final response = await _userService.login(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      final response = await _authService.login(loginRequest);
+      if (response['success'] == true) {
+        if (mounted) setState(() => _message = '');
 
-      if (response.success) {
+        final profile = await _userService.getProfile();
+
+        final data = profile['data'] ?? {};
+
+        String? name = data['name'];
+
+        if ((name == null || name.toString().trim().isEmpty) &&
+            data['user_metadata'] != null) {
+          name = data['user_metadata']['name'];
+        }
+
         if (mounted) {
-          // Navigate to home screen or dashboard
-          Navigator.pushReplacementNamed(context, '/home');
+          if (name == null || name.toString().trim().isEmpty) {
+            Navigator.pushReplacementNamed(context, '/add-name');
+          } else {
+            // Bubble transition to HomeScreen
+
+            final RenderBox? buttonBox =
+                _loginButtonKey.currentContext?.findRenderObject()
+                    as RenderBox?;
+
+            final Offset bubbleCenter =
+                buttonBox != null
+                    ? buttonBox.localToGlobal(
+                      buttonBox.size.center(Offset.zero),
+                    )
+                    : (MediaQuery.of(context).size.center(Offset.zero));
+
+            Navigator.of(context).pushReplacement(
+              BubblePageRoute(
+                page: const HomeScreen(),
+
+                bubbleCenter: bubbleCenter,
+
+                bubbleColor: const Color.fromARGB(255, 17, 80, 138),
+              ),
+            );
+          }
         }
       } else {
         if (mounted) {
           setState(() {
-            _message = 'Invalid email or password.';
+            _message = response['message'] ?? 'Invalid email or password.';
           });
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _message = 'Invalid email or password.';
+          _message = 'Invalid credentials.';
         });
       }
     } finally {
@@ -91,6 +124,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+  final GlobalKey _loginButtonKey = GlobalKey();
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   left: 30.0,
                   top: 50,
                 ),
+
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -147,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           color: const Color.fromARGB(255, 130, 130, 130),
                         ),
                       ),
+
                       const SizedBox(height: 40),
 
                       SquadUpInput(
@@ -158,11 +195,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, digite seu email';
                           }
+
                           if (!RegExp(
                             r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                           ).hasMatch(value)) {
                             return 'Por favor, digite um email válido';
                           }
+
                           return null;
                         },
                       ),
@@ -178,8 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Por favor, digite sua senha';
                           }
+
                           return null;
                         },
+
                         suffixIcon: Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: IconButton(
@@ -187,8 +228,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
+
                               color: const Color.fromARGB(255, 19, 85, 146),
                             ),
+
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
@@ -198,23 +241,34 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      if (_isInvalidLogin) ...[
+                      if (_message.isNotEmpty) ...[
                         const SizedBox(height: 4),
+
                         Center(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12,
+
                               vertical: 4,
                             ),
+
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
+
                               children: [
-                                Text(
-                                  _message,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.red.shade600,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
+                                Flexible(
+                                  child: Text(
+                                    _message,
+
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.red.shade600,
+
+                                      fontWeight: FontWeight.w500,
+
+                                      fontSize: 13,
+                                    ),
+
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                               ],
@@ -223,16 +277,31 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
 
+                      const SizedBox(height: 8),
+
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: TextButton(
-                          onPressed: () {},
-                          child: Text(
-                            "Forgot Password?",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: const Color.fromARGB(255, 0, 0, 0),
-                              fontWeight: FontWeight.w400,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/forgot-password',
+                              );
+                            },
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: Text(
+                              "Forgot Password?",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: const Color.fromARGB(255, 0, 0, 0),
+                                fontWeight: FontWeight.w400,
+                              ),
                             ),
                           ),
                         ),
@@ -245,6 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: 175,
                         height: 55,
                         child: ElevatedButton(
+                          key: _loginButtonKey,
                           onPressed: _isLoading ? null : _login,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color.fromARGB(
@@ -299,9 +369,13 @@ class _LoginScreenState extends State<LoginScreen> {
                               color: Colors.black87,
                             ),
                           ),
+
                           TextButton(
                             onPressed: () {
-                              Navigator.pushNamed(context, '/register');
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/register',
+                              );
                             },
                             style: TextButton.styleFrom(
                               padding: EdgeInsets.zero,

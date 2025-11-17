@@ -126,9 +126,23 @@ class ApiService {
     options: Options(contentType: 'multipart/form-data'),
   );
 
-  static const String loginEndpoint = '/user/login';
-  static const String registerEndpoint = '/user/register';
-  static const String logoutEndpoint = '/user/logout';
-  static const String refreshTokenEndpoint = '/user/refresh';
-  static const String profileEndpoint = '/user/profile';
+  static const String userEndpoint = '/user';
+  static const String userLogin = '$userEndpoint/login';
+  static const String userRegister = '$userEndpoint/register';
+  static const String userLogout = '$userEndpoint/logout';
+  static const String userRefreshToken = '$userEndpoint/refresh';
+  static const String userProfile = '$userEndpoint/profile';
+  static const String userChangePassword = '$userEndpoint/change-password';
+
+  static const String groupsEndpoint = '/groups';
+  static const String createGroup = '/groups/create';
+  static String groupById(String id) => '$groupsEndpoint/$id';
+  static String groupAvatar(String id) => '$groupsEndpoint/$id/avatar';
+  static String groupMembers(String id) => '$groupsEndpoint/$id/members';
+  static const String userGroups = '$groupsEndpoint/user';
+
+  static const String expensesEndpoint = '/expenses';
+  static String expenseById(String id) => '$expensesEndpoint/$id';
+  static String expensesByGroup(String groupId) =>
+      '$expensesEndpoint/group/$groupId';
 }

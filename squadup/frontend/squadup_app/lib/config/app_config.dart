@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppConfig {
   AppConfig._();
 
-  static const String _devBaseUrl = 'http://localhost:3000';
+  static const String _devBaseUrl = 'http://10.0.2.2:3000';
   static const String _prodBaseUrl = 'https://api.yourapp.com';
 
   static String get baseUrl => kReleaseMode ? _prodBaseUrl : _devBaseUrl;

@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
-import '../models/create_expense_request.dart';
-import '../models/group_with_members.dart';
+import '../services/groups_service.dart';
+import '../services/user_service.dart';
+import '../models/expense.dart';
+import '../models/groups.dart';
 
 class AddExpenseScreen extends StatefulWidget {
-  final GroupWithMembers group;
-  final String currentUserId;
+  final String? groupId;
+  final String? groupName;
 
-  const AddExpenseScreen({
-    super.key,
-    required this.group,
-    required this.currentUserId,
-  });
+  const AddExpenseScreen({super.key, this.groupId, this.groupName});
 
   @override
   State<AddExpenseScreen> createState() => _AddExpenseScreenState();
@@ -24,37 +21,42 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   final ExpensesService _expensesService = ExpensesService();
+  final GroupsService _groupsService = GroupsService();
+  final UserService _userService = UserService();
 
-  String? _selectedPayerId;
-  String _selectedCategory = 'Alimentação';
-  DateTime _selectedDate = DateTime.now();
-  List<String> _selectedParticipants = [];
   bool _isLoading = false;
+  bool _isLoadingMembers = true;
+  DateTime _selectedDate = DateTime.now();
+  String _selectedCategory = 'Alimentação';
+  String? _selectedPayerId;
+  List<String> _selectedParticipantIds = [];
+  List<GroupMember> _groupMembers = [];
 
-  // Cores seguindo o padrão da GroupHomeScreen
-  final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-  final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+  late String groupId;
+  late String? groupName;
 
-  // Categorias disponíveis
-  final List<String> _categories = [
-    'Alimentação',
-    'Transporte',
-    'Hospedagem',
-    'Entretenimento',
-    'Compras',
-    'Saúde',
-    'Educação',
-    'Utilitários',
-    'Outros',
+  final Color darkBlue = const Color(0xFF1D385F);
+  final Color primaryBlue = const Color(0xFF51A3E6);
+
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'Alimentação', 'icon': Icons.restaurant, 'color': Colors.orange},
+    {'name': 'Transporte', 'icon': Icons.directions_car, 'color': Colors.blue},
+    {'name': 'Entretenimento', 'icon': Icons.movie, 'color': Colors.purple},
+    {'name': 'Compras', 'icon': Icons.shopping_bag, 'color': Colors.green},
+    {'name': 'Saúde', 'icon': Icons.local_hospital, 'color': Colors.red},
+    {'name': 'Hospedagem', 'icon': Icons.home, 'color': Colors.brown},
+    {'name': 'Educação', 'icon': Icons.school, 'color': Colors.indigo},
+    {'name': 'Outros', 'icon': Icons.receipt, 'color': Colors.grey},
   ];
 
   @override
-  void initState() {
-    super.initState();
-    // Define o usuário atual como pagador padrão
-    _selectedPayerId = widget.currentUserId;
-    // Seleciona todos os membros como participantes por padrão
-    _selectedParticipants = widget.group.members.map((m) => m.userId).toList();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+    groupId = widget.groupId ?? args?['groupId'] ?? '';
+    groupName = widget.groupName ?? args?['groupName'];
+    _loadGroupMembers();
   }
 
   @override
@@ -64,14 +66,65 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     super.dispose();
   }
 
-  Future<void> _selectDate(BuildContext context) async {
+  Future<void> _loadGroupMembers() async {
+    setState(() {
+      _isLoadingMembers = true;
+    });
+
+    try {
+      // Get current user profile to get their actual ID
+      final userProfile = await _userService.getProfile();
+      final currentUserId = userProfile['data']?['id'] as String?;
+
+      final response = await _groupsService.getGroupById(groupId);
+      if (response['success'] == true && response['data'] != null) {
+        final groupData = GroupWithMembers.fromJson(
+          response['data'] as Map<String, dynamic>,
+        );
+
+        setState(() {
+          _groupMembers = groupData.members;
+          _isLoadingMembers = false;
+
+          // Set current user as default payer if they're in the group
+          if (currentUserId != null) {
+            _selectedPayerId = currentUserId;
+          } else if (_groupMembers.isNotEmpty) {
+            _selectedPayerId = _groupMembers.first.userId;
+          }
+
+          // Select all members by default
+          _selectedParticipantIds = _groupMembers.map((m) => m.userId).toList();
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingMembers = false;
+      });
+      _showSnackBar('Erro ao carregar membros: $e', isError: true);
+    }
+  }
+
+  Future<void> _selectDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      locale: const Locale('pt', 'BR'),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: primaryBlue,
+              onPrimary: Colors.white,
+              onSurface: darkBlue,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -79,206 +132,70 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     }
   }
 
-  void _toggleParticipant(String userId) {
-    setState(() {
-      if (_selectedParticipants.contains(userId)) {
-        _selectedParticipants.remove(userId);
-      } else {
-        _selectedParticipants.add(userId);
-      }
-    });
-  }
-
-  bool _validateForm() {
-    if (!_formKey.currentState!.validate()) {
-      return false;
-    }
+  Future<void> _createExpense() async {
+    if (!_formKey.currentState!.validate()) return;
 
     if (_selectedPayerId == null) {
-      _showSnackBar('Selecione quem pagou a despesa', isError: true);
-      return false;
+      _showSnackBar('Por favor selecione quem pagou', isError: true);
+      return;
     }
 
-    if (_selectedParticipants.isEmpty) {
-      _showSnackBar('Selecione pelo menos um participante', isError: true);
-      return false;
+    if (_selectedParticipantIds.isEmpty) {
+      _showSnackBar(
+        'Por favor selecione pelo menos um participante',
+        isError: true,
+      );
+      return;
     }
-
-    return true;
-  }
-
-  Future<void> _createExpense() async {
-    if (!_validateForm()) return;
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final request = CreateExpenseRequest(
-        groupId: widget.group.id,
+      final amount = double.parse(_amountController.text.trim());
+
+      final createExpenseDto = CreateExpenseDto(
+        groupId: groupId,
         payerId: _selectedPayerId!,
-        amount: double.parse(_amountController.text.replaceAll(',', '.')),
+        amount: amount,
         description: _descriptionController.text.trim(),
         category: _selectedCategory,
-        expenseDate: _selectedDate,
-        participantIds: _selectedParticipants,
+        expenseDate: _selectedDate.toIso8601String(),
+        participantIds: _selectedParticipantIds,
       );
 
-      await _expensesService.createExpense(request);
+      await _expensesService.createExpense(createExpenseDto);
 
       if (mounted) {
-        _showSnackBar('Despesa criada com sucesso!');
-        Navigator.of(context).pop(true); // Retorna true para indicar sucesso
+        _showSnackBar('Despesa criada com sucesso!', isError: false);
+        Navigator.pop(context, true);
       }
     } catch (e) {
-      if (mounted) {
-        String errorMessage = 'Erro ao criar despesa';
-
-        // Personalizar mensagem para erro de RLS
-        if (e.toString().contains('row-level security policy')) {
-          errorMessage =
-              'Erro de permissão: Você não tem autorização para criar despesas neste grupo.\n\nSolução: Execute o script SQL "DISABLE_EXPENSES_RLS_TEMP.sql" no Supabase.';
-        } else if (e.toString().contains('Bad Request')) {
-          errorMessage =
-              'Dados inválidos. Verifique se todos os campos estão preenchidos corretamente.';
-        } else {
-          errorMessage = 'Erro ao criar despesa: ${e.toString()}';
-        }
-
-        _showSnackBar(errorMessage, isError: true);
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _isLoading = false;
+      });
+      _showSnackBar('Erro ao criar despesa: $e', isError: true);
     }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        backgroundColor: isError ? Colors.red : primaryBlue,
+        backgroundColor: isError ? Colors.red[600] : primaryBlue,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
-        duration: Duration(seconds: isError ? 8 : 3),
-        action:
-            isError
-                ? SnackBarAction(
-                  label: 'Fechar',
-                  textColor: Colors.white,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  },
-                )
-                : null,
-      ),
-    );
-  }
-
-  String _getMemberName(String userId) {
-    // Usa o userId como nome de exibição (seguindo o padrão da aplicação)
-    return userId.split('@')[0]; // Se for email, pega a parte antes do @
-  }
-
-  // Top Bar com estilo da GroupHomeScreen
-  Widget _buildTopBar() {
-    return SizedBox(
-      height: kToolbarHeight + 10,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 34),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(width: 2),
-                  // Ícone da despesa
-                  Container(
-                    width: 58,
-                    height: 58,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF2ECC71).withValues(alpha: 0.8),
-                          const Color(0xFF2ECC71),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                    ),
-                    child: Container(
-                      margin: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      child: Container(
-                        margin: const EdgeInsets.all(2),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFF2ECC71).withValues(alpha: 0.7),
-                              const Color(0xFF2ECC71),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                        child: Center(
-                          child: Icon(
-                            Icons.add_card,
-                            color: Colors.white,
-                            size: 30,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Título
-                  Expanded(
-                    child: Text(
-                      'Adicionar Despesa',
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: darkBlue,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_isLoading)
-              Container(
-                width: 34,
-                height: 34,
-                padding: const EdgeInsets.all(8),
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(primaryBlue),
-                ),
-              ),
-          ],
-        ),
+        duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
   }
@@ -290,379 +207,62 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildTopBar(),
+            // Header
+            _buildHeader(),
+
+            // Content
             Expanded(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                  children: [
-                    const SizedBox(height: 24),
-                    // Descrição
-                    _buildInputCard(
-                      title: 'Descrição',
-                      child: TextFormField(
-                        controller: _descriptionController,
-                        decoration: InputDecoration(
-                          hintText: 'Ex: Jantar no restaurante',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: primaryBlue,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Informe a descrição da despesa';
-                          }
-                          if (value.trim().length < 3) {
-                            return 'Descrição deve ter pelo menos 3 caracteres';
-                          }
-                          return null;
-                        },
-                        maxLength: 100,
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Valor
-                    _buildInputCard(
-                      title: 'Valor',
-                      child: TextFormField(
-                        controller: _amountController,
-                        decoration: InputDecoration(
-                          hintText: '0,00',
-                          prefixText: 'R\$ ',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: primaryBlue,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+[,.]?\d{0,2}'),
-                          ),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Informe o valor da despesa';
-                          }
-                          final doubleValue = double.tryParse(
-                            value.replaceAll(',', '.'),
-                          );
-                          if (doubleValue == null || doubleValue <= 0) {
-                            return 'Informe um valor válido maior que zero';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Categoria
-                    _buildInputCard(
-                      title: 'Categoria',
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: primaryBlue,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        items:
-                            _categories.map((category) {
-                              return DropdownMenuItem(
-                                value: category,
-                                child: Text(category),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedCategory = value;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Data
-                    _buildInputCard(
-                      title: 'Data da Despesa',
-                      child: InkWell(
-                        onTap: () => _selectDate(context),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.calendar_today, color: primaryBlue),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${_selectedDate.day.toString().padLeft(2, '0')}/'
-                                '${_selectedDate.month.toString().padLeft(2, '0')}/'
-                                '${_selectedDate.year}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  color: darkBlue,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Quem pagou
-                    _buildInputCard(
-                      title: 'Quem pagou?',
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedPayerId,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: primaryBlue,
-                              width: 2,
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                        ),
-                        items:
-                            widget.group.members.map((member) {
-                              return DropdownMenuItem(
-                                value: member.userId,
-                                child: Text(_getMemberName(member.userId)),
-                              );
-                            }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            _selectedPayerId = value;
-                          });
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Participantes
-                    _buildInputCard(
-                      title: 'Participantes',
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                '${_selectedParticipants.length} selecionados',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.grey[600],
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          ...widget.group.members.map((member) {
-                            final isSelected = _selectedParticipants.contains(
-                              member.userId,
-                            );
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 4),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                color:
-                                    isSelected
-                                        ? primaryBlue.withValues(alpha: 0.1)
-                                        : Colors.transparent,
-                              ),
-                              child: CheckboxListTile(
-                                title: Text(
-                                  _getMemberName(member.userId),
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w500,
-                                    color: darkBlue,
-                                  ),
-                                ),
-                                subtitle:
-                                    member.userId == widget.currentUserId
-                                        ? Text(
-                                          'Você',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            color: primaryBlue,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        )
-                                        : null,
-                                value: isSelected,
-                                onChanged: (bool? value) {
-                                  _toggleParticipant(member.userId);
-                                },
-                                controlAffinity:
-                                    ListTileControlAffinity.leading,
-                                activeColor: primaryBlue,
-                                checkColor: Colors.white,
-                              ),
-                            );
-                          }),
-                          if (_selectedParticipants.isNotEmpty) ...[
-                            const Divider(height: 24),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: primaryBlue.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.calculate,
-                                    color: primaryBlue,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Valor por pessoa: R\$ ${_amountController.text.isNotEmpty ? ((double.tryParse(_amountController.text.replaceAll(',', '.')) ?? 0.0) / _selectedParticipants.length).toStringAsFixed(2) : '0,00'}',
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      color: primaryBlue,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
+              child:
+                  _isLoadingMembers
+                      ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(color: primaryBlue),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Carregando...',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[600],
                               ),
                             ),
                           ],
-                        ],
+                        ),
+                      )
+                      : SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('Detalhes da Despesa'),
+                              const SizedBox(height: 16),
+                              _buildDescriptionField(),
+                              const SizedBox(height: 20),
+                              _buildAmountField(),
+                              const SizedBox(height: 20),
+                              _buildDateSelector(),
+                              const SizedBox(height: 28),
+                              _buildSectionTitle('Categoria'),
+                              const SizedBox(height: 16),
+                              _buildCategorySelector(),
+                              const SizedBox(height: 28),
+                              _buildSectionTitle('Quem Pagou?'),
+                              const SizedBox(height: 16),
+                              _buildPayerSelector(),
+                              const SizedBox(height: 28),
+                              _buildSectionTitle('Dividir Com'),
+                              const SizedBox(height: 16),
+                              _buildParticipantsSelector(),
+                              const SizedBox(height: 32),
+                              _buildCreateButton(),
+                              const SizedBox(height: 20),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Botões
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed:
-                                _isLoading
-                                    ? null
-                                    : () => Navigator.of(context).pop(),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: primaryBlue, width: 2),
-                              foregroundColor: primaryBlue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            child: Text(
-                              'Cancelar',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isLoading ? null : _createExpense,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primaryBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              elevation: 3,
-                              shadowColor: primaryBlue.withValues(alpha: 0.3),
-                            ),
-                            child:
-                                _isLoading
-                                    ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor:
-                                            AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                      ),
-                                    )
-                                    : Text(
-                                      'Criar Despesa',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
@@ -670,38 +270,538 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
-  // Método para criar cards de input seguindo o padrão da GroupHomeScreen
-  Widget _buildInputCard({required String title, required Widget child}) {
+  Widget _buildHeader() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+      height: kToolbarHeight,
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 28),
           ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Nova Despesa',
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: darkBlue,
               ),
             ),
-            const SizedBox(height: 12),
-            child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: darkBlue,
+      ),
+    );
+  }
+
+  Widget _buildDescriptionField() {
+    return TextFormField(
+      controller: _descriptionController,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Por favor insira uma descrição';
+        }
+        if (value.trim().length < 3) {
+          return 'A descrição deve ter pelo menos 3 caracteres';
+        }
+        return null;
+      },
+      maxLength: 100,
+      decoration: InputDecoration(
+        hintText: 'Ex: Jantar no restaurante',
+        hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
+        prefixIcon: Icon(Icons.description_outlined, color: darkBlue),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primaryBlue, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        counterText: '',
+      ),
+      style: GoogleFonts.poppins(fontSize: 14, color: darkBlue),
+    );
+  }
+
+  Widget _buildAmountField() {
+    return TextFormField(
+      controller: _amountController,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Por favor insira um valor';
+        }
+        final amount = double.tryParse(value.trim());
+        if (amount == null) {
+          return 'Valor inválido';
+        }
+        if (amount <= 0) {
+          return 'O valor deve ser maior que zero';
+        }
+        if (amount > 999999.99) {
+          return 'O valor não pode exceder 999999.99';
+        }
+        return null;
+      },
+      decoration: InputDecoration(
+        hintText: '0.00',
+        hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
+        prefixIcon: Icon(Icons.euro, color: darkBlue),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: primaryBlue, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.red, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+      ),
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: darkBlue,
+      ),
+    );
+  }
+
+  Widget _buildDateSelector() {
+    return GestureDetector(
+      onTap: _selectDate,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: darkBlue, size: 20),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Data da Despesa',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_selectedDate.day.toString().padLeft(2, '0')}/'
+                    '${_selectedDate.month.toString().padLeft(2, '0')}/'
+                    '${_selectedDate.year}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios, color: darkBlue, size: 16),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCategorySelector() {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children:
+          _categories.map((category) {
+            final isSelected = _selectedCategory == category['name'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = category['name'] as String;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isSelected
+                          ? (category['color'] as Color).withValues(alpha: 0.15)
+                          : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? category['color'] as Color
+                            : Colors.grey.withValues(alpha: 0.3),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      category['icon'] as IconData,
+                      color:
+                          isSelected
+                              ? category['color'] as Color
+                              : Colors.grey[600],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      category['name'] as String,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color:
+                            isSelected
+                                ? category['color'] as Color
+                                : Colors.grey[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildPayerSelector() {
+    if (_groupMembers.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Text(
+          'Nenhum membro encontrado',
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return Column(
+      children:
+          _groupMembers.map((member) {
+            final isSelected = _selectedPayerId == member.userId;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedPayerId = member.userId;
+                });
+              },
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color:
+                      isSelected
+                          ? primaryBlue.withValues(alpha: 0.1)
+                          : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? primaryBlue
+                            : Colors.grey.withValues(alpha: 0.3),
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 20,
+                      backgroundColor:
+                          isSelected ? primaryBlue : Colors.grey[300],
+                      backgroundImage:
+                          member.avatarUrl != null
+                              ? NetworkImage(member.avatarUrl!)
+                              : null,
+                      child:
+                          member.avatarUrl == null
+                              ? Text(
+                                (member.name?.isNotEmpty ?? false)
+                                    ? member.name![0].toUpperCase()
+                                    : member.userId[0].toUpperCase(),
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              )
+                              : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        member.name ?? member.userId,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected ? primaryBlue : darkBlue,
+                        ),
+                      ),
+                    ),
+                    if (isSelected)
+                      Icon(Icons.check_circle, color: primaryBlue, size: 24)
+                    else
+                      Icon(
+                        Icons.radio_button_unchecked,
+                        color: Colors.grey[400],
+                        size: 24,
+                      ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+    );
+  }
+
+  Widget _buildParticipantsSelector() {
+    if (_groupMembers.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Text(
+          'Nenhum membro encontrado',
+          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        // Select All / Deselect All
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              if (_selectedParticipantIds.length == _groupMembers.length) {
+                _selectedParticipantIds.clear();
+              } else {
+                _selectedParticipantIds =
+                    _groupMembers.map((m) => m.userId).toList();
+              }
+            });
+          },
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: primaryBlue.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: primaryBlue.withValues(alpha: 0.3),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.group, color: primaryBlue, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _selectedParticipantIds.length == _groupMembers.length
+                        ? 'Desmarcar Todos'
+                        : 'Selecionar Todos',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: primaryBlue,
+                    ),
+                  ),
+                ),
+                Icon(
+                  _selectedParticipantIds.length == _groupMembers.length
+                      ? Icons.check_box
+                      : Icons.check_box_outline_blank,
+                  color: primaryBlue,
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Individual members
+        ..._groupMembers.map((member) {
+          final isSelected = _selectedParticipantIds.contains(member.userId);
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                if (isSelected) {
+                  _selectedParticipantIds.remove(member.userId);
+                } else {
+                  _selectedParticipantIds.add(member.userId);
+                }
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? primaryBlue.withValues(alpha: 0.1)
+                        : Colors.grey[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color:
+                      isSelected
+                          ? primaryBlue
+                          : Colors.grey.withValues(alpha: 0.3),
+                  width: isSelected ? 2 : 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor:
+                        isSelected ? primaryBlue : Colors.grey[300],
+                    backgroundImage:
+                        member.avatarUrl != null
+                            ? NetworkImage(member.avatarUrl!)
+                            : null,
+                    child:
+                        member.avatarUrl == null
+                            ? Text(
+                              (member.name?.isNotEmpty ?? false)
+                                  ? member.name![0].toUpperCase()
+                                  : member.userId[0].toUpperCase(),
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            )
+                            : null,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      member.name ?? member.userId,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight:
+                            isSelected ? FontWeight.w600 : FontWeight.w500,
+                        color: isSelected ? primaryBlue : darkBlue,
+                      ),
+                    ),
+                  ),
+                  if (isSelected)
+                    Icon(Icons.check_box, color: primaryBlue, size: 24)
+                  else
+                    Icon(
+                      Icons.check_box_outline_blank,
+                      color: Colors.grey[400],
+                      size: 24,
+                    ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildCreateButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _createExpense,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryBlue,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 0,
+          disabledBackgroundColor: primaryBlue.withValues(alpha: 0.5),
+        ),
+        child:
+            _isLoading
+                ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                : Text(
+                  'Add expense',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
       ),
     );
   }

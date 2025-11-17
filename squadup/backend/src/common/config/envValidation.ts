@@ -11,8 +11,8 @@ export class EnvironmentVariables {
   @IsUrl({ require_tld: false }, { message: 'SUPABASE_URL must be a valid URL' })
   SUPABASE_URL: string;
 
-  @IsString({ message: 'SUPABASE_KEY is required' })
-  SUPABASE_KEY: string;
+  @IsString({ message: 'SUPABASE_ANON_KEY is required' })
+  SUPABASE_ANON_KEY: string;
 
   @IsString({ message: 'SUPABASE_SERVICE_ROLE_KEY is required' })
   SUPABASE_SERVICE_ROLE_KEY: string;

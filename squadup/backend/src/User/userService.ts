@@ -23,6 +23,105 @@ export class UserService {
     private readonly sessionService: SessionService
   ) { }
 
+  async getUserByEmail(email: string) {
+    try {
+      const adminClient = this.supabase.getAdminClient();
+      const { data: profile, error } = await adminClient
+        .from('profiles')
+        .select('*')
+        .ilike('email', email.trim().toLowerCase())
+        .maybeSingle();
+
+      if (error) {
+        this.logger.error('Erro ao buscar perfil por email', error.message);
+        throw new BadRequestException('Erro ao buscar usuário por email');
+      }
+      if (!profile) {
+        throw new BadRequestException('Usuário não encontrado com este email');
+      }
+      return this.sanitizeUserData(profile);
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Erro inesperado ao buscar usuário por email', error);
+      throw new BadRequestException('Erro ao buscar usuário por email');
+    }
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<any> {
+    const user = await this.getUserById(userId);
+
+    const { error: signInError } = await this.supabase.getClient().auth.signInWithPassword({
+      email: user.email,
+      password: currentPassword,
+    });
+    if (signInError) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    if (!this.isStrongPassword(newPassword)) {
+      throw new BadRequestException(
+        'Password must be at least 8 characters and contain uppercase, lowercase, number and special character'
+      );
+    }
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('New password must be different from the current password');
+    }
+
+    const { error } = await this.supabase.getClient().auth.updateUser({
+      password: newPassword,
+    });
+    if (error) {
+      throw new BadRequestException('Failed to update password');
+    }
+
+    this.logger.log(`Password changed for user: ${userId}`);
+    return { success: true, message: 'Password updated successfully' };
+  }
+
+  async getProfile(accessToken: string) {
+    try {
+      if (!accessToken) {
+        throw new UnauthorizedException('Access token is required');
+      }
+
+      const userClient = this.supabase.getClientWithToken(accessToken);
+
+      const user = await this.getUserFromToken(accessToken);
+
+      const { data: profileData, error: profileError } = await userClient
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        this.logger.warn(`Failed to fetch profile for user ${user.id}`, profileError.message);
+      }
+
+      const combinedData = {
+        id: user.id,
+        email: user.email,
+        user_metadata: user.user_metadata,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+        ...profileData,
+      };
+
+      this.logger.log(`Profile retrieved for user: ${user.id}`);
+      return this.sanitizeUserData(combinedData);
+
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error('Error fetching user profile', error);
+      throw new BadRequestException('Unable to fetch user profile');
+    }
+  }
+
+
   async register(email: string, password: string) {
     try {
       if (!this.isValidEmail(email)) {
@@ -33,6 +132,15 @@ export class UserService {
         throw new BadRequestException(
           'Password must be at least 8 characters and contain uppercase, lowercase, number and special character'
         );
+      }
+
+      try {
+        await this.getUserByEmail(email);
+        throw new BadRequestException('Account already exists with this email');
+      } catch (err) {
+        if (!(err instanceof BadRequestException && err.message === 'Usuário não encontrado com este email')) {
+          throw err;
+        }
       }
 
       const { data, error } = await this.supabase.getClient().auth.signUp({
@@ -65,12 +173,14 @@ export class UserService {
   async updateProfile(
     updateData: UpdateProfileDto,
     userId: string,
-    avatarFile?: Express.Multer.File
+    avatarFile?: Express.Multer.File,
+    accessToken?: string
   ) {
-
     try {
-      const updatePayload: any = {};
+      this.logger.log(`Token recebido para updateProfile: ${accessToken}`);
+      const updatePayload: Record<string, any> = {};
 
+      // --- Validação e sanitização do nome ---
       if (updateData.name !== undefined) {
         const sanitizedName = this.sanitizeString(updateData.name);
 
@@ -81,6 +191,7 @@ export class UserService {
         updatePayload.name = sanitizedName || null;
       }
 
+      // --- Validação do avatar URL ---
       if (updateData.avatar_url !== undefined && !avatarFile) {
         if (!this.isValidAvatarUrl(updateData.avatar_url, userId)) {
           throw new BadRequestException('Invalid avatar URL');
@@ -88,27 +199,105 @@ export class UserService {
         updatePayload.avatar_url = updateData.avatar_url;
       }
 
+      // --- Upload de ficheiro de avatar ---
       if (avatarFile) {
         this.validateAvatarFile(avatarFile);
-        await this.handleAvatarUpdate(userId, avatarFile, updatePayload);
+        await this.handleAvatarUpdate(userId, avatarFile, updatePayload, accessToken);
       }
 
+      // --- Nenhum campo válido para atualizar ---
       if (Object.keys(updatePayload).length === 0) {
         throw new BadRequestException('No valid fields to update');
       }
 
-      const adminClient = this.supabase.getAdminClient();
-      const { data, error } = await adminClient.auth.admin.updateUserById(userId, {
-        user_metadata: updatePayload,
-      });
+      // --- Atualização através do Supabase (RLS) ---
+      let userClient;
+      if (accessToken) {
+        try {
+          try {
+            const tokenUser = await this.supabase.verifyToken(accessToken);
+            if (tokenUser.id !== userId) {
+              this.logger.warn(`Token user (${tokenUser.id}) does not match target user (${userId})`);
+            }
+          } catch (verifyErr) {
+            this.logger.warn('Could not verify access token for RLS update', verifyErr as Error);
+          }
 
-      if (error) {
-        this.logger.error(`Profile update failed for user: ${userId}`, error.message);
-        throw new BadRequestException('Unable to update profile');
+          userClient = this.supabase.getClientWithToken(accessToken);
+          const profileUpdate: Record<string, any> = {};
+
+          if ('name' in updatePayload) {
+            profileUpdate.name = updatePayload.name ?? null;
+          }
+          if ('avatar_url' in updatePayload) {
+            profileUpdate.avatar_url = updatePayload.avatar_url ?? null;
+          }
+
+          if (Object.keys(profileUpdate).length > 0) {
+            profileUpdate.updated_at = new Date().toISOString();
+
+            // Verifica se o perfil já existe
+            const { data: existingRow, error: selectErr } = await userClient
+              .from('profiles')
+              .select('id')
+              .eq('id', userId)
+              .maybeSingle();
+
+            if (selectErr) {
+              this.logger.warn('profiles existence check failed', selectErr.message);
+            }
+
+            // Se não existir, cria o perfil
+            if (!existingRow) {
+              const { error: insertErr } = await userClient
+                .from('profiles')
+                .insert({ id: userId })
+                .single();
+              if (insertErr) {
+                this.logger.warn('profiles insert via RLS failed', insertErr.message);
+              }
+            }
+
+            // Atualiza o perfil
+            const { error: profileError } = await userClient
+              .from('profiles')
+              .update(profileUpdate)
+              .eq('id', userId);
+
+            if (profileError) {
+              this.logger.warn('Profiles table update via RLS failed', {
+                code: (profileError as any).code,
+                message: profileError.message,
+                details: (profileError as any).details,
+                hint: (profileError as any).hint,
+              });
+            }
+          }
+        } catch (profilesErr) {
+          this.logger.warn('Unexpected error updating profiles table via RLS', profilesErr as Error);
+        }
       }
 
-      this.logger.log(`Profile updated successfully for user: ${userId}`);
-      return this.sanitizeUserData(data.user);
+      // --- Busca e retorna o perfil atualizado ---
+      if (!userClient && accessToken) {
+        userClient = this.supabase.getClientWithToken(accessToken);
+      }
+      if (userClient) {
+        const { data: updatedUser, error: fetchErr } = await userClient
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+
+        if (fetchErr) {
+          this.logger.warn('Failed to fetch updated user profile', fetchErr.message);
+          throw new BadRequestException('Could not retrieve updated profile');
+        }
+
+        this.logger.log(`Profiles updated successfully for user: ${userId}`);
+        // Este retorno devolve o objeto da tabela 'profiles' (com o nome)
+        return this.sanitizeUserData(updatedUser);
+      }
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
@@ -117,6 +306,7 @@ export class UserService {
       throw new BadRequestException('Profile update failed');
     }
   }
+
 
   async login(email: string, password: string) {
     try {
@@ -190,7 +380,7 @@ export class UserService {
     }
   }
 
-  async uploadAvatar(file: Express.Multer.File, userId: string): Promise<string> {
+  async uploadAvatar(file: Express.Multer.File, userId: string, accessToken?: string): Promise<string> {
     try {
       const fileExtension = file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
 
@@ -204,8 +394,12 @@ export class UserService {
       const fileName = `avatar_${timestamp}_${randomStr}.${fileExtension}`;
       const filePath = `${userId}/${fileName}`;
 
-      const { error } = await this.supabase.getClient().storage
-        .from('user-uploads')
+      const storageClient = accessToken 
+        ? this.supabase.getClientWithToken(accessToken)
+        : this.supabase.getClient();
+
+      const { error } = await storageClient.storage
+        .from('avatars')
         .upload(filePath, file.buffer, {
           contentType: file.mimetype,
           upsert: false,
@@ -217,8 +411,8 @@ export class UserService {
         throw new BadRequestException('Failed to upload avatar');
       }
 
-      const { data: publicUrlData } = this.supabase.getClient().storage
-        .from('user-uploads')
+      const { data: publicUrlData } = storageClient.storage
+        .from('avatars')
         .getPublicUrl(filePath);
 
       return publicUrlData.publicUrl;
@@ -234,14 +428,24 @@ export class UserService {
   private async handleAvatarUpdate(
     userId: string,
     avatarFile: Express.Multer.File,
-    updatePayload: any
+    updatePayload: any,
+    accessToken?: string
   ): Promise<void> {
     try {
-      const adminClient = this.supabase.getAdminClient();
-      const { data: currentUser, error: getUserError } = await adminClient.auth.admin.getUserById(userId);
+      // Buscar o avatar atual da tabela profiles
+      const profileClient = accessToken 
+        ? this.supabase.getClientWithToken(accessToken)
+        : this.supabase.getAdminClient();
+      
+      const { data: profileData, error: profileError } = await profileClient
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .maybeSingle();
 
-      if (!getUserError && currentUser?.user?.user_metadata?.avatar_url) {
-        const currentAvatarUrl = currentUser.user.user_metadata.avatar_url;
+      // Se existe um avatar antigo, removê-lo do storage
+      if (!profileError && profileData?.avatar_url) {
+        const currentAvatarUrl = profileData.avatar_url;
 
         try {
           const urlObj = new URL(currentAvatarUrl);
@@ -251,16 +455,20 @@ export class UserService {
 
           if (userIdFromPath === userId) {
             const oldFilePath = `${userId}/${fileName}`;
-            await this.supabase.getClient().storage
-              .from('user-uploads')
+            const storageClient = accessToken 
+              ? this.supabase.getClientWithToken(accessToken)
+              : this.supabase.getClient();
+            await storageClient.storage
+              .from('avatars')
               .remove([oldFilePath]);
+            this.logger.log(`Old avatar removed: ${oldFilePath}`);
           }
         } catch (deleteErr) {
           this.logger.warn('Could not delete old avatar', deleteErr);
         }
       }
 
-      const avatarUrl = await this.uploadAvatar(avatarFile, userId);
+      const avatarUrl = await this.uploadAvatar(avatarFile, userId, accessToken);
       updatePayload.avatar_url = avatarUrl;
     } catch (error) {
       this.logger.error('Avatar update handling failed', error);

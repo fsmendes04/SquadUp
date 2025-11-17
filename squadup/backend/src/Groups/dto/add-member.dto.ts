@@ -1,7 +1,8 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
 
 export class AddMemberDto {
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'User ID is required' })
+  @IsUUID('4', { message: 'User ID must be a valid UUID' })
   userId: string;
 }

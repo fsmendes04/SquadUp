@@ -64,7 +64,7 @@ class Expense {
       'amount': amount,
       'description': description,
       'category': category,
-      'expense_date': expenseDate.toIso8601String().split('T')[0],
+      'expense_date': expenseDate.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'deleted_at': deletedAt?.toIso8601String(),
@@ -125,5 +125,89 @@ class ExpensePayer {
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'email': email};
+  }
+}
+
+class CreateExpenseDto {
+  final String groupId;
+  final String payerId;
+  final double amount;
+  final String description;
+  final String category;
+  final String expenseDate;
+  final List<String> participantIds;
+
+  CreateExpenseDto({
+    required this.groupId,
+    required this.payerId,
+    required this.amount,
+    required this.description,
+    required this.category,
+    required this.expenseDate,
+    required this.participantIds,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'group_id': groupId,
+      'payer_id': payerId,
+      'amount': amount,
+      'description': description,
+      'category': category,
+      'expense_date': expenseDate,
+      'participant_ids': participantIds,
+    };
+  }
+}
+
+class UpdateExpenseDto {
+  final double? amount;
+  final String? description;
+  final String? category;
+  final String? expenseDate;
+  final List<String>? participantIds;
+
+  UpdateExpenseDto({
+    this.amount,
+    this.description,
+    this.category,
+    this.expenseDate,
+    this.participantIds,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {};
+    if (amount != null) data['amount'] = amount;
+    if (description != null) data['description'] = description;
+    if (category != null) data['category'] = category;
+    if (expenseDate != null) data['expense_date'] = expenseDate;
+    if (participantIds != null) data['participant_ids'] = participantIds;
+    return data;
+  }
+}
+
+class FilterExpensesDto {
+  final String? payerId;
+  final String? participantId;
+  final String? startDate;
+  final String? endDate;
+  final String? category;
+
+  FilterExpensesDto({
+    this.payerId,
+    this.participantId,
+    this.startDate,
+    this.endDate,
+    this.category,
+  });
+
+  Map<String, dynamic> toQueryParameters() {
+    final Map<String, dynamic> params = {};
+    if (payerId != null) params['payer_id'] = payerId;
+    if (participantId != null) params['participant_id'] = participantId;
+    if (startDate != null) params['start_date'] = startDate;
+    if (endDate != null) params['end_date'] = endDate;
+    if (category != null) params['category'] = category;
+    return params;
   }
 }

@@ -25,13 +25,29 @@ class _ProfileScreenState extends State {
 
   Future _loadUserData() async {
     try {
-      final response = await _userService.getProfile();
-      final data = response['data'] as Map?;
-      if (mounted) {
-        setState(() {
-          userData = data;
-          _isLoading = false;
-        });
+      final cachedData = await _userService.getProfileFromStorage();
+
+      if (cachedData != null) {
+        if (mounted) {
+          setState(() {
+            userData = cachedData;
+            _isLoading = false;
+          });
+        }
+      } else {
+        final response = await _userService.getProfile();
+        final data = response['data'] as Map?;
+
+        if (data != null) {
+          await _userService.getProfileFromStorage(); // This will trigger save
+        }
+
+        if (mounted) {
+          setState(() {
+            userData = data;
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {

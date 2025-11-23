@@ -112,6 +112,26 @@ class ExpensesService {
     }
   }
 
+  /// Get group balance - who owes and who is owed
+  Future<List<Map<String, dynamic>>> getUserBalances(String groupId) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('Usuário não autenticado. Faça login novamente.');
+    }
+
+    try {
+      final response = await _apiService.get(ApiService.groupBalance(groupId));
+
+      final result = _handleResponse(response);
+      final List<dynamic> balancesData = result['data'] as List<dynamic>;
+
+      return balancesData
+          .map((balance) => balance as Map<String, dynamic>)
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Map<String, dynamic> _handleResponse(Response response) {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return response.data as Map<String, dynamic>;

@@ -46,15 +46,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _loadUserData() async {
     try {
-      final response = await _userService.getProfile();
-      final user = response['data'] as Map<String, dynamic>?;
+      final cachedData = await _userService.getProfileFromStorage();
 
-      setState(() {
-        userData = user?.map((key, value) => MapEntry(key, value?.toString()));
-        _currentAvatarUrl = user?['avatar_url']; // Armazena avatar atual
-        _nameController.text = user?['name'] ?? '';
-        _isLoadingUserData = false;
-      });
+      if (cachedData != null) {
+        setState(() {
+          userData = cachedData.map(
+            (key, value) => MapEntry(key, value?.toString()),
+          );
+          _currentAvatarUrl = cachedData['avatar_url'];
+          _nameController.text = cachedData['name'] ?? '';
+          _isLoadingUserData = false;
+        });
+      } else {
+        final response = await _userService.getProfile();
+        final user = response['data'] as Map<String, dynamic>?;
+
+        setState(() {
+          userData = user?.map(
+            (key, value) => MapEntry(key, value?.toString()),
+          );
+          _currentAvatarUrl = user?['avatar_url'];
+          _nameController.text = user?['name'] ?? '';
+          _isLoadingUserData = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _isLoadingUserData = false;

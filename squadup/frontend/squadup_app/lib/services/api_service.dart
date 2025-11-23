@@ -25,13 +25,39 @@ class ApiService {
   void _setupInterceptors() {
     if (AppConfig.enableApiLogs) {
       _dio.interceptors.add(
-        LogInterceptor(
-          requestBody: true,
-          responseBody: true,
-          error: true,
-          requestHeader: false,
-          responseHeader: false,
-          logPrint: (object) => _log(object),
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            final data = options.data;
+            String logData = '';
+            if (data is Map) {
+              final maskedData = Map<String, dynamic>.from(data);
+              if (maskedData.containsKey('password')) {
+                maskedData['password'] = '***';
+              }
+              if (maskedData.containsKey('currentPassword')) {
+                maskedData['currentPassword'] = '***';
+              }
+              if (maskedData.containsKey('newPassword')) {
+                maskedData['newPassword'] = '***';
+              }
+              if (maskedData.containsKey('confirmPassword')) {
+                maskedData['confirmPassword'] = '***';
+              }
+              if (maskedData.containsKey('confirmNewPassword')) {
+                maskedData['confirmNewPassword'] = '***';
+              }
+              logData = maskedData.toString();
+            }
+            _log('➡️ ${options.method} ${options.path}');
+            if (logData.isNotEmpty) {
+              _log('📦 Data: $logData');
+            }
+            return handler.next(options);
+          },
+          onResponse: (response, handler) {
+            _log('✅ ${response.statusCode} ${response.requestOptions.path}');
+            return handler.next(response);
+          },
         ),
       );
     }
@@ -145,4 +171,6 @@ class ApiService {
   static String expenseById(String id) => '$expensesEndpoint/$id';
   static String expensesByGroup(String groupId) =>
       '$expensesEndpoint/group/$groupId';
+  static String groupBalance(String groupId) =>
+      '$expensesEndpoint/group/$groupId/balance';
 }

@@ -61,6 +61,34 @@ export class ExpensesController {
     }
   }
 
+  @Get('group/:groupId/balance')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getGroupBalance(
+    @Param('groupId') groupId: string,
+    @CurrentUser() user: any,
+    @GetToken() token: string,
+  ) {
+    try {
+      const balance = await this.expensesService.getGroupBalance(groupId, user.id, token);
+
+      return {
+        success: true,
+        message: 'Group balance retrieved successfully',
+        data: balance,
+      };
+    } catch (error) {
+      this.logger.error('Error fetching group balance', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to fetch group balance',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   @Get('group/:groupId')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async getExpensesByGroup(

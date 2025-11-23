@@ -1,18 +1,21 @@
 import 'package:dio/dio.dart';
 import 'api_service.dart';
+import 'storage_service.dart';
 
 class UserService {
   final ApiService _apiService;
+  late final StorageService _storageService;
 
-  UserService({ApiService? apiService})
-    : _apiService = apiService ?? ApiService();
+  UserService({ApiService? apiService, StorageService? storageService})
+    : _apiService = apiService ?? ApiService() {
+    _storageService = storageService ?? StorageService();
+  }
 
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
     required String confirmPassword,
   }) async {
-    // Validação local antes de enviar para o backend
     if (password != confirmPassword) {
       throw Exception('Passwords do not match');
     }
@@ -43,9 +46,27 @@ class UserService {
 
       final result = _handleResponse(response);
 
-      // Automatically set auth token if login successful
-      if (result['data']?['access_token'] != null) {
-        _apiService.setAuthToken(result['data']['access_token']);
+      final accessToken = result['data']?['access_token'];
+      if (result['success'] == true && accessToken != null) {
+        _apiService.setAuthToken(accessToken);
+        await _storageService.saveAccessToken(accessToken);
+
+        if (result['data']?['refresh_token'] != null) {
+          await _storageService.saveRefreshToken(
+            result['data']['refresh_token'],
+          );
+        }
+
+        try {
+          final profileResponse = await getProfile();
+          if (profileResponse['data'] != null) {
+            await _storageService.saveUserProfile(profileResponse['data']);
+          }
+        } catch (e) {
+          if (result['data']?['user'] != null) {
+            await _storageService.saveUserProfile(result['data']['user']);
+          }
+        }
       }
 
       return result;
@@ -54,7 +75,7 @@ class UserService {
     }
   }
 
-    Future<Map<String, dynamic>> changePassword({
+  Future<Map<String, dynamic>> changePassword({
     required String currentPassword,
     required String newPassword,
     required String confirmNewPassword,
@@ -86,6 +107,7 @@ class UserService {
       final result = _handleResponse(response);
 
       _apiService.removeAuthToken();
+      await _storageService.clearUserData();
 
       return result;
     } on DioException catch (e) {
@@ -123,6 +145,10 @@ class UserService {
     }
   }
 
+  Future<Map<String, dynamic>?> getProfileFromStorage() async {
+    return await _storageService.getUserProfile();
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     String? name,
     String? avatarUrl,
@@ -147,7 +173,20 @@ class UserService {
         ApiService.userProfile,
         data: data,
       );
-      return _handleResponse(response);
+      final result = _handleResponse(response);
+
+      try {
+        final profileResponse = await getProfile();
+        if (profileResponse['data'] != null) {
+          await _storageService.saveUserProfile(profileResponse['data']);
+        }
+      } catch (e) {
+        if (result['data'] != null) {
+          await _storageService.saveUserProfile(result['data']);
+        }
+      }
+
+      return result;
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -178,7 +217,20 @@ class UserService {
         ApiService.userProfile,
         data: formData,
       );
-      return _handleResponse(response);
+      final result = _handleResponse(response);
+
+      try {
+        final profileResponse = await getProfile();
+        if (profileResponse['data'] != null) {
+          await _storageService.saveUserProfile(profileResponse['data']);
+        }
+      } catch (e) {
+        if (result['data'] != null) {
+          await _storageService.saveUserProfile(result['data']);
+        }
+      }
+
+      return result;
     } on DioException catch (e) {
       throw _handleError(e);
     }

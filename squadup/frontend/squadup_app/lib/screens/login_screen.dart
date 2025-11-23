@@ -64,23 +64,23 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response['success'] == true) {
         if (mounted) setState(() => _message = '');
 
-        final profile = await _userService.getProfile();
+        await Future.delayed(const Duration(milliseconds: 500));
 
-        final data = profile['data'] ?? {};
+        Map<String, dynamic> data =
+            await _userService.getProfileFromStorage() ?? {};
 
         String? name = data['name'];
-
-        if ((name == null || name.toString().trim().isEmpty) &&
-            data['user_metadata'] != null) {
-          name = data['user_metadata']['name'];
+        if (name == null || name.toString().trim().isEmpty) {
+          if (data['user_metadata'] != null &&
+              data['user_metadata']['name'] != null) {
+            name = data['user_metadata']['name'];
+          }
         }
 
         if (mounted) {
           if (name == null || name.toString().trim().isEmpty) {
             Navigator.pushReplacementNamed(context, '/add-name');
           } else {
-            // Bubble transition to HomeScreen
-
             final RenderBox? buttonBox =
                 _loginButtonKey.currentContext?.findRenderObject()
                     as RenderBox?;

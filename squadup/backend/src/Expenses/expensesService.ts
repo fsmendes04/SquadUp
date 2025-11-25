@@ -4,7 +4,7 @@ import { GroupsService } from '../Groups/groupsService';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FilterExpensesDto } from './dto/filter-expenses.dto';
-import { Expense, ExpenseWithParticipants, ExpenseParticipant } from './expenseModel';
+import { ExpenseWithParticipants } from './expenseModel';
 import * as DOMPurify from 'isomorphic-dompurify';
 
 @Injectable()
@@ -46,7 +46,6 @@ export class ExpensesService {
         throw new BadRequestException('Duplicate participant IDs are not allowed');
       }
 
-      // Sanitizar strings
       const sanitizedDescription = this.sanitizeString(description);
       const sanitizedCategory = this.sanitizeString(category);
 
@@ -66,7 +65,6 @@ export class ExpensesService {
         throw new BadRequestException(`Category cannot exceed ${this.MAX_CATEGORY_LENGTH} characters`);
       }
 
-      // Validar membros do grupo
       await this.validateGroupMembership(group_id, userId, token);
       await this.validateGroupMembership(group_id, payer_id, token);
 
@@ -75,9 +73,7 @@ export class ExpensesService {
       }
 
       const participantsWithoutPayer = participant_ids.filter(id => id !== payer_id);
-      const amountPerParticipant = participantsWithoutPayer.length > 0
-        ? amount / participant_ids.length
-        : 0;
+      const amountPerParticipant = amount / participant_ids.length;
 
       const client = this.supabaseService.getClientWithToken(token);
       const { data: expense, error: expenseError } = await client
@@ -98,26 +94,14 @@ export class ExpensesService {
         throw new BadRequestException('Unable to create expense');
       }
 
-      // Adicionar participantes (excluindo o pagador, pois ele não deve a si mesmo)
-      const participantsData = participant_ids
-        .filter(participantId => participantId !== payer_id)
-        .map(participantId => ({
-          expense_id: expense.id,
-          user_id: participantId,
-          amount_owed: amountPerParticipant,
-        }));
+      const participantsData = participantsWithoutPayer.map(participantId => ({
+        expense_id: expense.id,
+        topayid: participantId,
+        toreceiveid: payer_id,
+        amount: amountPerParticipant,
+      }));
 
-      // LOG: Mostrar quanto cada participante deve
-      participantsData.forEach(p => {
-        this.logger.log(`User ${p.user_id} deve ${p.amount_owed.toFixed(2)} ao pagador ${payer_id}`);
-      });
-      // LOG: Mostrar quanto o pagador tem a receber
-      const totalReceber = participantsData.reduce((acc, p) => acc + p.amount_owed, 0);
-      this.logger.log(`Pagador ${payer_id} tem a receber ${totalReceber.toFixed(2)}`);
-
-      // Se o pagador for o único participante, não há dívidas a registrar
       if (participantsData.length === 0) {
-        this.logger.log(`Expense created with payer as sole participant: ${expense.id}`);
         return this.getExpenseById(expense.id, userId, token);
       }
 
@@ -126,23 +110,19 @@ export class ExpensesService {
         .insert(participantsData);
 
       if (participantsError) {
-        // Se falhar ao adicionar participantes, deletar a despesa criada
         await client
           .from('expenses')
           .delete()
           .eq('id', expense.id);
 
-        this.logger.error(`Failed to add participants for expense ${expense.id}`, participantsError.message);
         throw new BadRequestException('Unable to add participants');
       }
 
-      this.logger.log(`Expense created successfully: ${expense.id} by user ${userId}`);
       return this.getExpenseById(expense.id, userId, token);
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
-      this.logger.error('Unexpected error creating expense', error);
       throw new BadRequestException('Failed to create expense');
     }
   }
@@ -242,29 +222,23 @@ export class ExpensesService {
           .delete()
           .eq('expense_id', expenseId);
 
-        // Calcular novo valor por participante (excluindo o pagador)
+        // Calcular novo valor por participante
         const newAmount = updateExpenseDto.amount || expense.amount;
         const participantsWithoutPayer = updateExpenseDto.participant_ids.filter(id => id !== expense.payer_id);
-        const amountPerParticipant = participantsWithoutPayer.length > 0
-          ? newAmount / updateExpenseDto.participant_ids.length
-          : 0;
+        const amountPerParticipant = newAmount / updateExpenseDto.participant_ids.length;
 
-        // Adicionar novos participantes (excluindo o pagador)
-        const participantsData = updateExpenseDto.participant_ids
-          .filter(participantId => participantId !== expense.payer_id)
-          .map(participantId => ({
-            expense_id: expenseId,
-            user_id: participantId,
-            amount_owed: amountPerParticipant,
-          }));
+        // Criar registros expense_participants apenas para quem deve ao pagador
+        const participantsData = participantsWithoutPayer.map(participantId => ({
+          expense_id: expenseId,
+          topayid: participantId,
+          toreceiveid: expense.payer_id,
+          amount: amountPerParticipant,
+        }));
 
-        // LOG: Mostrar quanto cada participante deve
+        // LOG: Mostrar quanto cada participante deve/recebe
         participantsData.forEach(p => {
-          this.logger.log(`[UPDATE] User ${p.user_id} deve ${p.amount_owed.toFixed(2)} ao pagador ${expense.payer_id}`);
+          this.logger.log(`[UPDATE] User ${p.topayid} deve ${p.amount.toFixed(2)} ao user ${p.toreceiveid}`);
         });
-        // LOG: Mostrar quanto o pagador tem a receber
-        const totalReceber = participantsData.reduce((acc, p) => acc + p.amount_owed, 0);
-        this.logger.log(`[UPDATE] Pagador ${expense.payer_id} tem a receber ${totalReceber.toFixed(2)}`);
 
         // Apenas inserir se houver participantes (excluindo o caso onde o pagador é o único)
         if (participantsData.length > 0) {
@@ -285,16 +259,16 @@ export class ExpensesService {
           .eq('expense_id', expenseId);
 
         if (participants && participants.length > 0) {
-          const amountPerParticipant = updateExpenseDto.amount / participants.length;
+          // Contar total de participantes (incluindo o pagador)
+          const totalParticipants = participants.length + 1; // +1 para o pagador
+          const amountPerParticipant = updateExpenseDto.amount / totalParticipants;
 
-          const { error: updateParticipantsError } = await client
-            .from('expense_participants')
-            .update({ amount_owed: amountPerParticipant })
-            .eq('expense_id', expenseId);
-
-          if (updateParticipantsError) {
-            this.logger.error(`Failed to update participant amounts for expense ${expenseId}`, updateParticipantsError.message);
-            throw new BadRequestException('Unable to update participant amounts');
+          // Atualizar todos os participantes com o novo valor
+          for (const participant of participants) {
+            await client
+              .from('expense_participants')
+              .update({ amount: amountPerParticipant })
+              .eq('id', participant.id);
           }
         }
       }
@@ -363,7 +337,6 @@ export class ExpensesService {
         throw new NotFoundException('Expense not found');
       }
 
-      // Verificar se o usuário é membro do grupo
       await this.validateGroupMembership(expense.group_id, userId, token);
 
       return expense;
@@ -382,7 +355,6 @@ export class ExpensesService {
         throw new BadRequestException('Group ID is required');
       }
 
-      // Verificar se o usuário é membro do grupo
       await this.validateGroupMembership(groupId, userId, token);
 
       const client = this.supabaseService.getClientWithToken(token);
@@ -422,14 +394,13 @@ export class ExpensesService {
         throw new BadRequestException('Unable to fetch expenses');
       }
 
-      // Filtrar por participante se especificado
       if (filters?.participant_id) {
         return expenses.filter(expense =>
-          expense.participants.some((p: ExpenseParticipant) => p.user_id === filters.participant_id)
+          expense.participants.some((p: any) =>
+            p.topayid === filters.participant_id || p.toreceiveid === filters.participant_id
+          )
         );
-      }
-
-      return expenses || [];
+      } return expenses || [];
     } catch (error) {
       if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
@@ -457,64 +428,61 @@ export class ExpensesService {
       }
 
       const client = this.supabaseService.getClientWithToken(token);
-      const { data: expenses, error: expensesError } = await client
+
+      const { data: expenseIds, error: expenseIdsError } = await client
         .from('expenses')
-        .select(`
-          id,
-          payer_id,
-          amount,
-          participants:expense_participants(user_id, amount_owed)
-        `)
+        .select('id')
         .eq('group_id', groupId)
         .is('deleted_at', null);
 
-      if (expensesError) {
-        this.logger.error(`Failed to fetch expenses for balance calculation ${groupId}`, expensesError.message);
+      if (expenseIdsError) {
+        this.logger.error(`Failed to fetch expenses for balance calculation ${groupId}`, expenseIdsError.message);
         throw new BadRequestException('Unable to fetch expenses for balance');
       }
 
-      const balances = new Map<string, { userId: string; name: string; paid: number; owes: number }>();
+      const ids = expenseIds.map((e: any) => e.id);
+
+      // Buscar todos os participantes dessas despesas
+      const { data: participants, error: participantsError } = await client
+        .from('expense_participants')
+        .select('topayid, toreceiveid, amount')
+        .in('expense_id', ids);
+
+      if (participantsError) {
+        this.logger.error(`Failed to fetch participants for balance calculation ${groupId}`, participantsError.message);
+        throw new BadRequestException('Unable to fetch participants for balance');
+      }
+
+      // Inicializar saldos para todos os membros
+      const balances = new Map<string, { userId: string; name: string; balance: number }>();
 
       members.forEach((member: any) => {
         this.logger.log(`UserID: ${member.user_id}, Name: ${member.name}`);
         balances.set(member.user_id, {
           userId: member.user_id,
           name: member.name || 'Usuário',
-          paid: 0,
-          owes: 0,
+          balance: 0,
         });
       });
 
-      expenses.forEach((expense: any) => {
-        const payerBalance = balances.get(expense.payer_id);
+      // Calcular saldos: quem deve paga (negativo), quem recebe (positivo)
+      participants.forEach((participant: any) => {
+        const payerBalance = balances.get(participant.topayid);
+        const receiverBalance = balances.get(participant.toreceiveid);
+
         if (payerBalance) {
-          payerBalance.paid += expense.amount;
+          payerBalance.balance -= participant.amount; // Quem paga tem saldo negativo
         }
-
-        // Calcular quantos participantes no total (incluindo o pagador que pode não estar na lista)
-        const totalParticipants = expense.participants.length + 1; // +1 para o pagador
-        const amountPerPerson = expense.amount / totalParticipants;
-
-        // O pagador também "deve" a sua parte (que ele já pagou)
-        if (payerBalance) {
-          payerBalance.owes += amountPerPerson;
+        if (receiverBalance) {
+          receiverBalance.balance += participant.amount; // Quem recebe tem saldo positivo
         }
-
-        expense.participants.forEach((participant: any) => {
-          const participantBalance = balances.get(participant.user_id);
-          if (participantBalance) {
-            participantBalance.owes += participant.amount_owed;
-          }
-        });
-      });
-
+      });      // Converter para o formato esperado
       const result = Array.from(balances.values()).map(balance => {
-        const netBalance = balance.paid - balance.owes;
         return {
           userId: balance.userId,
           name: balance.name,
-          toReceive: netBalance > 0 ? Number(netBalance.toFixed(2)) : 0,
-          toPay: netBalance < 0 ? Number(Math.abs(netBalance).toFixed(2)) : 0,
+          toReceive: balance.balance > 0 ? Number(balance.balance.toFixed(2)) : 0,
+          toPay: balance.balance < 0 ? Number(Math.abs(balance.balance).toFixed(2)) : 0,
         };
       });
 

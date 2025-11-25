@@ -17,6 +17,7 @@ import 'screens/settings_screen.dart';
 import 'screens/language_screen.dart';
 import 'screens/expenses_screen.dart';
 import 'screens/add_expense_screen.dart';
+import 'screens/expense_history_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -72,6 +73,7 @@ class MyApp extends StatelessWidget {
             '/language': (context) => const LanguageScreen(),
             '/expenses': (context) => const ExpensesScreen(),
             '/add-expense': (context) => const AddExpenseScreen(),
+            '/expense-history': (context) => const ExpenseHistoryScreen(),
           },
         );
       },

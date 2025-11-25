@@ -4,11 +4,20 @@ class CustomCircularNavBar extends StatefulWidget {
   final int currentIndex;
   final Function(int) onTap;
   final double? barHeight;
+  final List<IconData>? icons;
+  final List<IconData>? outlinedIcons;
+  final Color? backgroundColor;
+  final Color? iconColor;
+
   const CustomCircularNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
     this.barHeight,
+    this.icons,
+    this.outlinedIcons,
+    this.backgroundColor,
+    this.iconColor,
   });
 
   @override
@@ -19,17 +28,20 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
-    List<IconData> icons = [Icons.home, Icons.person];
-    List<IconData> outlinedIcons = [Icons.home_outlined, Icons.person_outline];
-    const darkBlue = Color.fromARGB(255, 29, 56, 95);
-    const white = Color.fromARGB(255, 255, 255, 255);
+    final List<IconData> icons = widget.icons ?? [Icons.home, Icons.person];
+    final List<IconData> outlinedIcons =
+        widget.outlinedIcons ?? [Icons.home_outlined, Icons.person_outline];
+    final Color darkBlue =
+        widget.backgroundColor ?? const Color.fromARGB(255, 29, 56, 95);
+    final Color white =
+        widget.iconColor ?? const Color.fromARGB(255, 255, 255, 255);
 
     return Container(
       width: double.infinity,
       height: widget.barHeight ?? kBottomNavigationBarHeight + 5,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: darkBlue,
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: Color.fromARGB(40, 0, 0, 0),
             blurRadius: 15,
@@ -40,7 +52,7 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: List.generate(
-          2,
+          icons.length,
           (index) => Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 1),

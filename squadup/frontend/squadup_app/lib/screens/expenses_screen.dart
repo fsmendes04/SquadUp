@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
 import '../services/storage_service.dart';
 import '../models/expense.dart';
+import '../widgets/navigation_bar.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -24,11 +25,10 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
   List<Expense> _expenses = [];
   bool _loading = true;
-  String? _error;
   List<Map<String, dynamic>> _userBalances = [];
-  List<Map<String, dynamic>> _simplifications = [];
   bool _initialized = false;
   String? _currentUserName;
+  String? _currentUserId;
 
   @override
   void didChangeDependencies() {
@@ -63,6 +63,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       if (userProfile != null && mounted) {
         setState(() {
           _currentUserName = userProfile['name'];
+          _currentUserId = userProfile['id'];
         });
       }
     } catch (e) {
@@ -70,10 +71,65 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     }
   }
 
+  List<Map<String, dynamic>> _getParticipantsToReceive() {
+    if (_currentUserId == null) return [];
+
+    Map<String, Map<String, dynamic>> groupedByUser = {};
+
+    for (var expense in _expenses) {
+      for (var participant in expense.participants) {
+        if (participant.toReceiveId == _currentUserId) {
+          final userId = participant.toPayId;
+
+          if (groupedByUser.containsKey(userId)) {
+            groupedByUser[userId]!['totalAmount'] += participant.amount;
+            groupedByUser[userId]!['expenseCount']++;
+          } else {
+            groupedByUser[userId] = {
+              'userId': userId,
+              'userName': _getUserNameById(userId),
+              'totalAmount': participant.amount,
+              'expenseCount': 1,
+            };
+          }
+        }
+      }
+    }
+
+    return groupedByUser.values.toList();
+  }
+
+  List<Map<String, dynamic>> _getParticipantsToPay() {
+    if (_currentUserId == null) return [];
+
+    Map<String, Map<String, dynamic>> groupedByUser = {};
+
+    for (var expense in _expenses) {
+      for (var participant in expense.participants) {
+        if (participant.toPayId == _currentUserId) {
+          final userId = participant.toReceiveId;
+
+          if (groupedByUser.containsKey(userId)) {
+            groupedByUser[userId]!['totalAmount'] += participant.amount;
+            groupedByUser[userId]!['expenseCount']++;
+          } else {
+            groupedByUser[userId] = {
+              'userId': userId,
+              'userName': _getUserNameById(userId),
+              'totalAmount': participant.amount,
+              'expenseCount': 1,
+            };
+          }
+        }
+      }
+    }
+
+    return groupedByUser.values.toList();
+  }
+
   Future<void> _loadExpenses() async {
     setState(() {
       _loading = true;
-      _error = null;
     });
 
     try {
@@ -87,7 +143,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
         _loading = false;
       });
     }
@@ -187,161 +242,112 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: TabBar(
-                              controller: _tabController,
-                              indicator: BoxDecoration(
-                                color: primaryBlue,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              indicatorSize: TabBarIndicatorSize.tab,
-                              labelColor: Colors.white,
-                              unselectedLabelColor: darkBlue,
-                              labelStyle: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                              unselectedLabelStyle: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                              tabs: const [
-                                Tab(text: 'A Receber'),
-                                Tab(text: 'A Enviar'),
-                              ],
+                            child: StatefulBuilder(
+                              builder: (context, setState) {
+                                return TabBar(
+                                  controller: _tabController,
+                                  dividerColor: Colors.transparent,
+                                  indicator: BoxDecoration(
+                                    color: Colors.transparent,
+                                  ),
+                                  indicatorSize: TabBarIndicatorSize.tab,
+                                  labelColor: Colors.white,
+                                  unselectedLabelColor: darkBlue,
+                                  labelStyle: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  unselectedLabelStyle: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  tabs: [
+                                    Tab(
+                                      child: AnimatedBuilder(
+                                        animation: _tabController,
+                                        builder: (context, child) {
+                                          final selected =
+                                              _tabController.index == 0;
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  selected
+                                                      ? primaryBlue
+                                                      : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              'To Receive',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                                color:
+                                                    selected
+                                                        ? Colors.white
+                                                        : darkBlue,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                    Tab(
+                                      child: AnimatedBuilder(
+                                        animation: _tabController,
+                                        builder: (context, child) {
+                                          final selected =
+                                              _tabController.index == 1;
+                                          return Container(
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  selected
+                                                      ? darkBlue
+                                                      : Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              'To Send',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                                color:
+                                                    selected
+                                                        ? Colors.white
+                                                        : darkBlue,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                           SizedBox(
-                            height: 110,
+                            height: _calculateTabViewHeight(),
                             child: TabBarView(
                               controller: _tabController,
                               children: [
-                                // To Receive Tab
-                                SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children:
-                                        _userBalances
-                                            .where(
-                                              (u) =>
-                                                  u['toPay'] > 0 &&
-                                                  u['name'] != _currentUserName,
-                                            )
-                                            .map(
-                                              (u) => Container(
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 4,
-                                                      horizontal: 12,
-                                                    ),
-                                                padding: const EdgeInsets.all(
-                                                  14,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green[50],
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  border: Border.all(
-                                                    color: Colors.green[200]!,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      '${u['name']} deve-te',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: darkBlue,
-                                                          ),
-                                                    ),
-                                                    Text(
-                                                      '€${u['toPay'].toStringAsFixed(2)}',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            color:
-                                                                Colors
-                                                                    .green[700],
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                  ),
+                                // To Receive Tab - Lista expense_participants onde sou toReceiveId
+                                _buildParticipantsList(
+                                  _getParticipantsToReceive(),
+                                  darkBlue,
+                                  isReceiving: true,
                                 ),
-                                // To Send Tab
-                                SingleChildScrollView(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children:
-                                        _userBalances
-                                            .where(
-                                              (u) =>
-                                                  u['toReceive'] > 0 &&
-                                                  u['name'] != _currentUserName,
-                                            )
-                                            .map(
-                                              (u) => Container(
-                                                margin:
-                                                    const EdgeInsets.symmetric(
-                                                      vertical: 4,
-                                                      horizontal: 12,
-                                                    ),
-                                                padding: const EdgeInsets.all(
-                                                  14,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.red[50],
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  border: Border.all(
-                                                    color: Colors.red[200]!,
-                                                  ),
-                                                ),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      'Deves a ${u['name']}',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w500,
-                                                            color: darkBlue,
-                                                          ),
-                                                    ),
-                                                    Text(
-                                                      '€${u['toReceive'].toStringAsFixed(2)}',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            color:
-                                                                Colors.red[700],
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            )
-                                            .toList(),
-                                  ),
+                                // To Send Tab - Lista expense_participants onde sou toPayId
+                                _buildParticipantsList(
+                                  _getParticipantsToPay(),
+                                  darkBlue,
+                                  isReceiving: false,
                                 ),
                               ],
                             ),
@@ -351,27 +357,30 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                     ),
 
                     const SizedBox(height: 24),
-
-                    // Add Expense button
-                    _buildAddExpenseButton(primaryBlue),
-
-                    const SizedBox(height: 24),
-
-                    // Debt simplification section
-                    _buildDebtSimplification(darkBlue, primaryBlue),
-
-                    const SizedBox(height: 24),
-
-                    // Expenses history
-                    _buildExpensesHistory(darkBlue),
-
-                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
           ],
         ),
+      ),
+      bottomNavigationBar: CustomCircularNavBar(
+        currentIndex: 2,
+        icons: [Icons.add_card, Icons.history],
+        outlinedIcons: [Icons.add_card_outlined, Icons.history_outlined],
+        backgroundColor: darkBlue,
+        iconColor: Colors.white,
+        onTap: (index) {
+          if (index == 0) {
+            _navigateToCreateExpense();
+          } else if (index == 1) {
+            Navigator.pushNamed(
+              context,
+              '/expense-history',
+              arguments: {'groupId': groupId, 'groupName': groupName},
+            );
+          }
+        },
       ),
     );
   }
@@ -399,13 +408,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               ),
             ],
           ),
-          IconButton(
-            onPressed: () {
-              // TODO: Open group settings
-            },
-            icon: Icon(Icons.settings, color: darkBlue, size: 28),
-            tooltip: 'Configurações',
-          ),
         ],
       ),
     );
@@ -428,7 +430,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -443,7 +445,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               Icon(Icons.bar_chart_rounded, color: darkBlue, size: 24),
               const SizedBox(width: 8),
               Text(
-                'Balanço do Grupo',
+                'Group Balance',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -487,7 +489,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            // Left side - To Pay (red) - grows from center to left
                             Expanded(
                               child: Row(
                                 children: [
@@ -502,7 +503,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                       child: Container(
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFFF8A80),
+                                          color: darkBlue,
                                           borderRadius:
                                               const BorderRadius.horizontal(
                                                 left: Radius.circular(8),
@@ -524,14 +525,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               ),
                             ),
 
-                            // Center line (zero point)
-                            Container(
-                              width: 3,
-                              height: 32,
-                              color: darkBlue.withValues(alpha: 0.5),
-                            ),
-
-                            // Right side - To Receive (cyan) - grows from center to right
                             Expanded(
                               child: Row(
                                 children: [
@@ -542,7 +535,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                       child: Container(
                                         height: 32,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFF4DD0E1),
+                                          color: primaryBlue,
                                           borderRadius:
                                               const BorderRadius.horizontal(
                                                 right: Radius.circular(8),
@@ -587,13 +580,13 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                 width: 16,
                 height: 16,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF8A80),
+                  color: primaryBlue,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                'A Enviar',
+                'To Receive',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -605,13 +598,13 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                 width: 16,
                 height: 16,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4DD0E1),
+                  color: darkBlue,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               const SizedBox(width: 6),
               Text(
-                'A Receber',
+                'To Send',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -625,431 +618,139 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     );
   }
 
-  Widget _buildAddExpenseButton(Color primaryBlue) {
-    return Center(
-      child: GestureDetector(
-        onTap: _navigateToCreateExpense,
-        child: Container(
-          width: 200,
-          height: 60,
-          decoration: BoxDecoration(
-            color: primaryBlue,
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: primaryBlue.withValues(alpha: 0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.add, color: Colors.white, size: 28),
-              const SizedBox(width: 8),
-              Text(
-                'Add Expense',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _buildParticipantsList(
+    List<Map<String, dynamic>> participants,
+    Color darkBlue, {
+    required bool isReceiving,
+  }) {
+    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
-  Widget _buildDebtSimplification(Color darkBlue, Color primaryBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Liquidar Dívidas com Menos Passos',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-        const SizedBox(height: 16),
-        if (_simplifications.isEmpty)
-          Center(
-            child: Text(
-              'Nenhuma simplificação disponível.',
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey[600],
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          )
-        else
-          Column(
-            children:
-                _simplifications.map((simplification) {
-                  // ...existing code...
-                  // (Mantenha o restante do widget igual, mas agora depende dos dados reais)
-                  return Container();
-                }).toList(),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildExpensesHistory(Color darkBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Histórico de Despesas',
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        _buildExpensesList(darkBlue),
-      ],
-    );
-  }
-
-  Widget _buildExpensesList(Color darkBlue) {
     if (_loading) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Column(
-            children: [
-              const CircularProgressIndicator(
-                color: Color.fromARGB(255, 81, 163, 230),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Carregando despesas...',
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(color: primaryBlue),
+        ),
+      );
+    }
+
+    if (participants.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(
+            isReceiving ? "Nobody owes you anything" : "You don't owe anything",
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
     }
 
-    if (_error != null) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(24),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      itemCount: participants.length,
+      itemBuilder: (context, index) {
+        final item = participants[index];
+        final userName = item['userName'] as String;
+        final totalAmount = item['totalAmount'] as double;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.red[50],
+            color: Colors.white,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.red[200]!),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
             children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-              const SizedBox(height: 16),
-              Text(
-                'Erro ao carregar despesas',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
+              // User icon
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isReceiving ? primaryBlue : darkBlue,
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(Icons.person, color: Colors.white, size: 20),
               ),
-              const SizedBox(height: 8),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadExpenses,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 81, 163, 230),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-                child: Text(
-                  'Tentar Novamente',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_expenses.isEmpty) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Opacity(
-                opacity: 0.3,
-                child: Icon(
-                  Icons.receipt_long_outlined,
-                  size: 64,
-                  color: Colors.grey[400],
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Nenhuma despesa ainda',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Comece adicionando a primeira despesa',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      children:
-          _expenses.map((expense) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-                border: Border.all(color: Colors.grey[200]!, width: 1),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
+              const SizedBox(width: 12),
+              // User info
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        // Category icon
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: _getCategoryColor(expense.category),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            _getCategoryIcon(expense.category),
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-
-                        const SizedBox(width: 16),
-
-                        // Expense info
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                expense.description,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: darkBlue,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    size: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _formatDate(expense.expenseDate),
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Icon(
-                                    Icons.people,
-                                    size: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${expense.participants.length}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Amount
-                        Text(
-                          '€${expense.amount.toStringAsFixed(2)}',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: darkBlue,
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    if (expense.payer != null) ...[
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.account_circle,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'Pago por ${expense.payer!.email?.split('@')[0] ?? 'Usuário'}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: Colors.grey[700],
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                            Text(
-                              '€${(expense.amount / expense.participants.length).toStringAsFixed(2)}/pessoa',
-                              style: GoogleFonts.poppins(
-                                fontSize: 11,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                    if (!isReceiving)
+                      Text(
+                        'You owe',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ],
+                    Text(
+                      userName,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: isReceiving ? primaryBlue : darkBlue,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    if (isReceiving)
+                      Text(
+                        'Owes you',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                   ],
                 ),
               ),
-            );
-          }).toList(),
+              // Amount
+              Text(
+                '€${totalAmount.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isReceiving ? primaryBlue : darkBlue,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'alimentacao':
-      case 'alimentação':
-        return Colors.orange;
-      case 'transporte':
-        return Colors.blue;
-      case 'entretenimento':
-        return Colors.purple;
-      case 'compras':
-        return Colors.green;
-      case 'saude':
-      case 'saúde':
-        return Colors.red;
-      case 'hospedagem':
-        return Colors.brown;
-      case 'educacao':
-      case 'educação':
-        return Colors.indigo;
-      default:
-        return Colors.grey;
+  // Método auxiliar para obter nome do usuário por ID
+  String _getUserNameById(String userId) {
+    try {
+      final user = _userBalances.firstWhere(
+        (balance) => balance['userId'] == userId,
+        orElse: () => {'name': 'User'},
+      );
+      return user['name'] as String? ?? 'User';
+    } catch (e) {
+      return 'User';
     }
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'alimentacao':
-      case 'alimentação':
-        return Icons.restaurant;
-      case 'transporte':
-        return Icons.directions_car;
-      case 'entretenimento':
-        return Icons.movie;
-      case 'compras':
-        return Icons.shopping_bag;
-      case 'saude':
-      case 'saúde':
-        return Icons.local_hospital;
-      case 'hospedagem':
-        return Icons.home;
-      case 'educacao':
-      case 'educação':
-        return Icons.school;
-      default:
-        return Icons.receipt;
-    }
-  }
+  double _calculateTabViewHeight() {
+    final receiveCount = _getParticipantsToReceive().length;
+    final payCount = _getParticipantsToPay().length;
+    final maxCount = receiveCount > payCount ? receiveCount : payCount;
 
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Fev',
-      'Mar',
-      'Abr',
-      'Mai',
-      'Jun',
-      'Jul',
-      'Ago',
-      'Set',
-      'Out',
-      'Nov',
-      'Dez',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
+    if (maxCount == 0) return 100;
+
+    return (maxCount * 70.0) + 16.0;
   }
 }

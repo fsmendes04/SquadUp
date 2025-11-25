@@ -27,7 +27,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   bool _isLoading = false;
   bool _isLoadingMembers = true;
   DateTime _selectedDate = DateTime.now();
-  String _selectedCategory = 'Alimentação';
+  String _selectedCategory = 'Food';
   String? _selectedPayerId;
   List<String> _selectedParticipantIds = [];
   List<GroupMember> _groupMembers = [];
@@ -39,14 +39,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final Color primaryBlue = const Color(0xFF51A3E6);
 
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Alimentação', 'icon': Icons.restaurant, 'color': Colors.orange},
-    {'name': 'Transporte', 'icon': Icons.directions_car, 'color': Colors.blue},
-    {'name': 'Entretenimento', 'icon': Icons.movie, 'color': Colors.purple},
-    {'name': 'Compras', 'icon': Icons.shopping_bag, 'color': Colors.green},
-    {'name': 'Saúde', 'icon': Icons.local_hospital, 'color': Colors.red},
-    {'name': 'Hospedagem', 'icon': Icons.home, 'color': Colors.brown},
-    {'name': 'Educação', 'icon': Icons.school, 'color': Colors.indigo},
-    {'name': 'Outros', 'icon': Icons.receipt, 'color': Colors.grey},
+    {'name': 'Food', 'icon': Icons.restaurant},
+    {'name': 'Transport', 'icon': Icons.directions_car},
+    {'name': 'Entertainment', 'icon': Icons.movie},
+    {'name': 'Shopping', 'icon': Icons.shopping_bag},
+    {'name': 'Health', 'icon': Icons.local_hospital},
+    {'name': 'Accommodation', 'icon': Icons.home},
+    {'name': 'Education', 'icon': Icons.school},
+    {'name': 'Other', 'icon': Icons.receipt},
   ];
 
   @override
@@ -72,7 +72,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     });
 
     try {
-      // Get current user profile to get their actual ID
       final userProfile = await _userService.getProfile();
       final currentUserId = userProfile['data']?['id'] as String?;
 
@@ -86,14 +85,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           _groupMembers = groupData.members;
           _isLoadingMembers = false;
 
-          // Set current user as default payer if they're in the group
           if (currentUserId != null) {
             _selectedPayerId = currentUserId;
           } else if (_groupMembers.isNotEmpty) {
             _selectedPayerId = _groupMembers.first.userId;
           }
 
-          // Select all members by default
           _selectedParticipantIds = _groupMembers.map((m) => m.userId).toList();
         });
       }
@@ -101,7 +98,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       setState(() {
         _isLoadingMembers = false;
       });
-      _showSnackBar('Erro ao carregar membros: $e', isError: true);
+      _showSnackBar('Error loading members: $e', isError: true);
     }
   }
 
@@ -136,15 +133,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (_selectedPayerId == null) {
-      _showSnackBar('Por favor selecione quem pagou', isError: true);
+      _showSnackBar('Please select who paid', isError: true);
       return;
     }
 
     if (_selectedParticipantIds.isEmpty) {
-      _showSnackBar(
-        'Por favor selecione pelo menos um participante',
-        isError: true,
-      );
+      _showSnackBar('Please select at least one participant', isError: true);
       return;
     }
 
@@ -168,14 +162,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       await _expensesService.createExpense(createExpenseDto);
 
       if (mounted) {
-        _showSnackBar('Despesa criada com sucesso!', isError: false);
+        _showSnackBar('Expense created successfully!', isError: false);
         Navigator.pop(context, true);
       }
     } catch (e) {
       setState(() {
         _isLoading = false;
       });
-      _showSnackBar('Erro ao criar despesa: $e', isError: true);
+      _showSnackBar('Error creating expense: $e', isError: true);
     }
   }
 
@@ -221,7 +215,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             CircularProgressIndicator(color: primaryBlue),
                             const SizedBox(height: 16),
                             Text(
-                              'Carregando...',
+                              'Loading...',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -237,7 +231,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildSectionTitle('Detalhes da Despesa'),
+                              _buildSectionTitle('Expense Details'),
                               const SizedBox(height: 16),
                               _buildDescriptionField(),
                               const SizedBox(height: 20),
@@ -245,15 +239,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               const SizedBox(height: 20),
                               _buildDateSelector(),
                               const SizedBox(height: 28),
-                              _buildSectionTitle('Categoria'),
+                              _buildSectionTitle('Category'),
                               const SizedBox(height: 16),
                               _buildCategorySelector(),
                               const SizedBox(height: 28),
-                              _buildSectionTitle('Quem Pagou?'),
+                              _buildSectionTitle('Who Paid?'),
                               const SizedBox(height: 16),
                               _buildPayerSelector(),
                               const SizedBox(height: 28),
-                              _buildSectionTitle('Dividir Com'),
+                              _buildSectionTitle('Split With'),
                               const SizedBox(height: 16),
                               _buildParticipantsSelector(),
                               const SizedBox(height: 32),
@@ -283,7 +277,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Nova Despesa',
+              'New Expense',
               style: GoogleFonts.poppins(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
@@ -312,16 +306,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       controller: _descriptionController,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Por favor insira uma descrição';
+          return 'Please enter a description';
         }
         if (value.trim().length < 3) {
-          return 'A descrição deve ter pelo menos 3 caracteres';
+          return 'Description must be at least 3 characters';
         }
         return null;
       },
       maxLength: 100,
       decoration: InputDecoration(
-        hintText: 'Ex: Jantar no restaurante',
+        hintText: 'Ex: Dinner at restaurant',
         hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
         prefixIcon: Icon(Icons.description_outlined, color: darkBlue),
         border: OutlineInputBorder(
@@ -362,17 +356,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
-          return 'Por favor insira um valor';
+          return 'Please enter an amount';
         }
         final amount = double.tryParse(value.trim());
         if (amount == null) {
-          return 'Valor inválido';
+          return 'Invalid amount';
         }
         if (amount <= 0) {
-          return 'O valor deve ser maior que zero';
+          return 'Amount must be greater than zero';
         }
         if (amount > 999999.99) {
-          return 'O valor não pode exceder 999999.99';
+          return 'Amount cannot exceed 999999.99';
         }
         return null;
       },
@@ -434,7 +428,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Data da Despesa',
+                    'Expense Date',
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       color: Colors.grey[600],
@@ -462,66 +456,54 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildCategorySelector() {
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children:
-          _categories.map((category) {
-            final isSelected = _selectedCategory == category['name'];
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedCategory = category['name'] as String;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color:
-                      isSelected
-                          ? (category['color'] as Color).withValues(alpha: 0.15)
-                          : Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color:
-                        isSelected
-                            ? category['color'] as Color
-                            : Colors.grey.withValues(alpha: 0.3),
-                    width: isSelected ? 2 : 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      category['icon'] as IconData,
-                      color:
-                          isSelected
-                              ? category['color'] as Color
-                              : Colors.grey[600],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      category['name'] as String,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color:
-                            isSelected
-                                ? category['color'] as Color
-                                : Colors.grey[700],
-                      ),
-                    ),
-                  ],
-                ),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
+      itemCount: _categories.length,
+      itemBuilder: (context, index) {
+        final category = _categories[index];
+        final isSelected = _selectedCategory == category['name'];
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _selectedCategory = category['name'] as String;
+            });
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color:
+                  isSelected
+                      ? primaryBlue.withValues(alpha: 0.15)
+                      : Colors.grey[50],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color:
+                    isSelected
+                        ? primaryBlue
+                        : Colors.grey.withValues(alpha: 0.3),
+                width: isSelected ? 2.5 : 1,
               ),
-            );
-          }).toList(),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  category['icon'] as IconData,
+                  color: isSelected ? primaryBlue : Colors.grey[600],
+                  size: 28,
+                ),
+                const SizedBox(height: 6),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -535,7 +517,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           border: Border.all(color: Colors.grey[200]!),
         ),
         child: Text(
-          'Nenhum membro encontrado',
+          'No members found',
           style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
         ),
       );
@@ -629,7 +611,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           border: Border.all(color: Colors.grey[200]!),
         ),
         child: Text(
-          'Nenhum membro encontrado',
+          'No members found',
           style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
         ),
       );
@@ -667,8 +649,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 Expanded(
                   child: Text(
                     _selectedParticipantIds.length == _groupMembers.length
-                        ? 'Desmarcar Todos'
-                        : 'Selecionar Todos',
+                        ? 'Deselect All'
+                        : 'Select All',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -796,7 +778,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   ),
                 )
                 : Text(
-                  'Add expense',
+                  'Add Expense',
                   style: GoogleFonts.poppins(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,

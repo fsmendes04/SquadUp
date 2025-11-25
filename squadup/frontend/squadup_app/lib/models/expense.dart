@@ -77,15 +77,17 @@ class Expense {
 class ExpenseParticipant {
   final String id;
   final String expenseId;
-  final String userId;
-  final double amountOwed;
+  final String toPayId;
+  final String toReceiveId;
+  final double amount;
   final DateTime createdAt;
 
   ExpenseParticipant({
     required this.id,
     required this.expenseId,
-    required this.userId,
-    required this.amountOwed,
+    required this.toPayId,
+    required this.toReceiveId,
+    required this.amount,
     required this.createdAt,
   });
 
@@ -93,8 +95,9 @@ class ExpenseParticipant {
     return ExpenseParticipant(
       id: json['id'] as String,
       expenseId: json['expense_id'] as String,
-      userId: json['user_id'] as String,
-      amountOwed: (json['amount_owed'] as num).toDouble(),
+      toPayId: json['topayid'] as String,
+      toReceiveId: json['toreceiveid'] as String,
+      amount: (json['amount'] as num).toDouble(),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -103,8 +106,9 @@ class ExpenseParticipant {
     return {
       'id': id,
       'expense_id': expenseId,
-      'user_id': userId,
-      'amount_owed': amountOwed,
+      'topayid': toPayId,
+      'toreceiveid': toReceiveId,
+      'amount': amount,
       'created_at': createdAt.toIso8601String(),
     };
   }

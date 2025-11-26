@@ -59,7 +59,8 @@ export class SupabaseService {
     const supabaseUrl = process.env.SUPABASE_URL!;
     const anonKey = process.env.SUPABASE_ANON_KEY!;
 
-    return createClient(supabaseUrl, anonKey, {
+
+    const client = createClient(supabaseUrl, anonKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -72,5 +73,13 @@ export class SupabaseService {
         },
       },
     });
+
+    // Set the session explicitly
+    client.auth.setSession({
+      access_token: accessToken,
+      refresh_token: '',
+    });
+
+    return client;
   }
 }

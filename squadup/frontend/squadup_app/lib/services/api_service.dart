@@ -175,4 +175,9 @@ class ApiService {
       '$expensesEndpoint/group/$groupId/category/$category';
   static String groupBalance(String groupId) =>
       '$expensesEndpoint/group/$groupId/balance';
+
+  static const String galleryEndpoint = '/gallery';
+  static String galleriesByGroup(String groupId) =>
+      '$galleryEndpoint/group/$groupId';
+  static String galleryById(String galleryId) => '$galleryEndpoint/$galleryId';
 }

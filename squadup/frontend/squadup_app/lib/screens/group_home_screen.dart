@@ -677,13 +677,13 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () {
-                  Navigator.pushNamed(
+                onTap: () async {
+                  await Navigator.pushNamed(
                     context,
                     '/group-gallery',
                     arguments: {
                       'groupId': widget.groupId,
-                      'groupName': widget.groupName,
+                      'groupName': _groupDetails?.name ?? widget.groupName,
                     },
                   );
                 },

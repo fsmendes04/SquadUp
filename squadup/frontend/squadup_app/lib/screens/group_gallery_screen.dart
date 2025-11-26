@@ -3,7 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/loading_overlay.dart';
 import '../services/groups_service.dart';
+import '../services/gallery_service.dart';
 import '../models/groups.dart';
+import '../models/gallery_model.dart';
+import 'package:intl/intl.dart';
 
 class GroupGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -25,67 +28,60 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   final lightGrey = const Color.fromARGB(255, 242, 242, 242);
 
   final _groupsService = GroupsService();
+  final _galleryService = GalleryService();
   GroupWithMembers? _groupDetails;
+  List<Gallery> _galleries = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadGroupDetails();
+    _loadData();
   }
 
-  Future<void> _loadGroupDetails() async {
+  Future<void> _loadData() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
 
     try {
-      final response = await _groupsService.getGroupById(widget.groupId);
-      final groupDetails = GroupWithMembers.fromJson(response['data']);
+      // Load group details and galleries in parallel
+      final groupResponse = await _groupsService.getGroupById(widget.groupId);
+      final galleries = await _galleryService.getGalleriesByGroup(
+        widget.groupId,
+      );
 
       if (mounted) {
         setState(() {
-          _groupDetails = groupDetails;
+          _groupDetails = GroupWithMembers.fromJson(groupResponse['data']);
+          _galleries = galleries;
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
+          _error = 'Erro ao carregar galeria';
           _isLoading = false;
         });
       }
-      debugPrint('Error loading group details: $e');
     }
   }
 
-  // Dados fictícios dos eventos
-  final List<Map<String, dynamic>> events = [
-    {
-      'id': 1,
-      'title': 'Beach Day Trip',
-      'date': '24 Nov 2025',
-      'location': 'Miami Beach',
-      'photoCount': 6,
-      'image': 'lib/images/beach.jpeg',
-    },
-    {
-      'id': 2,
-      'title': 'Weekend BBQ',
-      'date': '15 Nov 2025',
-      'location': 'Central Park',
-      'photoCount': 12,
-      'image': 'lib/images/bbq.webp',
-    },
-    {
-      'id': 3,
-      'title': 'Movie Night',
-      'date': '10 Nov 2025',
-      'location': 'Cinema City',
-      'photoCount': 8,
-      'image': 'lib/images/movie.jpg',
-    },
-  ];
+  Future<void> _refreshData() async {
+    await _loadData();
+  }
+
+  String _formatDate(String dateStr) {
+    try {
+      final date = DateTime.parse(dateStr);
+      return DateFormat('dd MMM yyyy').format(date);
+    } catch (e) {
+      return dateStr;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,52 +91,64 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: _buildHeader(darkBlue),
-              ),
-              const SizedBox(height: 20),
+          child:
+              _error != null
+                  ? _buildErrorState()
+                  : RefreshIndicator(
+                    onRefresh: _refreshData,
+                    color: primaryBlue,
+                    child: Column(
+                      children: [
+                        // Header
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                          child: _buildHeader(darkBlue),
+                        ),
+                        const SizedBox(height: 20),
 
-              // Filtros
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          _buildFilterChip('Filters'),
-                          const SizedBox(width: 8),
-                          _buildAddButton(),
-                        ],
-                      ),
+                        // Filtros
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    _buildFilterChip('Filters'),
+                                    const SizedBox(width: 8),
+                                    _buildAddButton(),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.search, size: 32, color: darkBlue),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Lista de eventos
+                        Expanded(
+                          child:
+                              _galleries.isEmpty
+                                  ? _buildEmptyState()
+                                  : ListView.builder(
+                                    padding: const EdgeInsets.all(16.0),
+                                    itemCount: _galleries.length,
+                                    itemBuilder: (context, index) {
+                                      final gallery = _galleries[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 20.0,
+                                        ),
+                                        child: _buildGalleryCard(gallery),
+                                      );
+                                    },
+                                  ),
+                        ),
+                      ],
                     ),
-                    Icon(Icons.search, size: 32, color: darkBlue),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Lista de eventos
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16.0),
-                  itemCount: events.length,
-                  itemBuilder: (context, index) {
-                    final event = events[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 20.0),
-                      child: _buildEventCard(event),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+                  ),
         ),
       ),
     );
@@ -222,18 +230,18 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
 
   Widget _buildAddButton() {
     return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Criar novo evento em breve!'),
-            backgroundColor: primaryBlue,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
+      onTap: () async {
+        final result = await Navigator.pushNamed(
+          context,
+          '/create-gallery',
+          arguments: {
+            'groupId': widget.groupId,
+            'groupName': _groupDetails?.name ?? widget.groupName,
+          },
         );
+        if (result == true) {
+          await _loadData();
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -246,12 +254,72 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
     );
   }
 
-  Widget _buildEventCard(Map<String, dynamic> event) {
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.photo_library_outlined, size: 64, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            'Nenhuma galeria ainda',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Crie a primeira galeria do grupo!',
+            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            _error!,
+            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _refreshData,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Tentar novamente',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryCard(Gallery gallery) {
+    final firstImage = gallery.images.isNotEmpty ? gallery.images.first : null;
+
     return GestureDetector(
       onTap: () {
+        // TODO: Navigate to gallery details screen
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Abrir evento: ${event['title']}'),
+            content: Text('Abrir galeria: ${gallery.eventName}'),
             backgroundColor: primaryBlue,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -277,32 +345,57 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Imagem do evento
-            Stack(
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                  ),
-                  child: Image.asset(
-                    event['image'],
-                    height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+              child:
+                  firstImage != null
+                      ? Image.network(
+                        firstImage,
+                        height: 200,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: primaryBlue.withValues(alpha: 0.1),
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: primaryBlue,
+                              size: 50,
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: primaryBlue.withValues(alpha: 0.1),
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                color: primaryBlue,
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                      : Container(
                         height: 200,
                         color: primaryBlue.withValues(alpha: 0.1),
                         child: Icon(
-                          Icons.image_not_supported,
+                          Icons.photo_library_outlined,
                           color: primaryBlue,
                           size: 50,
                         ),
-                      );
-                    },
-                  ),
-                ),
-              ],
+                      ),
             ),
             // Informações do evento
             Padding(
@@ -315,7 +408,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          event['title'],
+                          gallery.eventName,
                           style: GoogleFonts.poppins(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -323,13 +416,23 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                           ),
                         ),
                       ),
-                      Text(
-                        '${event['photoCount']}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: darkBlue,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.photo_library,
+                            size: 16,
+                            color: primaryBlue,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${gallery.images.length}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: darkBlue,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -338,18 +441,21 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                     children: [
                       Icon(Icons.location_on, size: 14, color: primaryBlue),
                       const SizedBox(width: 4),
-                      Text(
-                        event['location'],
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      Expanded(
+                        child: Text(
+                          gallery.location,
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Icon(Icons.calendar_today, size: 12, color: primaryBlue),
                       const SizedBox(width: 4),
                       Text(
-                        event['date'],
+                        _formatDate(gallery.date),
                         style: GoogleFonts.poppins(
                           fontSize: 12,
                           color: Colors.grey[600],
@@ -357,7 +463,6 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
                 ],
               ),
             ),

@@ -171,6 +171,8 @@ class ApiService {
   static String expenseById(String id) => '$expensesEndpoint/$id';
   static String expensesByGroup(String groupId) =>
       '$expensesEndpoint/group/$groupId';
+  static String expensesByCategory(String groupId, String category) =>
+      '$expensesEndpoint/group/$groupId/category/$category';
   static String groupBalance(String groupId) =>
       '$expensesEndpoint/group/$groupId/balance';
 }

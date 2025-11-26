@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
 import '../services/groups_service.dart';
 import '../services/user_service.dart';
+import '../widgets/loading_overlay.dart';
 import '../models/expense.dart';
 import '../models/groups.dart';
 
@@ -196,69 +197,55 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(),
+    return LoadingOverlay(
+      isLoading: _isLoadingMembers || _isLoading,
+      message: _isLoadingMembers ? 'Loading members...' : 'Creating expense...',
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              _buildHeader(),
 
-            // Content
-            Expanded(
-              child:
-                  _isLoadingMembers
-                      ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(color: primaryBlue),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Loading...',
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                      : SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionTitle('Expense Details'),
-                              const SizedBox(height: 16),
-                              _buildDescriptionField(),
-                              const SizedBox(height: 20),
-                              _buildAmountField(),
-                              const SizedBox(height: 20),
-                              _buildDateSelector(),
-                              const SizedBox(height: 28),
-                              _buildSectionTitle('Category'),
-                              const SizedBox(height: 16),
-                              _buildCategorySelector(),
-                              const SizedBox(height: 28),
-                              _buildSectionTitle('Who Paid?'),
-                              const SizedBox(height: 16),
-                              _buildPayerSelector(),
-                              const SizedBox(height: 28),
-                              _buildSectionTitle('Split With'),
-                              const SizedBox(height: 16),
-                              _buildParticipantsSelector(),
-                              const SizedBox(height: 32),
-                              _buildCreateButton(),
-                              const SizedBox(height: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-            ),
-          ],
+              // Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Expense Details'),
+                        const SizedBox(height: 16),
+                        _buildDescriptionField(),
+                        const SizedBox(height: 20),
+                        _buildAmountField(),
+                        const SizedBox(height: 20),
+                        _buildDateSelector(),
+                        const SizedBox(height: 28),
+                        _buildSectionTitle('Category'),
+                        const SizedBox(height: 16),
+                        _buildCategorySelector(),
+                        const SizedBox(height: 28),
+                        _buildSectionTitle('Who Paid?'),
+                        const SizedBox(height: 16),
+                        _buildPayerSelector(),
+                        const SizedBox(height: 28),
+                        _buildSectionTitle('Split With'),
+                        const SizedBox(height: 16),
+                        _buildParticipantsSelector(),
+                        const SizedBox(height: 32),
+                        _buildCreateButton(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

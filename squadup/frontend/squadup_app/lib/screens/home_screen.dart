@@ -5,6 +5,7 @@ import '../widgets/navigation_bar.dart';
 import '../widgets/drawer_bar.dart';
 import '../widgets/group_card.dart';
 import '../widgets/group_search_bar.dart';
+import '../widgets/loading_overlay.dart';
 import '../services/user_service.dart';
 import '../services/groups_service.dart';
 import '../models/groups.dart';
@@ -358,294 +359,303 @@ class _HomeScreenState extends State<HomeScreen> {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return CustomDrawerBar(
-      key: _drawerKey,
-      userName: _getDisplayName(),
-      onItemTap: (index) async {
-        switch (index) {
-          case 0:
-            await Navigator.pushNamed(context, '/settings');
-            break;
-          case 1:
-            await Navigator.pushNamed(context, '/language');
-            break;
-          case 2:
-            _logout();
-            break;
-        }
-      },
-      child: Scaffold(
-        extendBody: true,
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14.0),
-            child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
-              onTap: () {
-                if (_isSearching) {
-                  setState(() {
-                    _isSearching = false;
-                  });
-                  FocusScope.of(context).unfocus();
-                }
-              },
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: kToolbarHeight,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Image.asset(
-                              'lib/images/logo_v3.png',
-                              height: 40,
-                              width: 40,
-                              fit: BoxFit.contain,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'SquadUp',
-                              style: GoogleFonts.poppins(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w500,
-                                color: darkBlue,
+    return LoadingOverlay(
+      isLoading: _isLoadingGroups && _userData == null,
+      message: 'Loading your groups...',
+      child: CustomDrawerBar(
+        key: _drawerKey,
+        userName: _getDisplayName(),
+        onItemTap: (index) async {
+          switch (index) {
+            case 0:
+              await Navigator.pushNamed(context, '/settings');
+              break;
+            case 1:
+              await Navigator.pushNamed(context, '/language');
+              break;
+            case 2:
+              _logout();
+              break;
+          }
+        },
+        child: Scaffold(
+          extendBody: true,
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: () {
+                  if (_isSearching) {
+                    setState(() {
+                      _isSearching = false;
+                    });
+                    FocusScope.of(context).unfocus();
+                  }
+                },
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: kToolbarHeight,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Image.asset(
+                                'lib/images/logo_v3.png',
+                                height: 40,
+                                width: 40,
+                                fit: BoxFit.contain,
                               ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            // Notification with badge
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.notifications_none_outlined,
-                                    size: 34,
-                                  ),
+                              const SizedBox(width: 10),
+                              Text(
+                                'SquadUp',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500,
                                   color: darkBlue,
-                                  onPressed: () {
-                                    // TODO: Implementar navegação para notificações
-                                  },
-                                  tooltip: 'Notificações',
                                 ),
-                                Positioned(
-                                  right: 6,
-                                  top: 6,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(4.5),
-                                    decoration: BoxDecoration(
-                                      color: primaryBlue,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: theme.scaffoldBackgroundColor,
-                                        width: 1.5,
-                                      ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              // Notification with badge
+                              Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.notifications_none_outlined,
+                                      size: 34,
                                     ),
-                                    child: const Text(
-                                      '1',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
+                                    color: darkBlue,
+                                    onPressed: () {
+                                      // TODO: Implementar navegação para notificações
+                                    },
+                                    tooltip: 'Notificações',
+                                  ),
+                                  Positioned(
+                                    right: 6,
+                                    top: 6,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4.5),
+                                      decoration: BoxDecoration(
+                                        color: primaryBlue,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: theme.scaffoldBackgroundColor,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        '1',
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.menu_rounded, size: 34),
-                              color: darkBlue,
-                              onPressed: _openDrawer,
-                              tooltip: 'Menu',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-                  // Greeting
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppLocalizations.of(
-                            context,
-                          )!.hiUser(_getDisplayName()),
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: darkBlue,
+                                ],
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.menu_rounded, size: 34),
+                                color: darkBlue,
+                                onPressed: _openDrawer,
+                                tooltip: 'Menu',
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 25),
-
-                  // Scrollable main content
-                  Expanded(
-                    child: RefreshIndicator(
-                      onRefresh: _refreshGroups,
-                      color: primaryBlue,
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.only(
-                          bottom: kBottomNavigationBarHeight + 12,
-                        ),
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        child:
-                            _userGroups.isEmpty &&
-                                    !_isLoadingGroups &&
-                                    _groupsError == null
-                                ? SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height -
-                                      kToolbarHeight -
-                                      kBottomNavigationBarHeight -
-                                      200,
-                                  child: _buildGroupsList(primaryBlue),
-                                )
-                                : Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Section title and add button
-                                    if (!_isSearching) ...[
-                                      AnimatedContainer(
-                                        duration: const Duration(
-                                          milliseconds: 300,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              AppLocalizations.of(
-                                                context,
-                                              )!.myGroups,
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w600,
-                                                color: darkBlue,
-                                              ),
-                                            ),
-                                            GestureDetector(
-                                              onTap:
-                                                  () => Navigator.of(context)
-                                                      .pushNamed(
-                                                        '/create-group',
-                                                      )
-                                                      .then((_) async {
-                                                        await _refreshGroups();
-                                                      }),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 16,
-                                                      vertical: 8,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: primaryBlue,
-                                                  borderRadius:
-                                                      BorderRadius.circular(15),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: darkBlue
-                                                          .withValues(
-                                                            alpha: 0.3,
-                                                          ),
-                                                      blurRadius: 8,
-                                                      offset: const Offset(
-                                                        0,
-                                                        2,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                child: Row(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.add,
-                                                      color: Colors.white,
-                                                      size: 18,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      AppLocalizations.of(
-                                                        context,
-                                                      )!.newGroup,
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            color: Colors.white,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      const SizedBox(height: 20),
-                                    ],
-
-                                    // Search bar
-                                    GroupSearchBar(
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _searchQuery = value;
-                                        });
-                                      },
-                                      onSearchingChanged: (searching) {
-                                        setState(() {
-                                          _isSearching = searching;
-                                        });
-                                      },
-                                    ),
-
-                                    const SizedBox(height: 14),
-
-                                    // Groups list
-                                    _buildGroupsList(primaryBlue),
-
-                                    const SizedBox(height: 8),
-                                  ],
-                                ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+
+                    const SizedBox(height: 25),
+                    // Greeting
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            AppLocalizations.of(
+                              context,
+                            )!.hiUser(_getDisplayName()),
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: darkBlue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    // Scrollable main content
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: _refreshGroups,
+                        color: primaryBlue,
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.only(
+                            bottom: kBottomNavigationBarHeight + 12,
+                          ),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child:
+                              _userGroups.isEmpty &&
+                                      !_isLoadingGroups &&
+                                      _groupsError == null
+                                  ? SizedBox(
+                                    height:
+                                        MediaQuery.of(context).size.height -
+                                        kToolbarHeight -
+                                        kBottomNavigationBarHeight -
+                                        200,
+                                    child: _buildGroupsList(primaryBlue),
+                                  )
+                                  : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // Section title and add button
+                                      if (!_isSearching) ...[
+                                        AnimatedContainer(
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                AppLocalizations.of(
+                                                  context,
+                                                )!.myGroups,
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: darkBlue,
+                                                ),
+                                              ),
+                                              GestureDetector(
+                                                onTap:
+                                                    () => Navigator.of(context)
+                                                        .pushNamed(
+                                                          '/create-group',
+                                                        )
+                                                        .then((_) async {
+                                                          await _refreshGroups();
+                                                        }),
+                                                child: Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 8,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: primaryBlue,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          15,
+                                                        ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: darkBlue
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        blurRadius: 8,
+                                                        offset: const Offset(
+                                                          0,
+                                                          2,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      const Icon(
+                                                        Icons.add,
+                                                        color: Colors.white,
+                                                        size: 18,
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        AppLocalizations.of(
+                                                          context,
+                                                        )!.newGroup,
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              fontSize: 14,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                      ],
+
+                                      // Search bar
+                                      GroupSearchBar(
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _searchQuery = value;
+                                          });
+                                        },
+                                        onSearchingChanged: (searching) {
+                                          setState(() {
+                                            _isSearching = searching;
+                                          });
+                                        },
+                                      ),
+
+                                      const SizedBox(height: 14),
+
+                                      // Groups list
+                                      _buildGroupsList(primaryBlue),
+
+                                      const SizedBox(height: 8),
+                                    ],
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        bottomNavigationBar: CustomCircularNavBar(
-          currentIndex: 0,
-          onTap: (index) async {
-            if (index == 0) {
-              // Home - já estamos na home
-            } else if (index == 1) {
-              // Profile
-              final result = await Navigator.pushNamed(context, '/profile');
-              if (result == true) {
-                _loadUserData();
+          bottomNavigationBar: CustomCircularNavBar(
+            currentIndex: 0,
+            onTap: (index) async {
+              if (index == 0) {
+                // Home - já estamos na home
+              } else if (index == 1) {
+                // Profile
+                final result = await Navigator.pushNamed(context, '/profile');
+                if (result == true) {
+                  _loadUserData();
+                }
               }
-            }
-          },
+            },
+          ),
         ),
       ),
     );

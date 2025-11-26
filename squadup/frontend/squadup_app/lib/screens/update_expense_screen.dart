@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
+import '../widgets/loading_overlay.dart';
 import '../models/expense.dart';
 
 class UpdateExpenseScreen extends StatefulWidget {
@@ -215,46 +216,50 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
-              child: _buildHeader(darkBlue),
-            ),
+    return LoadingOverlay(
+      isLoading: _loading,
+      message: 'Updating expense...',
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                child: _buildHeader(darkBlue),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Form
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildDescriptionField(darkBlue),
-                      const SizedBox(height: 20),
-                      _buildAmountField(darkBlue),
-                      const SizedBox(height: 20),
-                      _buildCategoryDropdown(darkBlue),
-                      const SizedBox(height: 20),
-                      _buildDatePicker(darkBlue),
-                      const SizedBox(height: 32),
-                      _buildUpdateButton(primaryBlue),
-                      const SizedBox(height: 12),
-                      _buildDeleteButton(),
-                      const SizedBox(height: 20),
-                    ],
+              // Form
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildDescriptionField(darkBlue),
+                        const SizedBox(height: 20),
+                        _buildAmountField(darkBlue),
+                        const SizedBox(height: 20),
+                        _buildCategoryDropdown(darkBlue),
+                        const SizedBox(height: 20),
+                        _buildDatePicker(darkBlue),
+                        const SizedBox(height: 32),
+                        _buildUpdateButton(primaryBlue),
+                        const SizedBox(height: 12),
+                        _buildDeleteButton(),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

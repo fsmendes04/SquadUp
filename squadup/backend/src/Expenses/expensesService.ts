@@ -410,6 +410,52 @@ export class ExpensesService {
     }
   }
 
+  async getExpenseByCategory(groupId: string, category: string, userId: string, token: string): Promise<ExpenseWithParticipants[]> {
+    try {
+      if (!groupId) {
+        throw new BadRequestException('Group ID is required');
+      }
+      if (!category) {
+        throw new BadRequestException('Category is required');
+      }
+
+      // Validar se o usuário é membro do grupo
+      await this.validateGroupMembership(groupId, userId, token);
+
+      // Sanitizar categoria
+      const sanitizedCategory = this.sanitizeString(category);
+      if (!sanitizedCategory) {
+        throw new BadRequestException('Invalid category');
+      }
+
+      const client = this.supabaseService.getClientWithToken(token);
+
+      const { data: expenses, error } = await client
+        .from('expenses')
+        .select(`
+          *,
+          participants:expense_participants(*)
+        `)
+        .eq('group_id', groupId)
+        .eq('category', sanitizedCategory)
+        .is('deleted_at', null)
+        .order('expense_date', { ascending: false });
+
+      if (error) {
+        this.logger.error(`Failed to fetch expenses by category for group ${groupId}`, error.message);
+        throw new BadRequestException('Unable to fetch expenses by category');
+      }
+
+      return expenses || [];
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) {
+        throw error;
+      }
+      this.logger.error('Unexpected error fetching expenses by category', error);
+      throw new BadRequestException('Failed to fetch expenses by category');
+    }
+  }
+
   async getGroupBalance(groupId: string, userId: string, token: string): Promise<any[]> {
     try {
       if (!groupId) {

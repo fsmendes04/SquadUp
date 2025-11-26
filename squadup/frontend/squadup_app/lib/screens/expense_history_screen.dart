@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/expenses_service.dart';
 import '../models/expense.dart';
+import '../widgets/loading_overlay.dart';
 import 'update_expense_screen.dart';
 
 class ExpenseHistoryScreen extends StatefulWidget {
@@ -23,6 +24,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   String? _groupId;
   String? _groupName;
   bool _initialized = false;
+  String _selectedPeriod = 'month';
+  DateTime _selectedMonth = DateTime.now();
 
   @override
   void didChangeDependencies() {
@@ -64,37 +67,52 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     }
   }
 
+  final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+  final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+
   @override
   Widget build(BuildContext context) {
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
-              child: _buildHeader(darkBlue),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
+    return LoadingOverlay(
+      isLoading: _loading,
+      message: 'Loading expense history...',
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildExpensesList(darkBlue),
-                    const SizedBox(height: 20),
-                  ],
+                child: _buildHeader(darkBlue),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!_loading && _error == null) ...[
+                        _buildPeriodSelector(darkBlue),
+                        const SizedBox(height: 16),
+                        _buildTotalExpensesCard(darkBlue),
+                        const SizedBox(height: 16),
+                        _buildSpendingByCategory(darkBlue),
+                        const SizedBox(height: 20),
+                      ],
+                      _buildExpensesList(darkBlue),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -120,6 +138,408 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPeriodSelector(Color darkBlue) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedPeriod = 'month';
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: darkBlue, width: 2),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color:
+                                _selectedPeriod == 'month'
+                                    ? darkBlue
+                                    : Colors.transparent,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Month',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedPeriod = 'year';
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: darkBlue, width: 2),
+                      ),
+                      child: Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color:
+                                _selectedPeriod == 'year'
+                                    ? darkBlue
+                                    : Colors.transparent,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Year',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: darkBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_selectedPeriod == 'month') ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, size: 28),
+                    color: darkBlue,
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(
+                          _selectedMonth.year,
+                          _selectedMonth.month - 1,
+                        );
+                      });
+                    },
+                  ),
+                  Text(
+                    '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, size: 28),
+                    color: darkBlue,
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(
+                          _selectedMonth.year,
+                          _selectedMonth.month + 1,
+                        );
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+            if (_selectedPeriod == 'year') ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, size: 28),
+                    color: darkBlue,
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(
+                          _selectedMonth.year - 1,
+                          _selectedMonth.month,
+                        );
+                      });
+                    },
+                  ),
+                  Text(
+                    '${_selectedMonth.year}',
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, size: 28),
+                    color: darkBlue,
+                    onPressed: () {
+                      setState(() {
+                        _selectedMonth = DateTime(
+                          _selectedMonth.year + 1,
+                          _selectedMonth.month,
+                        );
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  List<Expense> _getFilteredExpenses() {
+    if (_selectedPeriod == 'month') {
+      // Filter expenses for selected month
+      return _expenses.where((expense) {
+        return expense.expenseDate.year == _selectedMonth.year &&
+            expense.expenseDate.month == _selectedMonth.month;
+      }).toList();
+    } else {
+      // Filter expenses for selected year
+      return _expenses.where((expense) {
+        return expense.expenseDate.year == _selectedMonth.year;
+      }).toList();
+    }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
+  }
+
+  Widget _buildTotalExpensesCard(Color darkBlue) {
+    final filteredExpenses = _getFilteredExpenses();
+    final totalExpenses = filteredExpenses.fold<double>(
+      0.0,
+      (sum, expense) => sum + expense.amount,
+    );
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [primaryBlue, darkBlue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color.fromARGB(
+              255,
+              81,
+              163,
+              230,
+            ).withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Total Expenses',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            '€ ${totalExpenses.toStringAsFixed(2)}',
+            style: GoogleFonts.poppins(
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              height: 1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpendingByCategory(Color darkBlue) {
+    final filteredExpenses = _getFilteredExpenses();
+
+    // Calculate spending by category
+    final Map<String, double> categoryTotals = {};
+    for (var expense in filteredExpenses) {
+      categoryTotals[expense.category] =
+          (categoryTotals[expense.category] ?? 0) + expense.amount;
+    }
+
+    // Sort by amount descending
+    final sortedCategories =
+        categoryTotals.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+    final totalExpenses = filteredExpenses.fold<double>(
+      0.0,
+      (sum, expense) => sum + expense.amount,
+    );
+
+    // Define colors for categories
+    final List<Color> categoryColors = [
+      primaryBlue,
+      darkBlue,
+      primaryBlue,
+      darkBlue,
+      primaryBlue,
+      darkBlue,
+      primaryBlue,
+      darkBlue,
+    ];
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(color: Colors.grey[200]!, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Spending by Category',
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: darkBlue,
+            ),
+          ),
+          const SizedBox(height: 20),
+          if (sortedCategories.isEmpty)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Text(
+                  'No spendings yet',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            )
+          else ...[
+            ...sortedCategories.asMap().entries.map((entry) {
+              final index = entry.key;
+              final category = entry.value.key;
+              final amount = entry.value.value;
+              final percentage = (amount / totalExpenses) * 100;
+              final color = categoryColors[index % categoryColors.length];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          category,
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: darkBlue,
+                          ),
+                        ),
+                        Text(
+                          '€${amount.toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: percentage / 100,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                        minHeight: 14,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         ],
       ),
     );
@@ -244,10 +664,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       );
     }
 
+    final displayExpenses = _getFilteredExpenses();
+
     return Column(
       children:
-          _expenses.map((expense) {
-            return InkWell(
+          displayExpenses.map((expense) {
+            return GestureDetector(
               onTap: () async {
                 final result = await Navigator.push(
                   context,
@@ -261,19 +683,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                   _loadExpenses();
                 }
               },
-              borderRadius: BorderRadius.circular(16),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                   border: Border.all(color: Colors.grey[200]!, width: 1),
                 ),
                 child: Padding(

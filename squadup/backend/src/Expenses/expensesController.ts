@@ -118,6 +118,35 @@ export class ExpensesController {
     }
   }
 
+  @Get('group/:groupId/category/:category')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getExpensesByCategory(
+    @Param('groupId') groupId: string,
+    @Param('category') category: string,
+    @CurrentUser() user: any,
+    @GetToken() token: string,
+  ) {
+    try {
+      const expenses = await this.expensesService.getExpenseByCategory(groupId, category, user.id, token);
+
+      return {
+        success: true,
+        message: 'Expenses by category retrieved successfully',
+        data: expenses,
+      };
+    } catch (error) {
+      this.logger.error('Error fetching expenses by category', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to fetch expenses by category',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
   @Get(':id')
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   async getExpenseById(

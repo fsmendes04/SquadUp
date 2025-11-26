@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/navigation_bar.dart';
 import '../widgets/avatar_widget.dart';
+import '../widgets/loading_overlay.dart';
 import '../services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -83,260 +84,250 @@ class _ProfileScreenState extends State {
           Navigator.pop(context, _profileUpdated);
         }
       },
-      child: Scaffold(
-        extendBody: true,
-        backgroundColor: Colors.grey[100],
-        body:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    Stack(
+      child: LoadingOverlay(
+        isLoading: _isLoading,
+        message: 'Loading profile...',
+        child: Scaffold(
+          extendBody: true,
+          backgroundColor: Colors.grey[100],
+          body: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Stack(
+                children: [
+                  // Background container
+                  SizedBox(height: 350.0, width: double.infinity),
+                  // Blue header
+                  Container(
+                    height: 200.0,
+                    width: double.infinity,
+                    color: darkBlue,
+                  ),
+                  // Back and Edit buttons com padding lateral
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 10,
+                      left: 15,
+                      right: 15,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Background container
-                        SizedBox(height: 350.0, width: double.infinity),
-                        // Blue header
-                        Container(
-                          height: 200.0,
-                          width: double.infinity,
-                          color: darkBlue,
+                        IconButton(
+                          icon: const Icon(Icons.arrow_back_ios, size: 32),
+                          onPressed: () {
+                            Navigator.pop(context, _profileUpdated);
+                          },
+                          color: Colors.white,
                         ),
-                        // Back and Edit buttons com padding lateral
-                        Padding(
-                          padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).padding.top + 10,
-                            left: 15,
-                            right: 15,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.arrow_back_ios,
-                                  size: 32,
-                                ),
-                                onPressed: () {
-                                  Navigator.pop(context, _profileUpdated);
-                                },
-                                color: Colors.white,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined, size: 32),
-                                onPressed: () async {
-                                  final result = await Navigator.pushNamed(
-                                    context,
-                                    '/edit-profile',
-                                  );
-                                  if (result == true) {
-                                    _profileUpdated = true;
-                                    _loadUserData();
-                                  }
-                                },
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 32),
+                          onPressed: () async {
+                            final result = await Navigator.pushNamed(
+                              context,
+                              '/edit-profile',
+                            );
+                            if (result == true) {
+                              _profileUpdated = true;
+                              _loadUserData();
+                            }
+                          },
+                          color: Colors.white,
                         ),
-                        // White card (ajustado para não cortar)
-                        Positioned(
-                          top: 165.0,
-                          left: 15.0,
-                          right: 15.0,
-                          child: Material(
-                            elevation: 3.0,
-                            borderRadius: BorderRadius.circular(16.0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 24.0,
-                                vertical: 20.0,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16.0),
-                                color: Colors.white,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(height: 90),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          _getDisplayName(),
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 20.0,
-                                            color: Colors.black87,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Icon(
-                                        Icons.group,
-                                        color: darkBlue,
-                                        size: 22,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2.0),
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          userData?['email'] ?? 'No email',
-                                          style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w400,
-                                            fontSize: 15.0,
-                                            color: Colors.grey[700],
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Text(
-                                        '2', // Troque por userData?['groupsCount'] se disponível
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 17.0,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black87,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Avatar
-                        Positioned(
-                          top: 90.0,
-                          left: (MediaQuery.of(context).size.width / 2 - 85.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: AvatarWidget(
-                              key: ValueKey(
-                                userData?['avatar_url'] ?? 'no-avatar',
-                              ),
-                              radius: 80,
-                              allowEdit: false,
-                              avatarUrl: userData?['avatar_url'],
-                            ),
-                          ),
-                        ),
-                        // ...removido, agora está dentro do card branco...
                       ],
                     ),
-                    const SizedBox(height: 35.0),
-                    // Recent expenses section
-                    Padding(
-                      padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Recent Expenses',
-                            style: GoogleFonts.poppins(
-                              fontSize: 17.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'see all',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15.0,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 15.0),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 15.0, right: 5.0),
-                      child: SizedBox(
-                        height: 125.0,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
+                  ),
+                  // White card (ajustado para não cortar)
+                  Positioned(
+                    top: 165.0,
+                    left: 15.0,
+                    right: 15.0,
+                    child: Material(
+                      elevation: 3.0,
+                      borderRadius: BorderRadius.circular(16.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 20.0,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16.0),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildExpenseCard(
-                              'Dinner',
-                              Icons.restaurant,
-                              '\$45.50',
-                              primaryBlue.withValues(alpha: 0.8),
+                            const SizedBox(height: 90),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _getDisplayName(),
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 20.0,
+                                      color: Colors.black87,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Icon(Icons.group, color: darkBlue, size: 22),
+                              ],
                             ),
-                            _buildExpenseCard(
-                              'Movies',
-                              Icons.movie,
-                              '\$28.00',
-                              primaryBlue.withValues(alpha: 0.8),
-                            ),
-                            _buildExpenseCard(
-                              'Gas',
-                              Icons.local_gas_station,
-                              '\$35.20',
-                              primaryBlue.withValues(alpha: 0.8),
+                            const SizedBox(height: 2.0),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    userData?['email'] ?? 'No email',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w400,
+                                      fontSize: 15.0,
+                                      color: Colors.grey[700],
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '2', // Troque por userData?['groupsCount'] se disponível
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 17.0,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 25.0),
-                    // Statistics section
-                    Padding(
-                      padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Statistics',
-                            style: GoogleFonts.poppins(
-                              fontSize: 17.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            'this month',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15.0,
-                              color: Colors.grey,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  ),
+                  // Avatar
+                  Positioned(
+                    top: 90.0,
+                    left: (MediaQuery.of(context).size.width / 2 - 85.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
+                      child: AvatarWidget(
+                        key: ValueKey(userData?['avatar_url'] ?? 'no-avatar'),
+                        radius: 80,
+                        allowEdit: false,
+                        avatarUrl: userData?['avatar_url'],
+                      ),
                     ),
-                    const SizedBox(height: 15.0),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 15.0),
-                      child: _buildStatisticsCard(darkBlue),
+                  ),
+                  // ...removido, agora está dentro do card branco...
+                ],
+              ),
+              const SizedBox(height: 35.0),
+              // Recent expenses section
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent Expenses',
+                      style: GoogleFonts.poppins(
+                        fontSize: 17.0,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    SizedBox(height: kBottomNavigationBarHeight + 30),
+                    Text(
+                      'see all',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15.0,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ),
-        bottomNavigationBar: CustomCircularNavBar(
-          currentIndex: 1,
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.pop(context, _profileUpdated);
-            }
-          },
+              ),
+              const SizedBox(height: 15.0),
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0, right: 5.0),
+                child: SizedBox(
+                  height: 125.0,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      _buildExpenseCard(
+                        'Dinner',
+                        Icons.restaurant,
+                        '\$45.50',
+                        primaryBlue.withValues(alpha: 0.8),
+                      ),
+                      _buildExpenseCard(
+                        'Movies',
+                        Icons.movie,
+                        '\$28.00',
+                        primaryBlue.withValues(alpha: 0.8),
+                      ),
+                      _buildExpenseCard(
+                        'Gas',
+                        Icons.local_gas_station,
+                        '\$35.20',
+                        primaryBlue.withValues(alpha: 0.8),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25.0),
+              // Statistics section
+              Padding(
+                padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Statistics',
+                      style: GoogleFonts.poppins(
+                        fontSize: 17.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'this month',
+                      style: GoogleFonts.poppins(
+                        fontSize: 15.0,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 15.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                child: _buildStatisticsCard(darkBlue),
+              ),
+              SizedBox(height: kBottomNavigationBarHeight + 30),
+            ],
+          ),
+          bottomNavigationBar: CustomCircularNavBar(
+            currentIndex: 1,
+            onTap: (index) {
+              if (index == 0) {
+                Navigator.pop(context, _profileUpdated);
+              }
+            },
+          ),
         ),
       ),
     );

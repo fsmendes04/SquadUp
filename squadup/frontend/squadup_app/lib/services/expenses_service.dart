@@ -68,6 +68,31 @@ class ExpensesService {
     }
   }
 
+  /// Get expenses by category for a group
+  Future<List<Expense>> getExpensesByCategory(
+    String groupId,
+    String category,
+  ) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('Usuário não autenticado. Faça login novamente.');
+    }
+
+    try {
+      final response = await _apiService.get(
+        ApiService.expensesByCategory(groupId, category),
+      );
+
+      final result = _handleResponse(response);
+      final List<dynamic> expensesData = result['data'] as List<dynamic>;
+
+      return expensesData
+          .map((expense) => Expense.fromJson(expense as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   /// Update an expense
   Future<Expense> updateExpense(
     String expenseId,

@@ -4,6 +4,7 @@ import '../services/groups_service.dart';
 import '../models/groups.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/avatar_group.dart';
+import '../widgets/loading_overlay.dart';
 import 'edit_group_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
@@ -86,40 +87,42 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child:
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _error != null
-                ? _buildErrorState()
-                : RefreshIndicator(
-                  onRefresh: _refreshGroup,
-                  color: primaryBlue,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14.0,
-                        vertical: 20.0,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildTopBar(),
-                          const SizedBox(height: 25),
-                          _buildAvatarsSection(),
-                          _buildCalendarSection(),
-                          const SizedBox(height: 24),
-                          _buildActivitySection(),
-                          _buildNavigationCards(),
-                          const SizedBox(height: 32),
-                        ],
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      message: 'Loading group details...',
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child:
+              _error != null
+                  ? _buildErrorState()
+                  : RefreshIndicator(
+                    onRefresh: _refreshGroup,
+                    color: primaryBlue,
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14.0,
+                          vertical: 20.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTopBar(),
+                            const SizedBox(height: 25),
+                            _buildAvatarsSection(),
+                            _buildCalendarSection(),
+                            const SizedBox(height: 24),
+                            _buildActivitySection(),
+                            _buildNavigationCards(),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+        ),
       ),
     );
   }
@@ -665,7 +668,7 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      'Galeria',
+                      'Gallery',
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -674,7 +677,16 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () => _showFeatureSnackBar('Galeria'),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/group-gallery',
+                    arguments: {
+                      'groupId': widget.groupId,
+                      'groupName': widget.groupName,
+                    },
+                  );
+                },
               ),
             ),
           ],

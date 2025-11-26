@@ -4,6 +4,10 @@ import '../services/expenses_service.dart';
 import '../services/storage_service.dart';
 import '../models/expense.dart';
 import '../widgets/navigation_bar.dart';
+import '../widgets/avatar_group.dart';
+import '../widgets/loading_overlay.dart';
+import '../services/groups_service.dart';
+import '../models/groups.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -18,6 +22,7 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen>
     with SingleTickerProviderStateMixin {
   final ExpensesService _expensesService = ExpensesService();
+  final _groupsService = GroupsService();
 
   late String groupId;
   late String groupName;
@@ -29,6 +34,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   bool _initialized = false;
   String? _currentUserName;
   String? _currentUserId;
+  GroupWithMembers? _groupDetails;
 
   @override
   void didChangeDependencies() {
@@ -40,7 +46,23 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       groupName = widget.groupName ?? args?['groupName'] ?? '';
       _loadCurrentUser();
       _loadExpenses();
+      _loadGroupDetails();
       _initialized = true;
+    }
+  }
+
+  Future<void> _loadGroupDetails() async {
+    try {
+      final response = await _groupsService.getGroupById(groupId);
+      final groupDetails = GroupWithMembers.fromJson(response['data']);
+
+      if (mounted) {
+        setState(() {
+          _groupDetails = groupDetails;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading group details: $e');
     }
   }
 
@@ -194,219 +216,283 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
-              child: _buildHeader(darkBlue),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Scrollable content
-            Expanded(
-              child: SingleChildScrollView(
+    return LoadingOverlay(
+      isLoading: _loading,
+      message: 'Loading expenses...',
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Balance Chart
-                    _buildBalanceChart(primaryBlue, darkBlue),
+                child: _buildHeader(darkBlue),
+              ),
 
-                    const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-                    // Balance tabs and content
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withValues(alpha: 0.08),
-                            blurRadius: 10,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Column(
-                        children: [
-                          Container(
-                            height: 45,
-                            margin: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+              // Scrollable content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Balance Chart
+                      _buildBalanceChart(primaryBlue, darkBlue),
+
+                      const SizedBox(height: 24),
+
+                      // Balance tabs and content
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withValues(alpha: 0.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
                             ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: StatefulBuilder(
-                              builder: (context, setState) {
-                                return TabBar(
-                                  controller: _tabController,
-                                  dividerColor: Colors.transparent,
-                                  indicator: BoxDecoration(
-                                    color: Colors.transparent,
-                                  ),
-                                  indicatorSize: TabBarIndicatorSize.tab,
-                                  labelColor: Colors.white,
-                                  unselectedLabelColor: darkBlue,
-                                  labelStyle: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  unselectedLabelStyle: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  tabs: [
-                                    Tab(
-                                      child: AnimatedBuilder(
-                                        animation: _tabController,
-                                        builder: (context, child) {
-                                          final selected =
-                                              _tabController.index == 0;
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  selected
-                                                      ? primaryBlue
-                                                      : Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'To Receive',
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14,
-                                                color:
-                                                    selected
-                                                        ? Colors.white
-                                                        : darkBlue,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      ),
+                          ],
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              height: 45,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: StatefulBuilder(
+                                builder: (context, setState) {
+                                  return TabBar(
+                                    controller: _tabController,
+                                    dividerColor: Colors.transparent,
+                                    indicator: BoxDecoration(
+                                      color: Colors.transparent,
                                     ),
-                                    Tab(
-                                      child: AnimatedBuilder(
-                                        animation: _tabController,
-                                        builder: (context, child) {
-                                          final selected =
-                                              _tabController.index == 1;
-                                          return Container(
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  selected
-                                                      ? darkBlue
-                                                      : Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              'To Send',
-                                              style: GoogleFonts.poppins(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 14,
+                                    indicatorSize: TabBarIndicatorSize.tab,
+                                    labelColor: Colors.white,
+                                    unselectedLabelColor: darkBlue,
+                                    labelStyle: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                    unselectedLabelStyle: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                    tabs: [
+                                      Tab(
+                                        child: AnimatedBuilder(
+                                          animation: _tabController,
+                                          builder: (context, child) {
+                                            final selected =
+                                                _tabController.index == 0;
+                                            return Container(
+                                              decoration: BoxDecoration(
                                                 color:
                                                     selected
-                                                        ? Colors.white
-                                                        : darkBlue,
+                                                        ? primaryBlue
+                                                        : Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
                                               ),
-                                            ),
-                                          );
-                                        },
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                'To Receive',
+                                                style: GoogleFonts.poppins(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                  color:
+                                                      selected
+                                                          ? Colors.white
+                                                          : darkBlue,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                      Tab(
+                                        child: AnimatedBuilder(
+                                          animation: _tabController,
+                                          builder: (context, child) {
+                                            final selected =
+                                                _tabController.index == 1;
+                                            return Container(
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    selected
+                                                        ? darkBlue
+                                                        : Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              alignment: Alignment.center,
+                                              child: Text(
+                                                'To Send',
+                                                style: GoogleFonts.poppins(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14,
+                                                  color:
+                                                      selected
+                                                          ? Colors.white
+                                                          : darkBlue,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ),
+                            SizedBox(
+                              height: _calculateTabViewHeight(),
+                              child: TabBarView(
+                                controller: _tabController,
+                                children: [
+                                  // To Receive Tab - Lista expense_participants onde sou toReceiveId
+                                  _buildParticipantsList(
+                                    _getParticipantsToReceive(),
+                                    darkBlue,
+                                    isReceiving: true,
+                                  ),
+                                  // To Send Tab - Lista expense_participants onde sou toPayId
+                                  _buildParticipantsList(
+                                    _getParticipantsToPay(),
+                                    darkBlue,
+                                    isReceiving: false,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Button outside the tabs box
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryBlue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  _showSnackBar('Botão pressionado!');
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.settings, color: Colors.white),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Settle Up',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ],
-                                );
-                              },
-                            ),
-                          ),
-                          SizedBox(
-                            height: _calculateTabViewHeight(),
-                            child: TabBarView(
-                              controller: _tabController,
-                              children: [
-                                // To Receive Tab - Lista expense_participants onde sou toReceiveId
-                                _buildParticipantsList(
-                                  _getParticipantsToReceive(),
-                                  darkBlue,
-                                  isReceiving: true,
                                 ),
-                                // To Send Tab - Lista expense_participants onde sou toPayId
-                                _buildParticipantsList(
-                                  _getParticipantsToPay(),
-                                  darkBlue,
-                                  isReceiving: false,
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: CustomCircularNavBar(
-        currentIndex: 2,
-        icons: [Icons.add_card, Icons.history],
-        outlinedIcons: [Icons.add_card_outlined, Icons.history_outlined],
-        backgroundColor: darkBlue,
-        iconColor: Colors.white,
-        onTap: (index) {
-          if (index == 0) {
-            _navigateToCreateExpense();
-          } else if (index == 1) {
-            Navigator.pushNamed(
-              context,
-              '/expense-history',
-              arguments: {'groupId': groupId, 'groupName': groupName},
-            );
-          }
-        },
+
+        bottomNavigationBar: CustomCircularNavBar(
+          currentIndex: 2,
+          icons: [Icons.add_card, Icons.history],
+          outlinedIcons: [Icons.add_card_outlined, Icons.history_outlined],
+          backgroundColor: darkBlue,
+          iconColor: Colors.white,
+          onTap: (index) {
+            if (index == 0) {
+              _navigateToCreateExpense();
+            } else if (index == 1) {
+              Navigator.pushNamed(
+                context,
+                '/expense-history',
+                arguments: {'groupId': groupId, 'groupName': groupName},
+              );
+            }
+          },
+        ),
       ),
     );
   }
 
   Widget _buildHeader(Color darkBlue) {
     return SizedBox(
-      height: kToolbarHeight,
+      height: kToolbarHeight + 10, // espaço extra para avatar maior
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                groupName,
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
                 ),
-              ),
-            ],
+                Center(
+                  child: AvatarGroupWidget(
+                    groupId: groupId,
+                    avatarUrl: _groupDetails?.avatarUrl,
+                    radius: 31,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                // Nome do grupo
+                Expanded(
+                  child: Text(
+                    _groupDetails?.name ?? groupName,
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: darkBlue,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -507,6 +593,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                           borderRadius:
                                               const BorderRadius.horizontal(
                                                 left: Radius.circular(8),
+                                                right: Radius.circular(8),
                                               ),
                                         ),
                                         alignment: Alignment.centerLeft,
@@ -539,6 +626,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                           borderRadius:
                                               const BorderRadius.horizontal(
                                                 right: Radius.circular(8),
+                                                left: Radius.circular(8),
                                               ),
                                         ),
                                         alignment: Alignment.centerRight,
@@ -719,9 +807,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               Text(
                 '€${totalAmount.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: isReceiving ? primaryBlue : darkBlue,
+                  color: isReceiving ? Colors.green : Colors.red,
                 ),
               ),
             ],
@@ -731,7 +819,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     );
   }
 
-  // Método auxiliar para obter nome do usuário por ID
   String _getUserNameById(String userId) {
     try {
       final user = _userBalances.firstWhere(

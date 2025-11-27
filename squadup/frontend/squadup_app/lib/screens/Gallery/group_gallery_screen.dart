@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../widgets/avatar_group.dart';
-import '../widgets/loading_overlay.dart';
-import '../services/groups_service.dart';
-import '../services/gallery_service.dart';
-import '../models/groups.dart';
-import '../models/gallery.dart';
+import '../../widgets/avatar_group.dart';
+import '../../widgets/loading_overlay.dart';
+import '../../services/groups_service.dart';
+import '../../services/gallery_service.dart';
+import '../../models/groups.dart';
+import '../../models/gallery.dart';
 
 class GroupGalleryScreen extends StatefulWidget {
   final String groupId;

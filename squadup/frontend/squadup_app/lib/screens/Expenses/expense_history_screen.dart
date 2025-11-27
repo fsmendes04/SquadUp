@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/expenses_service.dart';
-import '../models/expense.dart';
-import '../widgets/loading_overlay.dart';
+import '../../services/expenses_service.dart';
+import '../../models/expense.dart';
+import '../../widgets/loading_overlay.dart';
 import 'update_expense_screen.dart';
 
 class ExpenseHistoryScreen extends StatefulWidget {

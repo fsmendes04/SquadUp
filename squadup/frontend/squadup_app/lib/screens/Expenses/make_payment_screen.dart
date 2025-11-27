@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/payments_service.dart';
-import '../services/storage_service.dart';
-import '../widgets/loading_overlay.dart';
-import '../models/groups.dart';
+import '../../services/payments_service.dart';
+import '../../services/storage_service.dart';
+import '../../widgets/loading_overlay.dart';
+import '../../models/groups.dart';
 
 class MakePaymentScreen extends StatefulWidget {
   final String groupId;
@@ -149,6 +149,22 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
             ),
           ),
           centerTitle: true,
+          actions: [
+            IconButton(
+              icon: Icon(Icons.history, color: darkBlue),
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  '/payment-history',
+                  arguments: {
+                    'groupId': widget.groupId,
+                    'groupName': widget.groupName,
+                  },
+                );
+              },
+              tooltip: 'Payment History',
+            ),
+          ],
         ),
         body: SafeArea(
           child: SingleChildScrollView(

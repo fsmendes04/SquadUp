@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/expenses_service.dart';
-import '../services/storage_service.dart';
-import '../models/expense.dart';
-import '../widgets/navigation_bar.dart';
-import '../widgets/avatar_group.dart';
-import '../widgets/loading_overlay.dart';
-import '../services/groups_service.dart';
-import '../models/groups.dart';
+import '../../services/expenses_service.dart';
+import '../../services/storage_service.dart';
+import '../../models/expense.dart';
+import '../../widgets/navigation_bar.dart';
+import '../../widgets/avatar_group.dart';
+import '../../widgets/loading_overlay.dart';
+import '../../services/groups_service.dart';
+import '../../models/groups.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -131,15 +131,16 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       for (var participant in expense.participants) {
         if (participant.toPayId == _currentUserId) {
           final userId = participant.toReceiveId;
+          final remainingAmount = participant.remainingAmount;
 
           if (groupedByUser.containsKey(userId)) {
-            groupedByUser[userId]!['totalAmount'] += participant.amount;
+            groupedByUser[userId]!['totalAmount'] += remainingAmount;
             groupedByUser[userId]!['expenseCount']++;
           } else {
             groupedByUser[userId] = {
               'userId': userId,
               'userName': _getUserNameById(userId),
-              'totalAmount': participant.amount,
+              'totalAmount': remainingAmount,
               'expenseCount': 1,
             };
           }
@@ -601,10 +602,18 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                   final toReceive = (user['toReceive'] as num).toDouble();
                   final toPay = (user['toPay'] as num).toDouble();
 
-                  final receivePercent =
+                  var receivePercent =
                       maxValue > 0 ? (toReceive / maxValue * 100).round() : 0;
-                  final payPercent =
+                  var payPercent =
                       maxValue > 0 ? (toPay / maxValue * 100).round() : 0;
+
+                  const minPercent = 35;
+                  if (toPay > 0 && payPercent < minPercent) {
+                    payPercent = minPercent;
+                  }
+                  if (toReceive > 0 && receivePercent < minPercent) {
+                    receivePercent = minPercent;
+                  }
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
@@ -633,29 +642,40 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                   if (toPay > 0)
                                     Expanded(
                                       flex: payPercent,
-                                      child: Container(
-                                        height: 32,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 48,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: darkBlue,
-                                          borderRadius:
-                                              const BorderRadius.horizontal(
-                                                left: Radius.circular(8),
-                                                right: Radius.circular(8),
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          return Container(
+                                            height: 32,
+                                            constraints: BoxConstraints(
+                                              minWidth: _calculateMinBarWidth(
+                                                toPay,
                                               ),
-                                        ),
-                                        alignment: Alignment.centerLeft,
-                                        padding: const EdgeInsets.only(left: 8),
-                                        child: Text(
-                                          '€${toPay.toStringAsFixed(2)}',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: darkBlue,
+                                              borderRadius:
+                                                  const BorderRadius.horizontal(
+                                                    left: Radius.circular(8),
+                                                    right: Radius.circular(8),
+                                                  ),
+                                            ),
+                                            alignment: Alignment.centerLeft,
+                                            padding: const EdgeInsets.only(
+                                              left: 8,
+                                              right: 8,
+                                            ),
+                                            child: Text(
+                                              '€${toPay.toStringAsFixed(2)}',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.visible,
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                                 ],
@@ -669,31 +689,40 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                   if (toReceive > 0)
                                     Expanded(
                                       flex: receivePercent,
-                                      child: Container(
-                                        height: 32,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 48,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: primaryBlue,
-                                          borderRadius:
-                                              const BorderRadius.horizontal(
-                                                right: Radius.circular(8),
-                                                left: Radius.circular(8),
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints) {
+                                          return Container(
+                                            height: 32,
+                                            constraints: BoxConstraints(
+                                              minWidth: _calculateMinBarWidth(
+                                                toReceive,
                                               ),
-                                        ),
-                                        alignment: Alignment.centerRight,
-                                        padding: const EdgeInsets.only(
-                                          right: 8,
-                                        ),
-                                        child: Text(
-                                          '€${toReceive.toStringAsFixed(2)}',
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
-                                        ),
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: primaryBlue,
+                                              borderRadius:
+                                                  const BorderRadius.horizontal(
+                                                    right: Radius.circular(8),
+                                                    left: Radius.circular(8),
+                                                  ),
+                                            ),
+                                            alignment: Alignment.centerRight,
+                                            padding: const EdgeInsets.only(
+                                              left: 8,
+                                              right: 8,
+                                            ),
+                                            child: Text(
+                                              '€${toReceive.toStringAsFixed(2)}',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.white,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.visible,
+                                            ),
+                                          );
+                                        },
                                       ),
                                     ),
                                   // Empty space
@@ -892,5 +921,18 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     if (maxCount == 0) return 100;
 
     return (maxCount * 70.0) + 16.0;
+  }
+
+  double _calculateMinBarWidth(double amount) {
+    final text = '€${amount.toStringAsFixed(2)}';
+    final textPainter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+    textPainter.layout();
+    return textPainter.width;
   }
 }

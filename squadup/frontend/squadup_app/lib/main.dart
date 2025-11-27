@@ -3,24 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'config/locale_provider.dart';
-import 'screens/edit_profile_screen.dart';
-import 'screens/group_home_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/add_name_screen.dart';
-import 'screens/profile_screen.dart';
-import 'screens/edit_group_screen.dart';
-import 'screens/create_group_screen.dart';
-import 'screens/forgot_password_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/language_screen.dart';
-import 'screens/expenses_screen.dart';
-import 'screens/add_expense_screen.dart';
-import 'screens/expense_history_screen.dart';
-import 'screens/group_gallery_screen.dart';
-import 'screens/create_gallery_screen.dart';
-import 'screens/make_payment_screen.dart';
+import 'config/screens.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -105,6 +88,7 @@ class MyApp extends StatelessWidget {
                 groupDetails: args['groupDetails'],
               );
             },
+            '/payment-history': (context) => const PaymentHistoryScreen(),
           },
         );
       },

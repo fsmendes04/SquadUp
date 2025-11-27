@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import '../services/gallery_service.dart';
-import '../widgets/loading_overlay.dart';
+import '../../services/gallery_service.dart';
+import '../../widgets/loading_overlay.dart';
 
 class CreateGalleryScreen extends StatefulWidget {
   final String groupId;

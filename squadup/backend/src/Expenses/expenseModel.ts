@@ -17,6 +17,7 @@ export interface ExpenseParticipant {
   topayid: string;
   toreceiveid: string;
   amount: number;
+  amount_paid: number;
   created_at: string;
 }
 

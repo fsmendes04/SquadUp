@@ -5,8 +5,7 @@ import '../widgets/loading_overlay.dart';
 import '../services/groups_service.dart';
 import '../services/gallery_service.dart';
 import '../models/groups.dart';
-import '../models/gallery_model.dart';
-import 'package:intl/intl.dart';
+import '../models/gallery.dart';
 
 class GroupGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -77,10 +76,28 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
-      return DateFormat('dd MMM yyyy').format(date);
+      return '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}';
     } catch (e) {
       return dateStr;
     }
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 
   @override

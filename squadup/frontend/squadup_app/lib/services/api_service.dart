@@ -180,4 +180,8 @@ class ApiService {
   static String galleriesByGroup(String groupId) =>
       '$galleryEndpoint/group/$groupId';
   static String galleryById(String galleryId) => '$galleryEndpoint/$galleryId';
+
+  static const String paymentsEndpoint = '/payments';
+  static String paymentsByGroup(String groupId) =>
+      '$paymentsEndpoint/group/$groupId';
 }

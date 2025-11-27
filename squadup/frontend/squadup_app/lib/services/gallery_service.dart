@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'api_service.dart';
-import '../models/gallery_model.dart';
+import '../models/gallery.dart';
 
 class GalleryService {
   final ApiService _apiService = ApiService();

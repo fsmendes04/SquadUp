@@ -102,15 +102,16 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       for (var participant in expense.participants) {
         if (participant.toReceiveId == _currentUserId) {
           final userId = participant.toPayId;
+          final remainingAmount = participant.remainingAmount;
 
           if (groupedByUser.containsKey(userId)) {
-            groupedByUser[userId]!['totalAmount'] += participant.amount;
+            groupedByUser[userId]!['totalAmount'] += remainingAmount;
             groupedByUser[userId]!['expenseCount']++;
           } else {
             groupedByUser[userId] = {
               'userId': userId,
               'userName': _getUserNameById(userId),
-              'totalAmount': participant.amount,
+              'totalAmount': remainingAmount,
               'expenseCount': 1,
             };
           }
@@ -422,6 +423,52 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 30),
+                            SizedBox(
+                              width: 150,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: darkBlue,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                ),
+                                onPressed: () {
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/make-payment',
+                                    arguments: {
+                                      'groupId': groupId,
+                                      'groupName': groupName,
+                                      'groupDetails': _groupDetails,
+                                    },
+                                  ).then((result) {
+                                    if (result == true) {
+                                      _loadExpenses();
+                                    }
+                                  });
+                                },
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.payment, color: Colors.white),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Payment',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -588,6 +635,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                       flex: payPercent,
                                       child: Container(
                                         height: 32,
+                                        constraints: const BoxConstraints(
+                                          minWidth: 48,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: darkBlue,
                                           borderRadius:
@@ -621,6 +671,9 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                       flex: receivePercent,
                                       child: Container(
                                         height: 32,
+                                        constraints: const BoxConstraints(
+                                          minWidth: 48,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: primaryBlue,
                                           borderRadius:

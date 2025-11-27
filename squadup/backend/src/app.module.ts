@@ -4,6 +4,7 @@ import { UserModule } from './User/user.module';
 import { GroupsModule } from './Groups/groups.module';
 import { ExpensesModule } from './Expenses/expenses.module';
 import { GalleryModule } from './Gallery/gallery.module';
+import { PaymentsModule } from './Payments/payments.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { validateEnvironment } from './common/config/envValidation';
@@ -24,7 +25,8 @@ import { RequestLoggingMiddleware } from './common/middleware/logger';
     UserModule,
     GroupsModule,
     ExpensesModule,
-    GalleryModule
+    GalleryModule,
+    PaymentsModule
   ],
   controllers: [],
   providers: [

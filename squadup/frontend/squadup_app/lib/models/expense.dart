@@ -80,6 +80,7 @@ class ExpenseParticipant {
   final String toPayId;
   final String toReceiveId;
   final double amount;
+  final double amountPaid;
   final DateTime createdAt;
 
   ExpenseParticipant({
@@ -88,8 +89,11 @@ class ExpenseParticipant {
     required this.toPayId,
     required this.toReceiveId,
     required this.amount,
+    this.amountPaid = 0,
     required this.createdAt,
   });
+
+  double get remainingAmount => amount - amountPaid;
 
   factory ExpenseParticipant.fromJson(Map<String, dynamic> json) {
     return ExpenseParticipant(
@@ -98,6 +102,7 @@ class ExpenseParticipant {
       toPayId: json['topayid'] as String,
       toReceiveId: json['toreceiveid'] as String,
       amount: (json['amount'] as num).toDouble(),
+      amountPaid: (json['amount_paid'] as num?)?.toDouble() ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -109,6 +114,7 @@ class ExpenseParticipant {
       'topayid': toPayId,
       'toreceiveid': toReceiveId,
       'amount': amount,
+      'amount_paid': amountPaid,
       'created_at': createdAt.toIso8601String(),
     };
   }

@@ -20,6 +20,7 @@ import 'screens/add_expense_screen.dart';
 import 'screens/expense_history_screen.dart';
 import 'screens/group_gallery_screen.dart';
 import 'screens/create_gallery_screen.dart';
+import 'screens/make_payment_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -92,6 +93,16 @@ class MyApp extends StatelessWidget {
               return CreateGalleryScreen(
                 groupId: args['groupId'] as String,
                 groupName: args['groupName'] as String,
+              );
+            },
+            '/make-payment': (context) {
+              final args =
+                  ModalRoute.of(context)!.settings.arguments
+                      as Map<String, dynamic>;
+              return MakePaymentScreen(
+                groupId: args['groupId'] as String,
+                groupName: args['groupName'] as String,
+                groupDetails: args['groupDetails'],
               );
             },
           },

@@ -99,6 +99,7 @@ export class ExpensesService {
         topayid: participantId,
         toreceiveid: payer_id,
         amount: amountPerParticipant,
+        amount_paid: 0,
       }));
 
       if (participantsData.length === 0) {
@@ -233,6 +234,7 @@ export class ExpensesService {
           topayid: participantId,
           toreceiveid: expense.payer_id,
           amount: amountPerParticipant,
+          amount_paid: 0,
         }));
 
         // LOG: Mostrar quanto cada participante deve/recebe
@@ -327,7 +329,15 @@ export class ExpensesService {
         .from('expenses')
         .select(`
           *,
-          participants:expense_participants(*)
+          participants:expense_participants(
+            id,
+            expense_id,
+            topayid,
+            toreceiveid,
+            amount,
+            amount_paid,
+            created_at
+          )
         `)
         .eq('id', expenseId)
         .is('deleted_at', null)
@@ -362,7 +372,15 @@ export class ExpensesService {
         .from('expenses')
         .select(`
           *,
-          participants:expense_participants(*)
+          participants:expense_participants(
+            id,
+            expense_id,
+            topayid,
+            toreceiveid,
+            amount,
+            amount_paid,
+            created_at
+          )
         `)
         .eq('group_id', groupId)
         .is('deleted_at', null)
@@ -434,7 +452,15 @@ export class ExpensesService {
         .from('expenses')
         .select(`
           *,
-          participants:expense_participants(*)
+          participants:expense_participants(
+            id,
+            expense_id,
+            topayid,
+            toreceiveid,
+            amount,
+            amount_paid,
+            created_at
+          )
         `)
         .eq('group_id', groupId)
         .eq('category', sanitizedCategory)
@@ -491,7 +517,7 @@ export class ExpensesService {
       // Buscar todos os participantes dessas despesas
       const { data: participants, error: participantsError } = await client
         .from('expense_participants')
-        .select('topayid, toreceiveid, amount')
+        .select('topayid, toreceiveid, amount, amount_paid')
         .in('expense_id', ids);
 
       if (participantsError) {
@@ -513,14 +539,15 @@ export class ExpensesService {
 
       // Calcular saldos: quem deve paga (negativo), quem recebe (positivo)
       participants.forEach((participant: any) => {
+        const remainingAmount = participant.amount - (participant.amount_paid || 0);
         const payerBalance = balances.get(participant.topayid);
         const receiverBalance = balances.get(participant.toreceiveid);
 
         if (payerBalance) {
-          payerBalance.balance -= participant.amount; // Quem paga tem saldo negativo
+          payerBalance.balance -= remainingAmount; // Quem deve tem saldo negativo
         }
         if (receiverBalance) {
-          receiverBalance.balance += participant.amount; // Quem recebe tem saldo positivo
+          receiverBalance.balance += remainingAmount; // Quem deve receber tem saldo positivo
         }
       });      // Converter para o formato esperado
       const result = Array.from(balances.values()).map(balance => {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../widgets/navigation_bar.dart';
 import '../widgets/drawer_bar.dart';
 import '../widgets/group_card.dart';
@@ -120,7 +119,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGroupsList(Color primaryBlue) {
-    final loc = AppLocalizations.of(context)!;
     if (_isLoadingGroups) {
       return const Center(
         child: Padding(
@@ -138,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
             const SizedBox(height: 16),
             Text(
-              loc.errorLoadingGroups,
+              'Error loading groups',
               style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
@@ -153,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               child: Text(
-                loc.tryAgain,
+                'Try again',
                 style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
               ),
             ),
@@ -189,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              loc.notPartOfAnyGroup,
+              "You're not part of any group yet",
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -199,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              loc.createOrJoinGroup,
+              'Create or join a group to get started!',
               style: GoogleFonts.poppins(
                 fontSize: 16,
                 fontWeight: FontWeight.w400,
@@ -228,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      loc.createGroup,
+                      'Create Group',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -268,7 +266,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 32),
             Text(
-              loc.noGroupsFound,
+              'No groups found',
               style: GoogleFonts.poppins(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -316,7 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar('Erro ao fazer logout');
+        _showErrorSnackBar('Error logging out');
       }
     }
   }
@@ -341,10 +339,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
-    final loc = AppLocalizations.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(loc?.logoutError ?? message),
+        content: Text(message),
         backgroundColor: Colors.red[600],
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -481,16 +478,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            AppLocalizations.of(
-                              context,
-                            )!.hiUser(_getDisplayName()),
-                            style: GoogleFonts.poppins(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
-                              color: darkBlue,
-                            ),
-                          ),
+                              Text(
+                                'Hi, ${_getDisplayName()}!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                  color: darkBlue,
+                                ),
+                              ),
                         ],
                       ),
                     ),
@@ -534,9 +529,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
-                                                AppLocalizations.of(
-                                                  context,
-                                                )!.myGroups,
+                                                'My Groups',
                                                 style: GoogleFonts.poppins(
                                                   fontSize: 20,
                                                   fontWeight: FontWeight.w600,
@@ -589,9 +582,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                                       ),
                                                       const SizedBox(width: 4),
                                                       Text(
-                                                        AppLocalizations.of(
-                                                          context,
-                                                        )!.newGroup,
+                                                        'New',
                                                         style:
                                                             GoogleFonts.poppins(
                                                               fontSize: 14,

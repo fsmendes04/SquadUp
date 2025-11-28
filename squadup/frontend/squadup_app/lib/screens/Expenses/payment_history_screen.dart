@@ -180,14 +180,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   color: darkBlue,
                 ),
               ),
-              Text(
-                groupName,
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Colors.grey[600],
-                ),
-              ),
             ],
           ),
           centerTitle: true,

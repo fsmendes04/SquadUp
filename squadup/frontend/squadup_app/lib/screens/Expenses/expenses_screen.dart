@@ -228,7 +228,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
                 child: _buildHeader(darkBlue),
               ),
 

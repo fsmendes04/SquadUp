@@ -46,6 +46,9 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
     );
     _selectedDate = widget.expense.expenseDate;
     _selectedCategory = widget.expense.category;
+    if (!_categories.contains(_selectedCategory)) {
+      _categories.add(_selectedCategory);
+    }
   }
 
   @override

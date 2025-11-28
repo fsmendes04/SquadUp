@@ -88,7 +88,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 child: _buildHeader(darkBlue),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
               // Scrollable content
               Expanded(
@@ -98,12 +98,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (!_loading && _error == null) ...[
-                        _buildPeriodSelector(darkBlue),
-                        const SizedBox(height: 16),
-                        _buildTotalExpensesCard(darkBlue),
-                        const SizedBox(height: 16),
-                        _buildSpendingByCategory(darkBlue),
-                        const SizedBox(height: 20),
+                          _buildPeriodSelector(darkBlue),
+                          const SizedBox(height: 4),
+                          if (_getFilteredExpenses().isNotEmpty) ...[
+                            _buildSpendingByCategory(darkBlue),
+                            const SizedBox(height: 20),
+                          ],
                       ],
                       _buildExpensesList(darkBlue),
                       const SizedBox(height: 20),
@@ -147,179 +147,180 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Linha dos botões Month e Year
         Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(width: 4),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedPeriod = 'month';
-                  });
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: darkBlue, width: 2),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                                _selectedPeriod == 'month'
-                                    ? darkBlue
-                                    : Colors.transparent,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Month',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: darkBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedPeriod = 'year';
-                  });
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: darkBlue, width: 2),
-                      ),
-                      child: Center(
-                        child: Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color:
-                                _selectedPeriod == 'year'
-                                    ? darkBlue
-                                    : Colors.transparent,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Year',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: darkBlue,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_selectedPeriod == 'month') ...[
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            // Botão Month
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedPeriod = 'month';
+                });
+              },
+              child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, size: 28),
-                    color: darkBlue,
-                    onPressed: () {
-                      setState(() {
-                        _selectedMonth = DateTime(
-                          _selectedMonth.year,
-                          _selectedMonth.month - 1,
-                        );
-                      });
-                    },
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: darkBlue, width: 2),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              _selectedPeriod == 'month'
+                                  ? darkBlue
+                                  : Colors.transparent,
+                        ),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
-                    '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                    'Month',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: darkBlue,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, size: 28),
-                    color: darkBlue,
-                    onPressed: () {
-                      setState(() {
-                        _selectedMonth = DateTime(
-                          _selectedMonth.year,
-                          _selectedMonth.month + 1,
-                        );
-                      });
-                    },
-                  ),
                 ],
               ),
-            ],
-            if (_selectedPeriod == 'year') ...[
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+            ),
+            const SizedBox(width: 32),
+            // Botão Year
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedPeriod = 'year';
+                });
+              },
+              child: Row(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left, size: 28),
-                    color: darkBlue,
-                    onPressed: () {
-                      setState(() {
-                        _selectedMonth = DateTime(
-                          _selectedMonth.year - 1,
-                          _selectedMonth.month,
-                        );
-                      });
-                    },
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: darkBlue, width: 2),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color:
+                              _selectedPeriod == 'year'
+                                  ? darkBlue
+                                  : Colors.transparent,
+                        ),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
-                    '${_selectedMonth.year}',
+                    'Year',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: darkBlue,
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right, size: 28),
-                    color: darkBlue,
-                    onPressed: () {
-                      setState(() {
-                        _selectedMonth = DateTime(
-                          _selectedMonth.year + 1,
-                          _selectedMonth.month,
-                        );
-                      });
-                    },
-                  ),
                 ],
               ),
-            ],
+            ),
           ],
         ),
+        // Card Total Expenses
+        const SizedBox(height: 16),
+        _buildTotalExpensesCard(darkBlue),
+        if (_selectedPeriod == 'month') ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left, size: 28),
+                color: darkBlue,
+                onPressed: () {
+                  setState(() {
+                    _selectedMonth = DateTime(
+                      _selectedMonth.year,
+                      _selectedMonth.month - 1,
+                    );
+                  });
+                },
+              ),
+              Text(
+                '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, size: 28),
+                color: darkBlue,
+                onPressed: () {
+                  setState(() {
+                    _selectedMonth = DateTime(
+                      _selectedMonth.year,
+                      _selectedMonth.month + 1,
+                    );
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
+        if (_selectedPeriod == 'year') ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left, size: 28),
+                color: darkBlue,
+                onPressed: () {
+                  setState(() {
+                    _selectedMonth = DateTime(
+                      _selectedMonth.year - 1,
+                      _selectedMonth.month,
+                    );
+                  });
+                },
+              ),
+              Text(
+                '${_selectedMonth.year}',
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right, size: 28),
+                color: darkBlue,
+                onPressed: () {
+                  setState(() {
+                    _selectedMonth = DateTime(
+                      _selectedMonth.year + 1,
+                      _selectedMonth.month,
+                    );
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -477,17 +478,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           ),
           const SizedBox(height: 20),
           if (sortedCategories.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 24),
-                child: Text(
-                  'No spendings yet',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    color: Colors.grey[500],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+            Text(
+              'No expenses to display',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: Colors.grey[600],
               ),
             )
           else ...[
@@ -625,41 +620,40 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
       );
     }
 
-    if (_expenses.isEmpty) {
-      return Center(
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Opacity(
-                opacity: 0.3,
-                child: Icon(
-                  Icons.receipt_long_outlined,
-                  size: 64,
-                  color: Colors.grey[400],
+    if (_getFilteredExpenses().isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 400,
+              height: 400,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.12,
+                  child: Image.asset(
+                    'lib/images/logo_v3.png',
+                    width: 300,
+                    height: 300,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              Text(
-                'No expenses yet',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
-                ),
+            ),
+            Text(
+              "No expenses found",
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[500],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Start by adding the first expense',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+
+          ],
         ),
       );
     }

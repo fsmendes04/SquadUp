@@ -14,7 +14,8 @@ import {
   FileTypeValidator,
   ParseFilePipe,
   Logger,
-  BadRequestException
+  BadRequestException,
+  Param
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
@@ -286,5 +287,33 @@ export class UserController {
         error.status || HttpStatus.BAD_REQUEST,
       );
     } 
+  }
+
+  @Get('profile/by-email/:email')
+  @UseGuards(AuthGuard)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async getUserByEmail(
+    @Param('email') email: string,
+    @GetToken() token: string,
+  ) {
+    try {
+      const userData = await this.userService.getUserByEmail(email);
+
+      return {
+        success: true,
+        message: 'User retrieved successfully',
+        data: userData,
+      };
+    } catch (error) {
+      this.logger.error('Get user by email error', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'User not found',
+        },
+        error.status || HttpStatus.NOT_FOUND,
+      );
+    }
   }
 }

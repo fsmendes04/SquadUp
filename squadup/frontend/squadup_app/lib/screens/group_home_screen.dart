@@ -6,6 +6,7 @@ import '../widgets/avatar_widget.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/loading_overlay.dart';
 import 'edit_group_screen.dart';
+import 'polls_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;
@@ -651,7 +652,17 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () => _showFeatureSnackBar('Enquetes'),
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PollsScreen(
+                        groupId: widget.groupId,
+                        groupName: _groupDetails?.name ?? widget.groupName,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),

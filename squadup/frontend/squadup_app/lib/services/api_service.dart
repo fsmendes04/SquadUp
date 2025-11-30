@@ -184,4 +184,6 @@ class ApiService {
   static const String paymentsEndpoint = '/payments';
   static String paymentsByGroup(String groupId) =>
       '$paymentsEndpoint/group/$groupId';
+  static String settleUpByGroup(String groupId) =>
+      '$paymentsEndpoint/group/$groupId/settle-up';
 }

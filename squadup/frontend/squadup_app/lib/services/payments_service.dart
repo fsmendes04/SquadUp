@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'api_service.dart';
 import '../models/payment.dart';
+import '../models/settle_up_transaction.dart';
 
 class PaymentsService {
   final ApiService _apiService = ApiService();
@@ -61,6 +62,34 @@ class PaymentsService {
     } on DioException catch (e) {
       throw Exception(
         e.response?.data['message'] ?? 'Failed to fetch payments',
+      );
+    }
+  }
+
+  /// Get minimum settle up transactions for a group
+  Future<List<SettleUpTransaction>> getSettleUpTransactions(
+    String groupId,
+  ) async {
+    if (!_apiService.hasAuthToken) {
+      throw Exception('User not authenticated. Please login again.');
+    }
+
+    try {
+      final response = await _apiService.get(
+        ApiService.settleUpByGroup(groupId),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List<dynamic>;
+        return data.map((json) => SettleUpTransaction.fromJson(json)).toList();
+      } else {
+        throw Exception(
+          response.data['message'] ?? 'Failed to calculate settle up',
+        );
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        e.response?.data['message'] ?? 'Failed to calculate settle up',
       );
     }
   }

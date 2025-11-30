@@ -149,6 +149,17 @@ class UserService {
     return await _storageService.getUserProfile();
   }
 
+  Future<Map<String, dynamic>> getUserByEmail(String email) async {
+    try {
+      final response = await _apiService.get(
+        '${ApiService.userProfile}/by-email/$email',
+      );
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<Map<String, dynamic>> updateProfile({
     String? name,
     String? avatarUrl,

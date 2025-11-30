@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/groups_service.dart';
+import '../services/user_service.dart';
 import '../models/groups.dart';
 import '../widgets/avatar_group.dart';
+import '../widgets/avatar_widget.dart';
 import '../widgets/loading_overlay.dart';
 
 class EditGroupScreen extends StatefulWidget {
@@ -15,6 +17,7 @@ class EditGroupScreen extends StatefulWidget {
 
 class _EditGroupScreenState extends State<EditGroupScreen> {
   final GroupsService _groupsService = GroupsService();
+  final UserService _userService = UserService();
   GroupWithMembers? _group;
   bool _loading = true;
   final _formKey = GlobalKey<FormState>();
@@ -80,6 +83,183 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
         _saving = false;
       });
     }
+  }
+
+  Future<void> _showAddMemberDialog() async {
+    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+    final emailController = TextEditingController();
+    bool isSearching = false;
+    Map<String, dynamic>? foundUser;
+    String? errorMessage;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                'Add Member',
+                style: GoogleFonts.poppins(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: darkBlue,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: GoogleFonts.poppins(color: darkBlue),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: darkBlue, width: 2),
+                      ),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  if (isSearching)
+                    const CircularProgressIndicator()
+                  else if (foundUser != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primaryBlue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          AvatarWidget(
+                            avatarUrl: foundUser!['avatar_url'],
+                            radius: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              foundUser!['name'] ?? 'User',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                color: darkBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else if (errorMessage != null)
+                    Text(
+                      errorMessage!,
+                      style: GoogleFonts.poppins(
+                        color: Colors.red,
+                        fontSize: 14,
+                      ),
+                    ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(
+                    'Cancel',
+                    style: GoogleFonts.poppins(color: Colors.grey),
+                  ),
+                ),
+                if (foundUser == null)
+                  ElevatedButton(
+                    onPressed: isSearching
+                        ? null
+                        : () async {
+                            final email = emailController.text.trim();
+                            if (email.isEmpty) return;
+
+                            setDialogState(() {
+                              isSearching = true;
+                              errorMessage = null;
+                            });
+
+                            try {
+                              final response = await _userService.getUserByEmail(email);
+                              if (response['success'] == true && response['data'] != null) {
+                                setDialogState(() {
+                                  foundUser = response['data'];
+                                  isSearching = false;
+                                });
+                              } else {
+                                setDialogState(() {
+                                  errorMessage = 'User not found';
+                                  isSearching = false;
+                                });
+                              }
+                            } catch (e) {
+                              setDialogState(() {
+                                errorMessage = 'Error searching user';
+                                isSearching = false;
+                              });
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: darkBlue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      'Search',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                  )
+                else
+                  ElevatedButton(
+                    onPressed: () async {
+                      try {
+                        await _groupsService.addMember(
+                          groupId: widget.groupId,
+                          userId: foundUser!['id'],
+                        );
+                        if (mounted) {
+                          Navigator.pop(context);
+                          await _fetchGroup();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Member added successfully'),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error adding member: $e'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: darkBlue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      'Add',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -280,6 +460,92 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                             }
                                             return null;
                                           },
+                                        ),
+                                        const SizedBox(height: 40),
+                                        // Members Section
+                                        Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Members',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: darkBlue,
+                                                ),
+                                              ),
+                                              TextButton.icon(
+                                                onPressed: _showAddMemberDialog,
+                                                icon: Icon(Icons.person_add, color: darkBlue, size: 20),
+                                                label: Text(
+                                                  'Add',
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: darkBlue,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          constraints: BoxConstraints(
+                                            maxHeight: 200,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: darkBlue.withValues(alpha: 0.3),
+                                              width: 1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: _group!.members.isEmpty
+                                              ? Center(
+                                                  child: Padding(
+                                                    padding: const EdgeInsets.all(24.0),
+                                                    child: Text(
+                                                      'No members yet',
+                                                      style: GoogleFonts.poppins(
+                                                        color: Colors.grey[600],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              : ListView.separated(
+                                                  shrinkWrap: true,
+                                                  itemCount: _group!.members.length,
+                                                  separatorBuilder: (context, index) => Divider(
+                                                    height: 1,
+                                                    color: darkBlue.withValues(alpha: 0.1),
+                                                  ),
+                                                  itemBuilder: (context, index) {
+                                                    final member = _group!.members[index];
+                                                    return ListTile(
+                                                      leading: AvatarWidget(
+                                                        avatarUrl: member.avatarUrl,
+                                                        radius: 20,
+                                                      ),
+                                                      title: Text(
+                                                        member.name ?? 'User',
+                                                        style: GoogleFonts.poppins(
+                                                          fontWeight: FontWeight.w500,
+                                                          color: darkBlue,
+                                                        ),
+                                                      ),
+                                                      subtitle: Text(
+                                                        member.role,
+                                                        style: GoogleFonts.poppins(
+                                                          fontSize: 12,
+                                                          color: Colors.grey[600],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
                                         ),
                                         const SizedBox(height: 40),
                                         SizedBox(

@@ -8,6 +8,7 @@ import '../../widgets/avatar_group.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../services/groups_service.dart';
 import '../../models/groups.dart';
+import '../settle_up_screen.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -405,12 +406,20 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                   ),
                                 ),
                                 onPressed: () {
-                                  _showSnackBar('Botão pressionado!');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SettleUpScreen(
+                                        groupId: groupId,
+                                        groupName: groupName,
+                                      ),
+                                    ),
+                                  );
                                 },
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.settings, color: Colors.white),
+                                    Icon(Icons.swap_horiz, color: Colors.white),
                                     const SizedBox(width: 8),
                                     Text(
                                       'Settle Up',

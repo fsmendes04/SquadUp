@@ -3,12 +3,17 @@ import { SupabaseService } from '../Supabase/supabaseService';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './paymentModel';
 import { ExpenseParticipant } from '../Expenses/expenseModel';
+import { SettleUpTransaction } from './dto/settle-up-transaction.dto';
+import { ExpensesService } from '../Expenses/expensesService';
 
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
 
-  constructor(private readonly supabaseService: SupabaseService) { }
+  constructor(
+    private readonly supabaseService: SupabaseService,
+    private readonly expensesService: ExpensesService,
+  ) { }
 
   /**
    * Register a payment and process settlement of expense participants
@@ -173,5 +178,66 @@ export class PaymentsService {
     }
 
     return payments || [];
+  }
+
+  /**
+   * Calculate minimum transactions needed to settle up all debts in a group
+   */
+  async calculateSettleUpTransactions(
+    groupId: string,
+    userId: string,
+    token: string,
+  ): Promise<SettleUpTransaction[]> {
+    // Get current balances for all group members
+    const balances = await this.expensesService.getGroupBalance(groupId, userId, token);
+
+    // Separate creditors (to receive) and debtors (to pay)
+    const creditors = balances
+      .filter(b => b.toReceive > 0)
+      .map(b => ({
+        userId: b.userId,
+        name: b.name,
+        amount: b.toReceive,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    const debtors = balances
+      .filter(b => b.toPay > 0)
+      .map(b => ({
+        userId: b.userId,
+        name: b.name,
+        amount: b.toPay,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
+    // Apply greedy algorithm to minimize transactions
+    const transactions: SettleUpTransaction[] = [];
+    let i = 0;
+    let j = 0;
+
+    while (i < debtors.length && j < creditors.length) {
+      const debtor = debtors[i];
+      const creditor = creditors[j];
+      const amount = Math.min(debtor.amount, creditor.amount);
+
+      if (amount > 0.01) {
+        transactions.push({
+          from: debtor.userId,
+          fromName: debtor.name,
+          to: creditor.userId,
+          toName: creditor.name,
+          amount: Number(amount.toFixed(2)),
+        });
+
+        debtor.amount -= amount;
+        creditor.amount -= amount;
+      }
+
+      if (debtor.amount < 0.01) i++;
+      if (creditor.amount < 0.01) j++;
+    }
+
+    this.logger.log(`Calculated ${transactions.length} settle-up transactions for group ${groupId}`);
+    return transactions;
   }
 }

@@ -6,7 +6,7 @@ import '../widgets/avatar_widget.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/loading_overlay.dart';
 import 'edit_group_screen.dart';
-import 'polls_screen.dart';
+import 'Polls/polls_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;

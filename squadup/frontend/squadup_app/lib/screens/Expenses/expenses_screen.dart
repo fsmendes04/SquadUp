@@ -8,7 +8,8 @@ import '../../widgets/avatar_group.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../services/groups_service.dart';
 import '../../models/groups.dart';
-import '../settle_up_screen.dart';
+import 'settle_up_screen.dart';
+import '../../widgets/squadup_button.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -394,17 +395,8 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                           children: [
                             SizedBox(
                               width: 150,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryBlue,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                ),
+                              child: SquadUpButton(
+                                text: 'Settle Up',
                                 onPressed: () {
                                   Navigator.push(
                                     context,
@@ -416,37 +408,19 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                     ),
                                   );
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.swap_horiz, color: Colors.white),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Settle Up',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                width: 150,
+                                height: 50,
+                                backgroundColor: primaryBlue,
+                                disabledColor: primaryBlue.withAlpha(128),
+                                textColor: Colors.white,
+                                borderRadius: 12,
                               ),
                             ),
-                            const SizedBox(width: 30),
+                            SizedBox(width: 30),
                             SizedBox(
                               width: 150,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: darkBlue,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
-                                  ),
-                                ),
+                              child: SquadUpButton(
+                                text: 'Payment',
                                 onPressed: () {
                                   Navigator.pushNamed(
                                     context,
@@ -462,21 +436,12 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                     }
                                   });
                                 },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.payment, color: Colors.white),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Payment',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                width: 150,
+                                height: 50,
+                                backgroundColor: darkBlue,
+                                disabledColor: darkBlue.withAlpha(128),
+                                textColor: Colors.white,
+                                borderRadius: 12,
                               ),
                             ),
                           ],

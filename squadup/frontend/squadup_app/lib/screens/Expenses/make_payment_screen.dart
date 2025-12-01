@@ -4,6 +4,8 @@ import '../../services/payments_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../models/groups.dart';
+import '../../widgets/squadup_button.dart';
+import '../../widgets/squadup_input.dart';
 
 class MakePaymentScreen extends StatefulWidget {
   final String groupId;
@@ -133,265 +135,232 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
       message: 'Processing payment...',
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: darkBlue),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Make Payment',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: darkBlue,
-            ),
-          ),
-          centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.history, color: darkBlue),
-              onPressed: () {
-                Navigator.pushNamed(
-                  context,
-                  '/payment-history',
-                  arguments: {
-                    'groupId': widget.groupId,
-                    'groupName': widget.groupName,
-                  },
-                );
-              },
-              tooltip: 'Payment History',
-            ),
-          ],
-        ),
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Group info
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: primaryBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: primaryBlue.withOpacity(0.3)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.group, color: primaryBlue, size: 24),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            widget.groupName,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: darkBlue,
-                            ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                child: SizedBox(
+                  height: kToolbarHeight,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Make Payment',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Select member
+                        Text(
+                          'Pay to',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (availableMembers.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[200]!),
+                            ),
+                            child: Text(
+                              'No members found',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          )
+                        else
+                          Column(
+                            children:
+                                availableMembers.map((member) {
+                                  final isSelected = _selectedUserId == member.userId;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedUserId = member.userId;
+                                      });
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isSelected
+                                                ? primaryBlue.withOpacity(0.1)
+                                                : Colors.grey[50],
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color:
+                                              isSelected
+                                                  ? primaryBlue
+                                                  : Colors.grey.withOpacity(0.3),
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            radius: 20,
+                                            backgroundColor:
+                                                isSelected
+                                                    ? primaryBlue
+                                                    : Colors.grey[300],
+                                            backgroundImage:
+                                                member.avatarUrl != null
+                                                    ? NetworkImage(member.avatarUrl!)
+                                                    : null,
+                                            child:
+                                                member.avatarUrl == null
+                                                    ? Text(
+                                                      (member.name?.isNotEmpty ??
+                                                              false)
+                                                          ? member.name![0]
+                                                              .toUpperCase()
+                                                          : member.userId[0]
+                                                              .toUpperCase(),
+                                                      style: GoogleFonts.poppins(
+                                                        fontWeight: FontWeight.w600,
+                                                        color: Colors.white,
+                                                      ),
+                                                    )
+                                                    : null,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              member.name ?? member.userId,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                fontWeight:
+                                                    isSelected
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w500,
+                                                color:
+                                                    isSelected
+                                                        ? primaryBlue
+                                                        : darkBlue,
+                                              ),
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            Icon(
+                                              Icons.check_circle,
+                                              color: primaryBlue,
+                                              size: 24,
+                                            )
+                                          else
+                                            Icon(
+                                              Icons.radio_button_unchecked,
+                                              color: Colors.grey[400],
+                                              size: 24,
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+
+                        const SizedBox(height: 24),
+
+                        // Amount
+                        Text(
+                          'Amount',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SquadUpInput(
+                          controller: _amountController,
+                          label: 'Amount',
+                          icon: Icons.attach_money,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter an amount';
+                            }
+                            final amount = double.tryParse(value);
+                            if (amount == null || amount <= 0) {
+                              return 'Please enter a valid amount';
+                            }
+                            return null;
+                          },
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        // Submit button
+                        SquadUpButton(
+                          text: 'Register Payment',
+                          onPressed: _submitPayment,
+                          isLoading: _loading,
+                          width: double.infinity,
+                          height: 56,
+                          backgroundColor: darkBlue,
+                          disabledColor: darkBlue.withAlpha(128),
+                          textColor: Colors.white,
+                          borderRadius: 12,
+                        ),
+
+                        const SizedBox(height: 16),
+                        // Botão de histórico
+                        SquadUpButton(
+                          text: 'Payment History',
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/payment-history',
+                              arguments: {
+                                'groupId': widget.groupId,
+                                'groupName': widget.groupName,
+                              },
+                            );
+                          },
+                          width: double.infinity,
+                          height: 56,
+                          backgroundColor: primaryBlue,
+                          disabledColor: primaryBlue.withAlpha(128),
+                          textColor: Colors.white,
+                          borderRadius: 12,
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 32),
-
-                  // Select member
-                  Text(
-                    'Pay to',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (availableMembers.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[200]!),
-                      ),
-                      child: Text(
-                        'No members found',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    )
-                  else
-                    Column(
-                      children:
-                          availableMembers.map((member) {
-                            final isSelected = _selectedUserId == member.userId;
-                            return GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _selectedUserId = member.userId;
-                                });
-                              },
-                              child: Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color:
-                                      isSelected
-                                          ? primaryBlue.withOpacity(0.1)
-                                          : Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color:
-                                        isSelected
-                                            ? primaryBlue
-                                            : Colors.grey.withOpacity(0.3),
-                                    width: isSelected ? 2 : 1,
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor:
-                                          isSelected
-                                              ? primaryBlue
-                                              : Colors.grey[300],
-                                      backgroundImage:
-                                          member.avatarUrl != null
-                                              ? NetworkImage(member.avatarUrl!)
-                                              : null,
-                                      child:
-                                          member.avatarUrl == null
-                                              ? Text(
-                                                (member.name?.isNotEmpty ??
-                                                        false)
-                                                    ? member.name![0]
-                                                        .toUpperCase()
-                                                    : member.userId[0]
-                                                        .toUpperCase(),
-                                                style: GoogleFonts.poppins(
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.white,
-                                                ),
-                                              )
-                                              : null,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        member.name ?? member.userId,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight:
-                                              isSelected
-                                                  ? FontWeight.w600
-                                                  : FontWeight.w500,
-                                          color:
-                                              isSelected
-                                                  ? primaryBlue
-                                                  : darkBlue,
-                                        ),
-                                      ),
-                                    ),
-                                    if (isSelected)
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: primaryBlue,
-                                        size: 24,
-                                      )
-                                    else
-                                      Icon(
-                                        Icons.radio_button_unchecked,
-                                        color: Colors.grey[400],
-                                        size: 24,
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  // Amount
-                  Text(
-                    'Amount',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextFormField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: '0.00',
-                      hintStyle: GoogleFonts.poppins(color: Colors.grey[400]),
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 16,
-                      ),
-                      prefixIcon: Icon(Icons.euro, color: primaryBlue),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter an amount';
-                      }
-                      final amount = double.tryParse(value);
-                      if (amount == null || amount <= 0) {
-                        return 'Please enter a valid amount';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Submit button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _submitPayment,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryBlue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Text(
-                        'Register Payment',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

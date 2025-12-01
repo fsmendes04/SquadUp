@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../models/settle_up_transaction.dart';
-import '../services/payments_service.dart';
-import '../services/storage_service.dart';
+import '../../models/settle_up_transaction.dart';
+import '../../services/payments_service.dart';
+import '../../services/storage_service.dart';
+import '../../widgets/loading_overlay.dart';
 
 class SettleUpScreen extends StatefulWidget {
   final String groupId;
@@ -76,16 +77,20 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
-              child: _buildHeader(),
-            ),
-            Expanded(
-              child: _buildBody(),
-            ),
-          ],
+        child: LoadingOverlay(
+          isLoading: _isLoading,
+          message: 'Settling up...',
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
+                child: _buildHeader(),
+              ),
+              Expanded(
+                child: _buildBody(),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -145,37 +150,38 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     }
 
     if (_transactions == null || _transactions!.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                size: 80,
-                color: Colors.green[400],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'All Settled Up!',
-                style: GoogleFonts.poppins(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 350,
+              height: 350,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.12,
+                  child: Image.asset(
+                    'lib/images/logo_v3.png',
+                    width: 350,
+                    height: 350,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'There are no pending balances in this group.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              "You're all settled up!",
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[500],
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       );
     }
@@ -186,8 +192,6 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 20),
-          _buildInfoCard(),
-          const SizedBox(height: 16),
           ..._transactions!.asMap().entries.map((entry) {
             return _buildTransactionCard(entry.value, entry.key + 1, _currentUserId);
           }).toList(),
@@ -198,87 +202,24 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
   }
 
   Widget _buildHeader() {
+    final txCount = _transactions?.length ?? 0;
     return SizedBox(
       height: kToolbarHeight,
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
             onPressed: () => Navigator.pop(context),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
+            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Settle Up',
+              'Settle Up${_transactions != null ? ' ($txCount)' : ''}',
               style: GoogleFonts.poppins(
-                fontSize: 20,
+                fontSize: 24,
                 fontWeight: FontWeight.w600,
                 color: darkBlue,
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.swap_horiz_rounded, color: darkBlue, size: 24),
-              const SizedBox(width: 8),
-              Text(
-                widget.groupName,
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: primaryBlue.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.info_outline, color: primaryBlue, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '${_transactions!.length} transaction${_transactions!.length != 1 ? 's' : ''} needed to settle all debts',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: darkBlue,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
@@ -331,7 +272,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: primaryBlue,
+                  color: darkBlue,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -379,8 +320,8 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Icon(
-                  Icons.arrow_forward_rounded,
-                  color: primaryBlue,
+                  Icons.arrow_forward_ios_rounded,
+                  color: darkBlue,
                   size: 24,
                 ),
               ),

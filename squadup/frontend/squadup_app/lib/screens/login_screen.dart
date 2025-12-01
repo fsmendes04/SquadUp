@@ -4,6 +4,7 @@ import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
 import '../widgets/bubble_page_route.dart';
 import 'home_screen.dart';
+import '../widgets/squadup_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -310,49 +311,17 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 40),
 
                       // Botão de login
-                      SizedBox(
+                      SquadUpButton(
+                        text: "Log In",
+                        onPressed: _login,
+                        isLoading: _isLoading,
                         width: 175,
                         height: 55,
-                        child: ElevatedButton(
-                          key: _loginButtonKey,
-                          onPressed: _isLoading ? null : _login,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              17,
-                              80,
-                              138,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 0,
-                            disabledBackgroundColor: const Color.fromARGB(
-                              255,
-                              19,
-                              85,
-                              146,
-                            ),
-                          ),
-                          child:
-                              _isLoading
-                                  ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : Text(
-                                    "Log In",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                        ),
+                        backgroundColor: const Color.fromARGB(255, 17, 80, 138),
+                        disabledColor: const Color.fromARGB(255, 19, 85, 146),
+                        textColor: Colors.white,
+                        borderRadius: 15,
+                        buttonKey: _loginButtonKey,
                       ),
 
                       const SizedBox(height: 40),

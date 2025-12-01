@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/user_service.dart';
+import '../widgets/squadup_button.dart';
 import '../widgets/squadup_input.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -255,48 +256,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 20),
 
-                      SizedBox(
+                      SquadUpButton(
+                        text: "Sign Up",
+                        onPressed: _register,
+                        isLoading: _isLoading,
                         width: 175,
                         height: 55,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _register,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color.fromARGB(
-                              255,
-                              19,
-                              85,
-                              146,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                            elevation: 0,
-                            disabledBackgroundColor: const Color.fromARGB(
-                              255,
-                              19,
-                              85,
-                              146,
-                            ),
-                          ),
-                          child:
-                              _isLoading
-                                  ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                  : Text(
-                                    "Sign Up",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                        ),
+                        backgroundColor: const Color.fromARGB(255, 19, 85, 146),
+                        disabledColor: const Color.fromARGB(255, 19, 85, 146),
+                        textColor: Colors.white,
+                        borderRadius: 15,
                       ),
 
                       const SizedBox(height: 40),

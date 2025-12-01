@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/expenses_service.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../models/expense.dart';
+import '../../widgets/squadup_input.dart';
+import '../../widgets/squadup_date_picker.dart';
+import '../../widgets/squadup_button.dart';
 
 class UpdateExpenseScreen extends StatefulWidget {
   final Expense expense;
@@ -24,15 +27,15 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
 
   bool _loading = false;
 
-  final List<String> _categories = [
-    'Alimentação',
-    'Transporte',
-    'Entretenimento',
-    'Compras',
-    'Saúde',
-    'Hospedagem',
-    'Educação',
-    'Outro',
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'Food', 'icon': Icons.restaurant},
+    {'name': 'Transport', 'icon': Icons.directions_car},
+    {'name': 'Entertainment', 'icon': Icons.movie},
+    {'name': 'Shopping', 'icon': Icons.shopping_bag},
+    {'name': 'Health', 'icon': Icons.local_hospital},
+    {'name': 'Accommodation', 'icon': Icons.home},
+    {'name': 'Education', 'icon': Icons.school},
+    {'name': 'Other', 'icon': Icons.receipt},
   ];
 
   @override
@@ -46,9 +49,6 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
     );
     _selectedDate = widget.expense.expenseDate;
     _selectedCategory = widget.expense.category;
-    if (!_categories.contains(_selectedCategory)) {
-      _categories.add(_selectedCategory);
-    }
   }
 
   @override
@@ -214,10 +214,11 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
     }
   }
 
+  final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+  final darkBlue = const Color.fromARGB(255, 29, 56, 95);
+
   @override
   Widget build(BuildContext context) {
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
     return LoadingOverlay(
       isLoading: _loading,
@@ -244,18 +245,18 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        const SizedBox(height: 20),
                         _buildDescriptionField(darkBlue),
                         const SizedBox(height: 20),
                         _buildAmountField(darkBlue),
                         const SizedBox(height: 20),
-                        _buildCategoryDropdown(darkBlue),
-                        const SizedBox(height: 20),
+                        _buildCategorySelector(darkBlue),
+                        const SizedBox(height: 30),
                         _buildDatePicker(darkBlue),
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 40),
                         _buildUpdateButton(primaryBlue),
                         const SizedBox(height: 12),
                         _buildDeleteButton(),
-                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -275,7 +276,7 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
+            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -294,152 +295,99 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
   }
 
   Widget _buildDescriptionField(Color darkBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Description',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _descriptionController,
-          decoration: InputDecoration(
-            hintText: 'Enter expense description',
-            hintStyle: GoogleFonts.poppins(color: Colors.grey[400]),
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color.fromARGB(255, 81, 163, 230),
-                width: 2,
-              ),
-            ),
-          ),
-          style: GoogleFonts.poppins(color: darkBlue),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter a description';
-            }
-            return null;
-          },
-        ),
-      ],
+    return SquadUpInput(
+      controller: _descriptionController,
+      label: 'Description',
+      icon: Icons.description_outlined,
+      keyboardType: TextInputType.text,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please enter a description';
+        }
+        return null;
+      },
     );
   }
 
   Widget _buildAmountField(Color darkBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Amount (€)',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _amountController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: '0.00',
-            hintStyle: GoogleFonts.poppins(color: Colors.grey[400]),
-            filled: true,
-            fillColor: Colors.grey[50],
-            prefixIcon: Icon(Icons.euro, color: Colors.grey[600]),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color.fromARGB(255, 81, 163, 230),
-                width: 2,
-              ),
-            ),
-          ),
-          style: GoogleFonts.poppins(color: darkBlue),
-          validator: (value) {
-            if (value == null || value.trim().isEmpty) {
-              return 'Please enter an amount';
-            }
-            final amount = double.tryParse(value);
-            if (amount == null || amount <= 0) {
-              return 'Please enter a valid amount';
-            }
-            return null;
-          },
-        ),
-      ],
+    return SquadUpInput(
+      controller: _amountController,
+      label: 'Amount',
+      icon: Icons.attach_money,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Please enter an amount';
+        }
+        final amount = double.tryParse(value);
+        if (amount == null || amount <= 0) {
+          return 'Please enter a valid amount';
+        }
+        return null;
+      },
     );
   }
 
-  Widget _buildCategoryDropdown(Color darkBlue) {
+  Widget _buildCategorySelector(Color darkBlue) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Category',
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: 16,
             fontWeight: FontWeight.w600,
             color: darkBlue,
           ),
         ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: _selectedCategory,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: Colors.grey[50],
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color.fromARGB(255, 81, 163, 230),
-                width: 2,
-              ),
-            ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1,
           ),
-          style: GoogleFonts.poppins(color: darkBlue),
-          items:
-              _categories.map((category) {
-                return DropdownMenuItem(value: category, child: Text(category));
-              }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _selectedCategory = value;
-              });
-            }
+          itemCount: _categories.length,
+          itemBuilder: (context, index) {
+            final category = _categories[index];
+            final isSelected = _selectedCategory == category['name'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedCategory = category['name'] as String;
+                });
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color:
+                      isSelected
+                          ? const Color(0xFF51A3E6).withValues(alpha: 0.15)
+                          : Colors.grey[50],
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color:
+                        isSelected
+                            ? const Color(0xFF51A3E6)
+                            : Colors.grey.withValues(alpha: 0.3),
+                    width: isSelected ? 2.5 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      category['icon'] as IconData,
+                      color: isSelected ? const Color(0xFF51A3E6) : Colors.grey[600],
+                      size: 28,
+                    ),
+                    const SizedBox(height: 6),
+                  ],
+                ),
+              ),
+            );
           },
         ),
       ],
@@ -447,115 +395,41 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
   }
 
   Widget _buildDatePicker(Color darkBlue) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Date',
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-        const SizedBox(height: 8),
-        InkWell(
-          onTap: _selectDate,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.calendar_today, color: Colors.grey[600]),
-                const SizedBox(width: 12),
-                Text(
-                  _formatDate(_selectedDate),
-                  style: GoogleFonts.poppins(fontSize: 16, color: darkBlue),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
+    return SquadUpDatePicker(
+      label: 'Date',
+      selectedDate: _selectedDate,
+      icon: Icons.calendar_today,
+      onDateSelected: _selectDate,
     );
   }
 
   Widget _buildUpdateButton(Color primaryBlue) {
-    return SizedBox(
+    return SquadUpButton(
+      text: 'Update Expense',
+      onPressed: _updateExpense,
+      isLoading: _loading,
       width: double.infinity,
       height: 56,
-      child: ElevatedButton(
-        onPressed: _loading ? null : _updateExpense,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Colors.grey[300],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-        ),
-        child:
-            _loading
-                ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                : Text(
-                  'Update Expense',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-      ),
+      backgroundColor: darkBlue,
+      disabledColor: Colors.grey[300] ?? Colors.grey,
+      textColor: Colors.white,
+      borderRadius: 16,
     );
   }
 
   Widget _buildDeleteButton() {
-    return SizedBox(
+    return SquadUpButton(
+      text: 'Delete Expense',
+      onPressed: _deleteExpense,
+      isLoading: _loading,
       width: double.infinity,
       height: 56,
-      child: OutlinedButton(
-        onPressed: _loading ? null : _deleteExpense,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.red,
-          side: const BorderSide(color: Colors.red, width: 2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-        child: Text(
-          'Delete Expense',
-          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
+      backgroundColor: const Color.fromARGB(255, 221, 69, 59),
+      disabledColor: Colors.grey[300] ?? Colors.grey,
+      textColor: Colors.white,
+      borderRadius: 16,
     );
   }
 
-  String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
-}
+

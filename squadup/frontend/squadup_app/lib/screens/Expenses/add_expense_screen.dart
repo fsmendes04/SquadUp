@@ -6,6 +6,9 @@ import '../../services/user_service.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../models/expense.dart';
 import '../../models/groups.dart';
+import '../../widgets/squadup_button.dart';
+import '../../widgets/squadup_input.dart';
+import '../../widgets/squadup_date_picker.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String? groupId;
@@ -289,8 +292,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildDescriptionField() {
-    return TextFormField(
+    return SquadUpInput(
       controller: _descriptionController,
+      label: 'Description',
+      icon: Icons.description_outlined,
+      keyboardType: TextInputType.text,
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
           return 'Please enter a description';
@@ -300,46 +306,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         }
         return null;
       },
-      maxLength: 100,
-      decoration: InputDecoration(
-        hintText: 'Ex: Dinner at restaurant',
-        hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
-        prefixIcon: Icon(Icons.description_outlined, color: darkBlue),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryBlue, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-        counterText: '',
-      ),
-      style: GoogleFonts.poppins(fontSize: 14, color: darkBlue),
     );
   }
 
   Widget _buildAmountField() {
-    return TextFormField(
+    return SquadUpInput(
       controller: _amountController,
+      label: 'Amount',
+      icon: Icons.attach_money,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (value) {
         if (value == null || value.trim().isEmpty) {
@@ -357,88 +331,15 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         }
         return null;
       },
-      decoration: InputDecoration(
-        hintText: '0.00',
-        hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 14),
-        prefixIcon: Icon(Icons.euro, color: darkBlue),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.withValues(alpha: 0.3)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: primaryBlue, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 16,
-        ),
-        filled: true,
-        fillColor: Colors.grey[50],
-      ),
-      style: GoogleFonts.poppins(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: darkBlue,
-      ),
     );
   }
 
   Widget _buildDateSelector() {
-    return GestureDetector(
-      onTap: _selectDate,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.calendar_today, color: darkBlue, size: 20),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Expense Date',
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${_selectedDate.day.toString().padLeft(2, '0')}/'
-                    '${_selectedDate.month.toString().padLeft(2, '0')}/'
-                    '${_selectedDate.year}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.arrow_forward_ios, color: darkBlue, size: 16),
-          ],
-        ),
-      ),
+    return SquadUpDatePicker(
+      label: 'Date',
+      selectedDate: _selectedDate,
+      onDateSelected: _selectDate,
+      icon: Icons.calendar_today,
     );
   }
 
@@ -620,18 +521,21 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
-              color: primaryBlue.withValues(alpha: 0.05),
+              color: _selectedParticipantIds.length == _groupMembers.length 
+              ? primaryBlue.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: primaryBlue.withValues(alpha: 0.3),
+                color: _selectedParticipantIds.length == _groupMembers.length 
+                ? primaryBlue.withOpacity(0.3) 
+                : Colors.grey.withOpacity(0.3),
                 width: 1,
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.group, color: primaryBlue, size: 24),
+                Icon(Icons.group, color: _selectedParticipantIds.length == _groupMembers.length ? primaryBlue : Colors.grey, size: 24),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -641,7 +545,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: primaryBlue,
+                      color: _selectedParticipantIds.length == _groupMembers.length
+                          ? primaryBlue
+                          : Colors.grey,
                     ),
                   ),
                 ),
@@ -649,7 +555,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   _selectedParticipantIds.length == _groupMembers.length
                       ? Icons.check_box
                       : Icons.check_box_outline_blank,
-                  color: primaryBlue,
+                  color: _selectedParticipantIds.length == _groupMembers.length
+                      ? primaryBlue
+                      : Colors.grey,
                   size: 24,
                 ),
               ],
@@ -740,38 +648,16 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildCreateButton() {
-    return SizedBox(
+    return SquadUpButton(
+      text: 'Add Expense',
+      onPressed: _createExpense,
+      isLoading: _isLoading,
       width: double.infinity,
       height: 56,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _createExpense,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryBlue,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          disabledBackgroundColor: primaryBlue.withValues(alpha: 0.5),
-        ),
-        child:
-            _isLoading
-                ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-                : Text(
-                  'Add Expense',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-      ),
+      backgroundColor: darkBlue,
+      disabledColor: primaryBlue.withAlpha(128),
+      textColor: Colors.white,
+      borderRadius: 16,
     );
   }
 }

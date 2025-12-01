@@ -162,57 +162,78 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       message: 'Loading payment history...',
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: darkBlue),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+        body: SafeArea(
+          child: Column(
             children: [
-              Text(
-                'Payment History',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                child: SizedBox(
+                  height: kToolbarHeight,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Payment History',
+                          style: GoogleFonts.poppins(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: _payments.isEmpty
+                    ? _buildEmptyState(darkBlue)
+                    : _buildPaymentsList(primaryBlue, darkBlue),
               ),
             ],
           ),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-          child:
-              _payments.isEmpty
-                  ? _buildEmptyState(darkBlue)
-                  : _buildPaymentsList(primaryBlue, darkBlue),
         ),
       ),
     );
   }
 
   Widget _buildEmptyState(Color darkBlue) {
-    return Center(
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[300]),
-          const SizedBox(height: 16),
-          Text(
-            'No payments yet',
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: darkBlue,
+          SizedBox(
+            width: 350,
+            height: 350,
+            child: Center(
+              child: Opacity(
+                opacity: 0.12,
+                child: Image.asset(
+                  'lib/images/logo_v3.png',
+                  width: 350,
+                  height: 350,
+                  fit: BoxFit.contain,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 32),
           Text(
-            'Payment history will appear here',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+            "No payments yet",
+            style: GoogleFonts.poppins(
+              fontSize: 22,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey[500],
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -385,7 +406,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: darkBlue,
+                    color: isCurrentUserSender
+                        ? Colors.red
+                        : isCurrentUserReceiver
+                            ? Colors.green
+                            : darkBlue,
                   ),
                 ),
               ],

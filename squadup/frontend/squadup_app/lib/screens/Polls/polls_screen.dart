@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'create_poll_screen.dart';
+import '../../widgets/squadup_button.dart';
 
 class PollsScreen extends StatefulWidget {
   final String groupId;
@@ -40,76 +41,54 @@ class _PollsScreenState extends State<PollsScreen>
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 0,    
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 24),
+          icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Apostas',
+          'Polls',
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: 24,
             fontWeight: FontWeight.w600,
             color: darkBlue,
           ),
         ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add_circle, color: primaryBlue, size: 32),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CreatePollScreen(
-                    groupId: widget.groupId,
-                    groupName: widget.groupName,
-                  ),
-                ),
-              );
-              if (result == true) {
-                // TODO: Refresh polls list
-              }
-            },
-          ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            color: Colors.white,
-            child: TabBar(
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              labelColor: Colors.white,
-              unselectedLabelColor: darkBlue,
-              labelStyle: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-              indicator: BoxDecoration(
-                color: primaryBlue,
-                borderRadius: BorderRadius.circular(25),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              tabs: const [
-                Tab(text: 'Ativas'),
-                Tab(text: 'Terminadas'),
-                Tab(text: 'Minhas'),
+              children: [
+                _buildActivePolls(),
+                _buildFinishedPolls(),
               ],
             ),
           ),
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildActivePolls(),
-          _buildFinishedPolls(),
-          _buildMyPolls(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal:40.0, vertical: 40.0),
+            child: SquadUpButton(
+              text: 'New Poll',
+              width: double.infinity,
+              height: 55,
+              backgroundColor: darkBlue,
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreatePollScreen(
+                      groupId: widget.groupId,
+                      groupName: widget.groupName,
+                    ),
+                  ),
+                );
+                if (result == true) {
+                  // TODO: Refresh polls list
+                }
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -123,30 +102,15 @@ class _PollsScreenState extends State<PollsScreen>
         const SizedBox(height: 20),
         _buildPollCard(
           icon: Icons.location_on,
-          iconColor: const Color(0xFFE91E63),
+          iconColor: darkBlue,
           title: 'Quem chega primeiro ao Porto?',
-          subtitle: 'Viagem Porto 2024',
           options: [
-            PollOption(name: 'João (tua escolha)', percentage: 40),
+            PollOption(name: 'João (your choice)', percentage: 40),
             PollOption(name: 'Miguel', percentage: 40),
             PollOption(name: 'Ana', percentage: 20),
           ],
           participants: 5,
           endDate: '14 Mar 2024',
-        ),
-        const SizedBox(height: 16),
-        _buildPollCard(
-          icon: Icons.restaurant,
-          iconColor: const Color(0xFFE91E63),
-          title: 'Quem paga mais no jantar?',
-          subtitle: 'Jantar de Natal',
-          options: [
-            PollOption(name: 'Pedro', percentage: 38),
-            PollOption(name: 'Rui', percentage: 38),
-            PollOption(name: 'Sara', percentage: 24),
-          ],
-          participants: 5,
-          endDate: '20 Dez 2024',
         ),
       ],
     );
@@ -171,37 +135,13 @@ class _PollsScreenState extends State<PollsScreen>
     );
   }
 
-  Widget _buildMyPolls() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildPollCard(
-          icon: Icons.location_on,
-          iconColor: const Color(0xFFE91E63),
-          title: 'Quem chega primeiro ao Porto?',
-          subtitle: 'Viagem Porto 2024',
-          options: [
-            PollOption(name: 'João (tua escolha)', percentage: 40),
-            PollOption(name: 'Miguel', percentage: 40),
-            PollOption(name: 'Ana', percentage: 20),
-          ],
-          participants: 5,
-          endDate: '14 Mar 2024',
-          isMyPoll: true,
-        ),
-      ],
-    );
-  }
 
   Widget _buildStatsCard() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF9C27B0),
-            const Color(0xFFAB47BC),
-          ],
+       gradient: LinearGradient(
+          colors: [primaryBlue, darkBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -210,88 +150,7 @@ class _PollsScreenState extends State<PollsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.emoji_events,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Taxa de Acerto',
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.workspace_premium,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '#3',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '51%',
-                style: GoogleFonts.poppins(
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1,
-                ),
-              ),
-              Text(
-                '1250 pts',
-                style: GoogleFonts.poppins(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -342,11 +201,9 @@ class _PollsScreenState extends State<PollsScreen>
     required IconData icon,
     required Color iconColor,
     required String title,
-    required String subtitle,
     required List<PollOption> options,
     required int participants,
     required String endDate,
-    bool isMyPoll = false,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -388,13 +245,7 @@ class _PollsScreenState extends State<PollsScreen>
                         color: darkBlue,
                       ),
                     ),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
+                    
                   ],
                 ),
               ),
@@ -438,7 +289,7 @@ class _PollsScreenState extends State<PollsScreen>
   }
 
   Widget _buildPollOption(PollOption option) {
-    final isSelected = option.name.contains('(tua escolha)');
+    final isSelected = option.name.contains('(your choice)');
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -476,7 +327,7 @@ class _PollsScreenState extends State<PollsScreen>
               valueColor: AlwaysStoppedAnimation<Color>(
                 isSelected ? darkBlue : primaryBlue,
               ),
-              minHeight: 8,
+              minHeight: 12,
             ),
           ),
         ],

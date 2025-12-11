@@ -191,5 +191,6 @@ class ApiService {
   static String pollById(String pollId) => '$pollsEndpoint/$pollId';
   static String pollsByGroup(String groupId) => '$pollsEndpoint/group/$groupId';
   static String pollsByUser(String userId) => '$pollsEndpoint/user/$userId';
-
+  static String voteInPoll(String pollId) => '$pollsEndpoint/vote/$pollId';
+  static String userVoteInPoll(String pollId) => '$pollsEndpoint/voted/$pollId';
 }

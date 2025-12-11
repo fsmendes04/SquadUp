@@ -20,4 +20,12 @@ class PollsService {
 	Future<Response> getPollsByUser(String userId) async {
 		return await _api.get(ApiService.pollsByUser(userId));
 	}
+
+  Future<Response> voteInPoll(String pollId, Map<String, dynamic> data) async {
+    return await _api.post(ApiService.voteInPoll(pollId), data: data);
+  }
+
+  Future<Response> getUserVoteInPoll(String pollId) async {
+    return await _api.get(ApiService.userVoteInPoll(pollId));
+  }
 }

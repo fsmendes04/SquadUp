@@ -669,6 +669,15 @@ export class GroupsService {
     }
   }
 
+  async checkUserIsMember(groupId: string, userId: string, token: string): Promise<boolean> {
+    try {
+      return await this.isUserMember(groupId, userId, token);
+    } catch (error) {
+      this.logger.warn(`Error checking member status for user ${userId} in group ${groupId}`, error);
+      return false;
+    }
+  }
+
   private sanitizeString(input: string): string {
     if (!input) return '';
     const cleaned = DOMPurify.sanitize(input, {

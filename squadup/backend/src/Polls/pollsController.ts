@@ -159,4 +159,68 @@ export class PollsController {
       );
     }
   }
+
+  @Post('vote/:pollId')
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
+  async voteInPoll(
+    @Param('pollId') pollId: string,
+    @Body('optionId') optionId: string,
+    @CurrentUser() user: any,
+    @GetToken() token: string,
+  ) {
+    try {
+      if (!pollId || !optionId) {
+        throw new BadRequestException('Poll ID and Option ID are required');
+      }
+
+      const result = await this.pollsService.castVote(pollId, optionId, user.id, token);
+
+      return {
+        success: true,
+        message: 'Vote cast successfully',
+        data: result,
+      };
+    } catch (error) {
+      this.logger.error('Error casting vote', error.message);
+
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to cast vote',
+        },
+        statusCode,
+      );
+    }
+  }
+
+  @Get('voted/:pollId')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getUserVoteInPoll(
+    @Param('pollId') pollId: string,
+    @CurrentUser() user: any,
+    @GetToken() token: string,
+  ) {
+    try {
+      if (!pollId) {
+        throw new BadRequestException('Poll ID is required');
+      }
+      const optionId = await this.pollsService.userVotedInPoll(pollId, user.id, token);
+      return {
+        success: true,
+        message: optionId ? 'User has voted' : 'User has not voted',
+        data: optionId,
+      };
+    } catch (error) {
+      this.logger.error('Error checking user vote', error.message);
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to check user vote',
+        },
+        statusCode,
+      );
+    }
+  }
 }

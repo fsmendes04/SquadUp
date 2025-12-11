@@ -176,7 +176,6 @@ export class PollsService {
         throw new NotFoundException('Poll not found');
       }
 
-      // Verify user is the creator or group admin
       const isGroupAdmin = await this.groupsService.checkUserIsAdmin(
         poll.group_id,
         userId,
@@ -283,7 +282,8 @@ export class PollsService {
       const { data: options, error: optionsError } = await userClient
         .from('poll_options')
         .select('*')
-        .eq('poll_id', pollId);
+        .eq('poll_id', pollId)
+        .order('id', { ascending: true });
 
       if (optionsError) {
         this.logger.warn('Failed to fetch poll options', optionsError.message);
@@ -348,7 +348,8 @@ export class PollsService {
           const { data: options } = await userClient
             .from('poll_options')
             .select('*')
-            .eq('poll_id', poll.id);
+            .eq('poll_id', poll.id)
+            .order('id', { ascending: true });
 
           const { data: votes } = await userClient
             .from('poll_votes')
@@ -413,7 +414,8 @@ export class PollsService {
           const { data: options } = await userClient
             .from('poll_options')
             .select('*')
-            .eq('poll_id', poll.id);
+            .eq('poll_id', poll.id)
+            .order('id', { ascending: true });
 
           const { data: votes } = await userClient
             .from('poll_votes')
@@ -439,6 +441,172 @@ export class PollsService {
       }
       this.logger.error('Unexpected error fetching polls by user', error);
       throw new BadRequestException('Failed to fetch polls');
+    }
+  }
+
+  async castVote(
+    pollId: string,
+    optionId: string,
+    userId: string,
+    token: string,
+  ): Promise<{ vote: PollVote; updatedPoll: Poll }> {
+    try {
+      if (!token) {
+        throw new UnauthorizedException('Access token is required');
+      }
+
+      if (!pollId || !optionId) {
+        throw new BadRequestException('Poll ID and Option ID are required');
+      }
+
+      const userClient = this.supabaseService.getClientWithToken(token);
+
+      // Get poll to verify status and membership
+      const { data: poll, error: pollError } = await userClient
+        .from('polls')
+        .select('*')
+        .eq('id', pollId)
+        .single();
+
+      if (pollError || !poll) {
+        throw new NotFoundException('Poll not found');
+      }
+
+      // Check if poll is still active
+      if (poll.status !== 'active') {
+        throw new BadRequestException('This poll is closed');
+      }
+
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.checkUserIsMember(
+        poll.group_id,
+        userId,
+        token,
+      );
+
+      if (!isMember) {
+        throw new ForbiddenException('You must be a group member to vote');
+      }
+
+      // Verify option belongs to this poll
+      const { data: option, error: optionError } = await userClient
+        .from('poll_options')
+        .select('*')
+        .eq('id', optionId)
+        .eq('poll_id', pollId)
+        .single();
+
+      if (optionError || !option) {
+        throw new BadRequestException('Invalid option for this poll');
+      }
+
+      // Check if user has already voted
+      const { data: existingVote, error: existingVoteError } = await userClient
+        .from('poll_votes')
+        .select('*')
+        .eq('poll_id', pollId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (existingVoteError && existingVoteError.code !== 'PGRST116') {
+        this.logger.error('Error checking existing vote', existingVoteError.message);
+        throw new BadRequestException('Failed to process vote');
+      }
+
+      let vote: PollVote;
+
+      if (existingVote) {
+        // User is changing their vote
+        const oldOptionId = existingVote.option_id;
+
+        // Update the vote
+        const { data: updatedVote, error: updateError } = await userClient
+          .from('poll_votes')
+          .update({
+            option_id: optionId,
+          })
+          .eq('id', existingVote.id)
+          .select('*')
+          .single();
+
+        if (updateError) {
+          this.logger.error('Error updating vote', updateError.message);
+          throw new BadRequestException('Failed to update vote');
+        }
+
+        vote = updatedVote;
+
+        // O trigger na base de dados trata do incremento/decremento do vote_count
+
+        this.logger.log(`Vote updated: poll ${pollId}, user ${userId}, from ${oldOptionId} to ${optionId}`);
+      } else {
+        // User is voting for the first time
+        const { data: newVote, error: voteError } = await userClient
+          .from('poll_votes')
+          .insert([{
+            poll_id: pollId,
+            option_id: optionId,
+            user_id: userId,
+          }])
+          .select('*')
+          .single();
+
+        if (voteError) {
+          this.logger.error('Error creating vote', voteError.message);
+          throw new BadRequestException('Failed to cast vote');
+        }
+
+        vote = newVote;
+      }
+      const updatedPoll = await this.getPollWithDetails(pollId, token);
+
+      return { vote, updatedPoll };
+    } catch (error) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ForbiddenException ||
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException('Failed to cast vote');
+    }
+  }
+
+  async userVotedInPoll(
+    pollId: string,
+    userId: string,
+    token: string,
+  ): Promise<string | null> {
+    try {
+      if (!token) {
+        throw new UnauthorizedException('Access token is required');
+      }
+      if (!pollId || !userId) {
+        throw new BadRequestException('Poll ID and User ID are required');
+      }
+      const userClient = this.supabaseService.getClientWithToken(token);
+      const { data: vote, error: voteError } = await userClient
+        .from('poll_votes')
+        .select('*')
+        .eq('poll_id', pollId)
+        .eq('user_id', userId)
+        .maybeSingle();
+      if (voteError && voteError.code !== 'PGRST116') {
+        this.logger.error('Error checking user vote', voteError.message);
+        throw new BadRequestException('Failed to check vote status');
+      }
+      return vote ? vote.option_id : null;
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      this.logger.error('Unexpected error checking user vote', error);
+      throw new BadRequestException('Failed to check vote status');
     }
   }
 

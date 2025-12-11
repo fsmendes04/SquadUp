@@ -368,7 +368,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               color:
                   isSelected
                       ? primaryBlue.withValues(alpha: 0.15)
-                      : Colors.grey[50],
+                      : darkBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color:
@@ -383,7 +383,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               children: [
                 Icon(
                   category['icon'] as IconData,
-                  color: isSelected ? primaryBlue : Colors.grey[600],
+                  color: isSelected ? primaryBlue :darkBlue,
                   size: 28,
                 ),
                 const SizedBox(height: 6),

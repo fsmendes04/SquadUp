@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../widgets/squadup_input.dart';
 import '../../widgets/squadup_button.dart';
 import '../../widgets/squadup_date_picker.dart';
+import '../../services/polls_service.dart';
 
 class CreatePollScreen extends StatefulWidget {
   final String groupId;
@@ -27,9 +28,12 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   ];
 
   DateTime? _endDate;
+  String _pollType = 'voting'; // 'voting' or 'betting'
 
   final darkBlue = const Color.fromARGB(255, 29, 56, 95);
   final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
+  final PollsService _pollsService = PollsService();
+  bool _isCreating = false;
 
   @override
   void dispose() {
@@ -41,11 +45,23 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   void _addOption() {
-    if (_optionControllers.length < 6) {
+    if (_optionControllers.length < 10) {
       setState(() {
         _optionControllers.add(TextEditingController());
       });
-    } 
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Maximum of 10 options allowed'),
+          backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   void _removeOption(int index) {
@@ -85,7 +101,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
     }
   }
 
-  void _createPoll() {
+  Future<void> _createPoll() async {
     if (_formKey.currentState!.validate()) {
       if (_endDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,20 +118,61 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
         return;
       }
 
-      // TODO: Implement poll creation
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Poll created successfully!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
-        ),
-      );
+      setState(() => _isCreating = true);
 
-      Navigator.pop(context, true);
+      try {
+        final options = _optionControllers
+            .where((controller) => controller.text.trim().isNotEmpty)
+            .map((controller) => controller.text.trim())
+            .toList();
+
+        final pollData = {
+          'group_id': widget.groupId,
+          'title': _titleController.text.trim(),
+          'type': _pollType,
+          'options': options,
+          'closed_at': _endDate!.toIso8601String(),
+        };
+
+        final response = await _pollsService.createPoll(pollData);
+
+        if (mounted) {
+          if (response.statusCode == 201 && response.data['success'] == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Poll created successfully!'),
+                backgroundColor: Colors.green,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.all(16),
+              ),
+            );
+            Navigator.pop(context, true);
+          } else {
+            throw Exception(response.data['message'] ?? 'Failed to create poll');
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isCreating = false);
+        }
+      }
     }
   }
 
@@ -172,6 +229,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                         return null;
                       },
                     ),
+                    const SizedBox(height: 20),
+                    _buildSectionTitle('Poll Type'),
+                    const SizedBox(height: 12),
+                    _buildPollTypeSelector(),
                     const SizedBox(height: 20),
                     _buildSectionTitle('Answer Options'),
                     const SizedBox(height: 16),
@@ -256,10 +317,13 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Widget _buildAddOptionButton() {
+    final bool canAddMore = _optionControllers.length < 10;
     return SquadUpButton(
-      text: 'Add Option',
-      onPressed: _addOption,
-      backgroundColor: primaryBlue,
+      text: canAddMore 
+          ? 'Add Option' 
+          : 'Maximum options reached',
+      onPressed: canAddMore ? _addOption : () {},
+      backgroundColor: canAddMore ? primaryBlue : Colors.grey,
       textColor: Colors.white,
       borderRadius: 12,
       width: double.infinity,
@@ -284,10 +348,62 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           );
   }
 
+  Widget _buildPollTypeSelector() {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          RadioListTile<String>(
+            title: Text(
+              'Voting',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: darkBlue,
+              ),
+            ),
+            
+            value: 'voting',
+            groupValue: _pollType,
+            activeColor: primaryBlue,
+            onChanged: (value) {
+              setState(() {
+                _pollType = value!;
+              });
+            },
+          ),
+          Divider(height: 1, color: Colors.grey.shade300),
+          RadioListTile<String>(
+            title: Text(
+              'Betting',
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: darkBlue,
+              ),
+            ),
+            
+            value: 'betting',
+            groupValue: _pollType,
+            activeColor: primaryBlue,
+            onChanged: (value) {
+              setState(() {
+                _pollType = value!;
+              });
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCreateButton() {
     return SquadUpButton(
-      text: 'Create Poll',
-      onPressed: _createPoll,
+      text: _isCreating ? 'Creating...' : 'Create Poll',
+      onPressed: _isCreating ? () {} : _createPoll,
       backgroundColor: darkBlue,
       width: double.infinity,
       height: 55,

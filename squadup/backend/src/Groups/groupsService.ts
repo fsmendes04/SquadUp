@@ -628,6 +628,15 @@ export class GroupsService {
     }
   }
 
+  async checkUserIsAdmin(groupId: string, userId: string, token: string): Promise<boolean> {
+    try {
+      return await this.isUserAdmin(groupId, userId, token);
+    } catch (error) {
+      this.logger.warn(`Error checking admin status for user ${userId} in group ${groupId}`, error);
+      return false;
+    }
+  }
+
   private async isUserAdmin(groupId: string, userId: string, token: string): Promise<boolean> {
     try {
       const client = this.supabaseService.getClientWithToken(token);

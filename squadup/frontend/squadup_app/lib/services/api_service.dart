@@ -186,4 +186,10 @@ class ApiService {
       '$paymentsEndpoint/group/$groupId';
   static String settleUpByGroup(String groupId) =>
       '$paymentsEndpoint/group/$groupId/settle-up';
+
+  static const String pollsEndpoint = '/polls';
+  static String pollById(String pollId) => '$pollsEndpoint/$pollId';
+  static String pollsByGroup(String groupId) => '$pollsEndpoint/group/$groupId';
+  static String pollsByUser(String userId) => '$pollsEndpoint/user/$userId';
+
 }

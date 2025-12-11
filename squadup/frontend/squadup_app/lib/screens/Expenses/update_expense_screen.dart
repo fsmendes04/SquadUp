@@ -380,7 +380,7 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
                   children: [
                     Icon(
                       category['icon'] as IconData,
-                      color: isSelected ? const Color(0xFF51A3E6) : Colors.grey[600],
+                      color: isSelected ? const Color(0xFF51A3E6) : darkBlue,
                       size: 28,
                     ),
                     const SizedBox(height: 6),

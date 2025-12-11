@@ -5,6 +5,7 @@ import { GroupsModule } from './Groups/groups.module';
 import { ExpensesModule } from './Expenses/expenses.module';
 import { GalleryModule } from './Gallery/gallery.module';
 import { PaymentsModule } from './Payments/payments.module';
+import { PollsModule } from './Polls/polls.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { validateEnvironment } from './common/config/envValidation';
@@ -26,7 +27,8 @@ import { RequestLoggingMiddleware } from './common/middleware/logger';
     GroupsModule,
     ExpensesModule,
     GalleryModule,
-    PaymentsModule
+    PaymentsModule,
+    PollsModule
   ],
   controllers: [],
   providers: [

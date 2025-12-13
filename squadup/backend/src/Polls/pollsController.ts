@@ -223,4 +223,37 @@ export class PollsController {
       );
     }
   }
+
+  @Get(':pollId/votes')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
+  async getPollVotes(
+    @Param('pollId') pollId: string,
+    @CurrentUser() user: any,
+    @GetToken() token: string,
+  ) {
+    try {
+      if (!pollId) {
+        throw new BadRequestException('Poll ID is required');
+      }
+
+      const votes = await this.pollsService.getPollVotes(pollId, user.id, token);
+
+      return {
+        success: true,
+        message: 'Poll votes retrieved successfully',
+        data: votes,
+      };
+    } catch (error) {
+      this.logger.error('Error fetching poll votes', error.message);
+
+      const statusCode = error.status || HttpStatus.BAD_REQUEST;
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to retrieve poll votes',
+        },
+        statusCode,
+      );
+    }
+  }
 }

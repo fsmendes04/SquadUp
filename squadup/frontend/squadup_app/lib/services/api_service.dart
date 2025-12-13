@@ -193,4 +193,5 @@ class ApiService {
   static String pollsByUser(String userId) => '$pollsEndpoint/user/$userId';
   static String voteInPoll(String pollId) => '$pollsEndpoint/vote/$pollId';
   static String userVoteInPoll(String pollId) => '$pollsEndpoint/voted/$pollId';
+  static String pollVotes(String pollId) => '$pollsEndpoint/$pollId/votes';
 }

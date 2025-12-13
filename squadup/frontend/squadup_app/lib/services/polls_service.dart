@@ -28,4 +28,8 @@ class PollsService {
   Future<Response> getUserVoteInPoll(String pollId) async {
     return await _api.get(ApiService.userVoteInPoll(pollId));
   }
+
+  Future<Response> getPollVotes(String pollId) async {
+    return await _api.get(ApiService.pollVotes(pollId));
+  }
 }

@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../services/gallery_service.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../widgets/header.dart';
+import '../../widgets/squadup_input.dart';
+import '../../widgets/squadup_button.dart';
 
 class CreateGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -55,7 +57,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao selecionar imagens: $e'),
+            content: Text('Error selecting images: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -77,7 +79,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao tirar foto: $e'),
+            content: Text('Error taking photo: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -128,7 +130,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
     if (_selectedImages.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Selecione pelo menos uma imagem'),
+          content: const Text('Please select at least one image'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -143,7 +145,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
     if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Selecione uma data'),
+          content: const Text('Please select a date'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -171,7 +173,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Galeria criada com sucesso!'),
+            content: const Text('Album created successfully!'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -189,7 +191,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao criar galeria: $e'),
+            content: Text('Error creating album: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
@@ -206,7 +208,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: _isLoading,
-      message: 'Criando galeria...',
+      message: 'Creating album...',
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -224,248 +226,201 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                // Event Name
-                TextFormField(
-                  controller: _eventNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Nome do Evento',
-                    hintText: 'Ex: Beach Day Trip',
-                    prefixIcon: Icon(Icons.event, color: primaryBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primaryBlue, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Nome do evento é obrigatório';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Location
-                TextFormField(
-                  controller: _locationController,
-                  decoration: InputDecoration(
-                    labelText: 'Local',
-                    hintText: 'Ex: Miami Beach',
-                    prefixIcon: Icon(Icons.location_on, color: primaryBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primaryBlue, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Local é obrigatório';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Date
-                TextFormField(
-                  controller: _dateController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    labelText: 'Data',
-                    hintText: 'Selecione a data',
-                    prefixIcon: Icon(Icons.calendar_today, color: primaryBlue),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: primaryBlue, width: 2),
-                    ),
-                  ),
-                  onTap: _selectDate,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Data é obrigatória';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Images Section
-                Text(
-                  'Fotos',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: darkBlue,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Add Images Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _pickImages,
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Galeria'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryBlue,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                        // Event Name
+                        SquadUpInput(
+                          controller: _eventNameController,
+                          label: 'Event Name',
+                          icon: Icons.description,
+                          keyboardType: TextInputType.text,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Event name is required';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _pickImageFromCamera,
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Câmera'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: primaryBlue,
-                          side: BorderSide(color: primaryBlue, width: 2),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                // Selected Images Grid
-                if (_selectedImages.isNotEmpty)
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
+                        // Location
+                        SquadUpInput(
+                          controller: _locationController,
+                          label: 'Location',
+                          icon: Icons.location_on,
+                          keyboardType: TextInputType.text,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Location is required';
+                            }
+                            return null;
+                          },
                         ),
-                    itemCount: _selectedImages.length,
-                    itemBuilder: (context, index) {
-                      return Stack(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              File(_selectedImages[index].path),
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
+                        const SizedBox(height: 16),
+
+                        // Date
+                        GestureDetector(
+                          onTap: _selectDate,
+                          child: AbsorbPointer(
+                            child: SquadUpInput(
+                              controller: _dateController,
+                              label: 'Date',
+                              icon: Icons.calendar_today,
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Date is required';
+                                }
+                                return null;
+                              },
                             ),
                           ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () => _removeImage(index),
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 16,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Images Section
+                        Text(
+                          'Photos',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Add Images Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _pickImages,
+                                icon: const Icon(Icons.photo_library),
+                                label: const Text('Gallery'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryBlue,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: _pickImageFromCamera,
+                                icon: const Icon(Icons.camera_alt),
+                                label: const Text('Camera'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: primaryBlue,
+                                  side: BorderSide(color: primaryBlue, width: 2),
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
 
-                if (_selectedImages.isEmpty)
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      color: primaryBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: primaryBlue.withValues(alpha: 0.3),
-                        width: 2,
-                        style: BorderStyle.solid,
-                      ),
-                    ),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.photo_library_outlined,
-                            size: 48,
-                            color: primaryBlue.withValues(alpha: 0.5),
+                        // Selected Images Grid
+                        if (_selectedImages.isNotEmpty)
+                          GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 8,
+                                  mainAxisSpacing: 8,
+                                ),
+                            itemCount: _selectedImages.length,
+                            itemBuilder: (context, index) {
+                              return Stack(
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(
+                                      File(_selectedImages[index].path),
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: () => _removeImage(index),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.close,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Nenhuma foto selecionada',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+
+                        if (_selectedImages.isEmpty)
+                          Container(
+                            height: 150,
+                            decoration: BoxDecoration(
+                              color: primaryBlue.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: primaryBlue.withValues(alpha: 0.3),
+                                width: 2,
+                                style: BorderStyle.solid,
+                              ),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.photo_library_outlined,
+                                    size: 48,
+                                    color: primaryBlue.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'No photos selected',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ),
 
-                const SizedBox(height: 32),
+                        const SizedBox(height: 32),
 
-                // Create Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _createGallery,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryBlue,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'Criar Galeria',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
+                        // Create Button
+                        SquadUpButton(
+                          text: 'Create Album',
+                          onPressed: _createGallery,
+                          isLoading: _isLoading,
+                          width: double.infinity,
+                          height: 56,
+                          backgroundColor: darkBlue,
+                          disabledColor: primaryBlue.withAlpha(128),
+                          textColor: Colors.white,
+                          borderRadius: 12,
+                        ),
                       ],
                     ),
                   ),

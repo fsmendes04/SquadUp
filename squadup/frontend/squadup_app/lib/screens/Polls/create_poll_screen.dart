@@ -4,6 +4,7 @@ import '../../widgets/squadup_input.dart';
 import '../../widgets/squadup_button.dart';
 import '../../widgets/squadup_date_picker.dart';
 import '../../services/polls_service.dart';
+import '../../widgets/header.dart';
 
 class CreatePollScreen extends StatefulWidget {
   final String groupId;
@@ -183,32 +184,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
-              child: SizedBox(
-                height: kToolbarHeight,
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'New Poll',
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: darkBlue,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            CustomHeader(
+              darkBlue: darkBlue,
+              title: 'New Poll',
             ),
-            const SizedBox(height: 20),
             Expanded(
               child: Form(
                 key: _formKey,

@@ -610,6 +610,111 @@ export class PollsService {
     }
   }
 
+  async getPollVotes(
+    pollId: string,
+    userId: string,
+    token: string,
+  ): Promise<Array<{
+    id: string;
+    poll_id: string;
+    option_id: string;
+    user_id: string;
+    user_name: string;
+    created_at: string;
+  }>> {
+    try {
+      if (!token) {
+        throw new UnauthorizedException('Access token is required');
+      }
+
+      if (!pollId) {
+        throw new BadRequestException('Poll ID is required');
+      }
+
+      const userClient = this.supabaseService.getClientWithToken(token);
+
+      // Get poll to verify user belongs to the group
+      const { data: poll, error: pollError } = await userClient
+        .from('polls')
+        .select('group_id')
+        .eq('id', pollId)
+        .single();
+
+      if (pollError || !poll) {
+        throw new NotFoundException('Poll not found');
+      }
+
+      // Verify user is a member of the group
+      const isMember = await this.groupsService.checkUserIsMember(
+        poll.group_id,
+        userId,
+        token,
+      );
+
+      if (!isMember) {
+        throw new ForbiddenException('You must be a group member to view poll votes');
+      }
+
+      // Fetch all votes for the poll
+      const { data: votes, error: votesError } = await userClient
+        .from('poll_votes')
+        .select('id, poll_id, option_id, user_id, created_at')
+        .eq('poll_id', pollId)
+        .order('created_at', { ascending: false });
+
+      if (votesError) {
+        this.logger.error('Error fetching poll votes', votesError.message);
+        throw new BadRequestException('Failed to fetch poll votes');
+      }
+
+      if (!votes || votes.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(votes.map((vote: any) => vote.user_id))];
+
+      // Fetch user details using admin client to access all profiles
+      const adminClient = this.supabaseService.getAdminClient();
+      const { data: users, error: usersError } = await adminClient
+        .from('profiles')
+        .select('id, name, avatar_url')
+        .in('id', userIds);
+
+      if (usersError) {
+        this.logger.warn('Error fetching user details', usersError.message);
+      }
+
+      // Create a map of user IDs to user info (name and avatar_url)
+      const userMap = new Map(
+        (users || []).map((user: any) => [user.id, { name: user.name, avatar_url: user.avatar_url }]),
+      );
+
+      // Combine votes with user names and avatar_url
+      return votes.map((vote: any) => {
+        const user = userMap.get(vote.user_id) || { name: 'Unknown User', avatar_url: null };
+        return {
+          id: vote.id,
+          poll_id: vote.poll_id,
+          option_id: vote.option_id,
+          user_id: vote.user_id,
+          user_name: user.name,
+          avatar_url: user.avatar_url,
+          created_at: vote.created_at,
+        };
+      });
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+      this.logger.error('Unexpected error fetching poll votes', error);
+      throw new BadRequestException('Failed to retrieve poll votes');
+    }
+  }
+
   private sanitizeString(input: string): string {
     if (!input) return '';
     const cleaned = DOMPurify.sanitize(input, {

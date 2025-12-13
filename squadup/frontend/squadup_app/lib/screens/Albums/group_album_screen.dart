@@ -319,17 +319,17 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
           Text(
             'No albums yet',
             style: GoogleFonts.poppins(
-              fontSize: 16,
+              fontSize: 22,
               fontWeight: FontWeight.w400,
               color: Colors.grey[500],
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
-            'Create the first album for the group!',
+            'Create the first album!',
             style: GoogleFonts.poppins(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
               color: Colors.grey[500],
             ),

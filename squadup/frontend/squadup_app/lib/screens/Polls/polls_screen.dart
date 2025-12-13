@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'create_poll_screen.dart';
-import '../../widgets/squadup_button.dart';
+import 'poll_details_screen.dart';
+import '../../widgets/header_avatar.dart';
+import '../../widgets/loading_overlay.dart';
+import '../../widgets/navigation_bar.dart';
 import '../../services/polls_service.dart';
+import '../../services/groups_service.dart';
+import '../../models/groups.dart';
 
 class PollsScreen extends StatefulWidget {
   final String groupId;
@@ -22,6 +27,8 @@ class _PollsScreenState extends State<PollsScreen> {
   final darkBlue = const Color.fromARGB(255, 29, 56, 95);
   final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
   final PollsService _pollsService = PollsService();
+  final _groupsService = GroupsService();
+  GroupWithMembers? _groupDetails;
   List<dynamic> _activePolls = [];
   List<dynamic> _finishedPolls = [];
   bool _isLoading = true;
@@ -37,6 +44,7 @@ class _PollsScreenState extends State<PollsScreen> {
   Future<void> _loadPolls() async {
     setState(() => _isLoading = true);
     try {
+      final groupResponse = await _groupsService.getGroupById(widget.groupId);
       final response = await _pollsService.getPollsByGroup(widget.groupId);
       if (response.statusCode == 200 && response.data['success'] == true) {
         final polls = response.data['data'] as List;
@@ -97,6 +105,7 @@ class _PollsScreenState extends State<PollsScreen> {
         }
 
         setState(() {
+          _groupDetails = GroupWithMembers.fromJson(groupResponse['data']);
           _activePolls = activePolls;
           _finishedPolls = finishedPolls;
           _userVotes = userVotes;
@@ -123,73 +132,74 @@ class _PollsScreenState extends State<PollsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      message: 'Loading polls...',
+      child: Scaffold(
         backgroundColor: Colors.white,
-        elevation: 0,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 20.0),
-          child: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        title: Text(
-          'Polls',
-          style: GoogleFonts.poppins(
-            fontSize: 24,
-            fontWeight: FontWeight.w600,
-            color: darkBlue,
-          ),
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (!_isLoading) ...[
-                    const SizedBox(height: 16),
-                    _buildStatsCard(),
-                    const SizedBox(height: 20),
-                    _buildTypeSelector(darkBlue),
-                    const SizedBox(height: 20),
-                  ],
-                  _buildPollsList(),
-                  const SizedBox(height: 20),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal:40.0, vertical: 40.0),
-            child: SquadUpButton(
-              text: 'New Poll',
-              width: double.infinity,
-              height: 55,
-              backgroundColor: darkBlue,
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CreatePollScreen(
-                      groupId: widget.groupId,
-                      groupName: widget.groupName,
-                    ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(darkBlue),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!_isLoading) ...[
+                        const SizedBox(height: 16),
+                        _buildStatsCard(),
+                        const SizedBox(height: 20),
+                        _buildTypeSelector(darkBlue),
+                        const SizedBox(height: 20),
+                      ],
+                      _buildPollsList(),
+                      const SizedBox(height: 20),
+                    ],
                   ),
-                );
-                if (result == true) {
-                  _loadPolls();
-                }
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
+      bottomNavigationBar: CustomCircularNavBar(
+        currentIndex: 3,
+        icons: [Icons.add_sharp, Icons.bar_chart_rounded],
+        outlinedIcons: [Icons.add_outlined, Icons.bar_chart_outlined],
+        backgroundColor: darkBlue,
+        iconColor: Colors.white,
+        onTap: (index) {
+          if (index == 0) {
+            _navigateToCreatePoll();
+          }
+        },
       ),
+      ),
+    );
+  }
+
+  Future<void> _navigateToCreatePoll() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreatePollScreen(
+          groupId: widget.groupId,
+          groupName: widget.groupName,
+        ),
+      ),
+    );
+    if (result == true) {
+      _loadPolls();
+    }
+  }
+
+  Widget _buildHeader(Color darkBlue) {
+    return HeaderAvatar(
+      darkBlue: darkBlue,
+      title: _groupDetails?.name ?? widget.groupName,
+      groupId: widget.groupId,
+      avatarUrl: _groupDetails?.avatarUrl,
     );
   }
 
@@ -209,31 +219,38 @@ class _PollsScreenState extends State<PollsScreen> {
     }
 
     if (displayPolls.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                _selectedStatus == 'all' 
-                  ? Icons.align_horizontal_left_rounded 
-                  : (_selectedStatus == 'active' ? Icons.align_horizontal_left_rounded : Icons.check_circle_outline),
-                size: 64,
-                color: Colors.grey[300],
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _selectedStatus == 'all' 
-                  ? 'No polls' 
-                  : (_selectedStatus == 'active' ? 'No active polls' : 'No finished polls'),
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  color: Colors.grey[600],
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 400,
+              height: 400,
+              child: Center(
+                child: Opacity(
+                  opacity: 0.12,
+                  child: Image.asset(
+                    'lib/images/logo_v3.png',
+                    width: 300,
+                    height: 300,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+            Text(
+              'No polls found',
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: Colors.grey[500],
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+          ],
         ),
       );
     }
@@ -694,14 +711,27 @@ class _PollsScreenState extends State<PollsScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Text(
-                                  'Details',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: darkBlue,
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PollDetailsScreen(
+                                          poll: poll,
+                                          groupName: _groupDetails?.name ?? widget.groupName,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    'Details',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: darkBlue,
+                                    ),
+                                  ),
                                 ),
-                                ),  
                               ],
                             ),
                           ],

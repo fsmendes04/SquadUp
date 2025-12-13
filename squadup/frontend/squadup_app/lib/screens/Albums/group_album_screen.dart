@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../widgets/avatar_group.dart';
+import '../../widgets/header_avatar.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../services/groups_service.dart';
 import '../../services/gallery_service.dart';
@@ -102,11 +102,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                     color: primaryBlue,
                     child: Column(
                       children: [
-                        // Header
-                        Padding(
-                          padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
-                          child: _buildHeader(darkBlue),
-                        ),
+                          _buildHeader(darkBlue),
                         const SizedBox(height: 20),
 
                         // Section title and add button
@@ -170,46 +166,11 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildHeader(Color darkBlue) {
-    return SizedBox(
-      height: kToolbarHeight + 10, // espaço extra para avatar maior
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                Center(
-                  child: AvatarGroupWidget(
-                    groupId: widget.groupId,
-                    avatarUrl: _groupDetails?.avatarUrl,
-                    radius: 31,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Nome do grupo
-                Expanded(
-                  child: Text(
-                    _groupDetails?.name ?? widget.groupName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return HeaderAvatar(
+      darkBlue: darkBlue,
+      title: _groupDetails?.name ?? widget.groupName,
+      groupId: widget.groupId,
+      avatarUrl: _groupDetails?.avatarUrl,
     );
   }
 

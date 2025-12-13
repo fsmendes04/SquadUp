@@ -1,3 +1,4 @@
+import '../../widgets/header.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/expenses_service.dart';
@@ -228,14 +229,11 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: _buildHeader(darkBlue),
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'Update Expense',
               ),
-
               const SizedBox(height: 20),
-
               // Form
               Expanded(
                 child: SingleChildScrollView(
@@ -269,30 +267,6 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
     );
   }
 
-  Widget _buildHeader(Color darkBlue) {
-    return SizedBox(
-      height: kToolbarHeight,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Update Expense',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: darkBlue,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDescriptionField(Color darkBlue) {
     return SquadUpInput(

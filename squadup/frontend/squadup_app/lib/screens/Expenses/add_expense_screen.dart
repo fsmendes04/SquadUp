@@ -4,6 +4,7 @@ import '../../services/expenses_service.dart';
 import '../../services/groups_service.dart';
 import '../../services/user_service.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../widgets/header.dart';
 import '../../models/expense.dart';
 import '../../models/groups.dart';
 import '../../widgets/squadup_button.dart';
@@ -208,9 +209,10 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              // Header
-              _buildHeader(),
-
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'New Expense',
+              ),
               // Content
               Expanded(
                 child: SingleChildScrollView(
@@ -254,31 +256,6 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14.0),
-      height: kToolbarHeight,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 28),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'New Expense',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: darkBlue,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildSectionTitle(String title) {
     return Text(
@@ -524,12 +501,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: _selectedParticipantIds.length == _groupMembers.length 
-              ? primaryBlue.withOpacity(0.05) : Colors.grey.withOpacity(0.05),
+              ? primaryBlue.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _selectedParticipantIds.length == _groupMembers.length 
-                ? primaryBlue.withOpacity(0.3) 
-                : Colors.grey.withOpacity(0.3),
+                ? primaryBlue.withValues(alpha: 0.3) 
+                : Colors.grey.withValues(alpha: 0.3),
                 width: 1,
               ),
             ),

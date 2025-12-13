@@ -550,27 +550,44 @@ class _PollsScreenState extends State<PollsScreen> {
                         child: Icon(icon, color: iconColor, size: 32),
                       ),
                       const SizedBox(width: 16),
+                      // Título e ícone de expandir juntos
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              title,
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                                color: darkBlue,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: darkBlue,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    width: 50,
+                                    height: 3,
+                                    decoration: BoxDecoration(
+                                      color: iconColor,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(width: 12),
                             Container(
-                              width: 40,
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: iconColor,
-                                borderRadius: BorderRadius.circular(2),
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Icon(
+                                isExpanded ? Icons.expand_less : Icons.expand_more,
+                                size: 22,
+                                color: darkBlue,
                               ),
                             ),
                           ],
@@ -633,13 +650,10 @@ class _PollsScreenState extends State<PollsScreen> {
                     ),
                   ),
                 // Divider
-                
-                // Footer com stats e badge
                 Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.only(left: 20, top: 20, bottom: 20, right: 20),
                   child: Row(
                     children: [
-                      // Stats lado esquerdo
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,22 +694,17 @@ class _PollsScreenState extends State<PollsScreen> {
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                Text(
+                                  'Details',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: darkBlue,
+                                ),
+                                ),  
                               ],
                             ),
                           ],
-                        ),
-                      ),
-                      // Badge no canto
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: darkBlue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Icon(
-                          isExpanded ? Icons.expand_less : Icons.expand_more,
-                          size: 18,
-                          color: darkBlue,
                         ),
                       ),
                     ],

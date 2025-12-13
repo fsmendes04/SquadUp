@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../widgets/header.dart';
 import '../../services/payments_service.dart';
 import '../../services/storage_service.dart';
 import '../../services/groups_service.dart';
@@ -116,17 +117,6 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         _showSnackBar('Error loading payments: $e', isError: true);
       }
     }
-    Future<void> _loadData() async {
-      setState(() {
-        _loading = true;
-      });
-      await Future.wait([_loadGroupDetails(), _loadPayments()]);
-      if (mounted) {
-        setState(() {
-          _loading = false;
-        });
-      }
-    }
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
@@ -165,33 +155,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: SizedBox(
-                  height: kToolbarHeight,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Payment History',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: darkBlue,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'Payment History',
               ),
-              const SizedBox(height: 20),
-              Expanded(
+              Container(
                 child: _payments.isEmpty
                     ? _buildEmptyState(darkBlue)
                     : _buildPaymentsList(primaryBlue, darkBlue),
@@ -206,7 +174,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   Widget _buildEmptyState(Color darkBlue) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 130.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -225,7 +193,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 40),
           Text(
             "No payments yet",
             style: GoogleFonts.poppins(

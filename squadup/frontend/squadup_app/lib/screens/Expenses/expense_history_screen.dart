@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/expenses_service.dart';
 import '../../models/expense.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../widgets/header.dart';
 import 'update_expense_screen.dart';
 
 class ExpenseHistoryScreen extends StatefulWidget {
@@ -82,15 +83,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: _buildHeader(darkBlue),
+                CustomHeader(
+                  darkBlue: darkBlue,
+                  title: 'Expense History',      
               ),
-
               const SizedBox(height: 10),
-
-              // Scrollable content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 14.0),
@@ -98,12 +95,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (!_loading && _error == null) ...[
-                          _buildPeriodSelector(darkBlue),
-                          const SizedBox(height: 4),
-                          if (_getFilteredExpenses().isNotEmpty) ...[
-                            _buildSpendingByCategory(darkBlue),
-                            const SizedBox(height: 20),
-                          ],
+                        _buildPeriodSelector(darkBlue),
+                        const SizedBox(height: 4),
+                        if (_getFilteredExpenses().isNotEmpty) ...[
+                          _buildSpendingByCategory(darkBlue),
+                          const SizedBox(height: 20),
+                        ],
                       ],
                       _buildExpensesList(darkBlue),
                       const SizedBox(height: 20),
@@ -118,30 +115,6 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     );
   }
 
-  Widget _buildHeader(Color darkBlue) {
-    return SizedBox(
-      height: kToolbarHeight,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Expense History',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: darkBlue,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildPeriodSelector(Color darkBlue) {
     return Column(

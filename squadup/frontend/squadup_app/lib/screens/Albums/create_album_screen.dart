@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/gallery_service.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../widgets/header.dart';
 
 class CreateGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -30,7 +31,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
   final _galleryService = GalleryService();
   final _imagePicker = ImagePicker();
 
-  List<XFile> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   bool _isLoading = false;
   DateTime? _selectedDate;
 
@@ -208,40 +209,21 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
       message: 'Criando galeria...',
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text(
-            'Nova Galeria',
-            style: GoogleFonts.poppins(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: darkBlue,
-            ),
-          ),
-          centerTitle: true,
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Grupo: ${widget.groupName}',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
+        body: SafeArea(
+          child: Column(
+            children: [
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'New Album',
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                 // Event Name
                 TextFormField(
                   controller: _eventNameController,
@@ -484,8 +466,12 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                     ),
                   ),
                 ),
-              ],
-            ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

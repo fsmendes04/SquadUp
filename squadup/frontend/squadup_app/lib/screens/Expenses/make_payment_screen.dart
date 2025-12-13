@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/payments_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../widgets/header.dart';
 import '../../models/groups.dart';
 import '../../widgets/squadup_button.dart';
 import '../../widgets/squadup_input.dart';
@@ -138,30 +139,9 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14.0),
-                child: SizedBox(
-                  height: kToolbarHeight,
-                  child: Row(
-                    children: [
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Make Payment',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w600,
-                            color: darkBlue,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'Make Payment',
               ),
               const SizedBox(height: 10),
               Expanded(
@@ -184,14 +164,15 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                         const SizedBox(height: 16),
                         if (availableMembers.isEmpty)
                           Container(
+                            width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.grey[50],
+                              color: Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[200]!),
+                              border: Border.all(color: Colors.grey[300]!),
                             ),
                             child: Text(
-                              'No members found',
+                              'No other group members available.',
                               style: GoogleFonts.poppins(
                                 fontSize: 14,
                                 color: Colors.grey[600],
@@ -215,14 +196,14 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                       decoration: BoxDecoration(
                                         color:
                                             isSelected
-                                                ? primaryBlue.withOpacity(0.1)
+                                                ? primaryBlue.withValues(alpha: 0.1)
                                                 : Colors.grey[50],
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color:
                                               isSelected
                                                   ? primaryBlue
-                                                  : Colors.grey.withOpacity(0.3),
+                                                  : Colors.grey.withValues(alpha: 0.3),
                                           width: isSelected ? 2 : 1,
                                         ),
                                       ),

@@ -4,7 +4,7 @@ import '../../services/expenses_service.dart';
 import '../../services/storage_service.dart';
 import '../../models/expense.dart';
 import '../../widgets/navigation_bar.dart';
-import '../../widgets/avatar_group.dart';
+import '../../widgets/header_avatar.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../services/groups_service.dart';
 import '../../models/groups.dart';
@@ -229,27 +229,25 @@ class _ExpensesScreenState extends State<ExpensesScreen>
           child: Column(
             children: [
               // Header
-              Padding(
-                padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
-                child: _buildHeader(darkBlue),
+              HeaderAvatar(
+                darkBlue: darkBlue,
+                title: _groupDetails?.name ?? groupName,
+                groupId: groupId,
+                avatarUrl: _groupDetails?.avatarUrl,
               ),
-
-              const SizedBox(height: 20),
-
-              // Scrollable content
+              const SizedBox(height: 6),
+              // Make entire content scrollable
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 14.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Balance Chart
                       _buildBalanceChart(primaryBlue, darkBlue),
-
-                      const SizedBox(height: 24),
-
-                      // Balance tabs and content
+                      const SizedBox(height: 18),
+                      // Balance tabs with fixed height
                       Container(
+                        height: 400, // Fixed height for transactions
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
@@ -268,7 +266,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                               height: 45,
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 12,
-                                vertical: 8,
+                                vertical: 12,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
@@ -361,18 +359,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                 },
                               ),
                             ),
-                            SizedBox(
-                              height: _calculateTabViewHeight(),
+                            Expanded(
                               child: TabBarView(
                                 controller: _tabController,
                                 children: [
-                                  // To Receive Tab - Lista expense_participants onde sou toReceiveId
+                                  // To Receive Tab
                                   _buildParticipantsList(
                                     _getParticipantsToReceive(),
                                     darkBlue,
                                     isReceiving: true,
                                   ),
-                                  // To Send Tab - Lista expense_participants onde sou toPayId
+                                  // To Send Tab
                                   _buildParticipantsList(
                                     _getParticipantsToPay(),
                                     darkBlue,
@@ -384,69 +381,65 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                           ],
                         ),
                       ),
-
-                      const SizedBox(height: 10),
-
-                      // Button outside the tabs box
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 150,
-                              child: SquadUpButton(
-                                text: 'Settle Up',
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SettleUpScreen(
-                                        groupId: groupId,
-                                        groupName: groupName,
-                                      ),
+                      const SizedBox(height: 30),
+                      // Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 150,
+                            child: SquadUpButton(
+                              text: 'Settle Up',
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SettleUpScreen(
+                                      groupId: groupId,
+                                      groupName: groupName,
                                     ),
-                                  );
-                                },
-                                width: 150,
-                                height: 50,
-                                backgroundColor: primaryBlue,
-                                disabledColor: primaryBlue.withAlpha(128),
-                                textColor: Colors.white,
-                                borderRadius: 12,
-                              ),
-                            ),
-                            SizedBox(width: 30),
-                            SizedBox(
+                                  ),
+                                );
+                              },
                               width: 150,
-                              child: SquadUpButton(
-                                text: 'Payment',
-                                onPressed: () {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/make-payment',
-                                    arguments: {
-                                      'groupId': groupId,
-                                      'groupName': groupName,
-                                      'groupDetails': _groupDetails,
-                                    },
-                                  ).then((result) {
-                                    if (result == true) {
-                                      _loadExpenses();
-                                    }
-                                  });
-                                },
-                                width: 150,
-                                height: 50,
-                                backgroundColor: darkBlue,
-                                disabledColor: darkBlue.withAlpha(128),
-                                textColor: Colors.white,
-                                borderRadius: 12,
-                              ),
+                              height: 50,
+                              backgroundColor: primaryBlue,
+                              disabledColor: primaryBlue.withAlpha(128),
+                              textColor: Colors.white,
+                              borderRadius: 12,
                             ),
-                          ],
-                        ),
+                          ),
+                          SizedBox(width: 30),
+                          SizedBox(
+                            width: 150,
+                            child: SquadUpButton(
+                              text: 'Payment',
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/make-payment',
+                                  arguments: {
+                                    'groupId': groupId,
+                                    'groupName': groupName,
+                                    'groupDetails': _groupDetails,
+                                  },
+                                ).then((result) {
+                                  if (result == true) {
+                                    _loadExpenses();
+                                  }
+                                });
+                              },
+                              width: 150,
+                              height: 50,
+                              backgroundColor: darkBlue,
+                              disabledColor: darkBlue.withAlpha(128),
+                              textColor: Colors.white,
+                              borderRadius: 12,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -454,7 +447,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
             ],
           ),
         ),
-
         bottomNavigationBar: CustomCircularNavBar(
           currentIndex: 2,
           icons: [Icons.add_card, Icons.history],
@@ -477,49 +469,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     );
   }
 
-  Widget _buildHeader(Color darkBlue) {
-    return SizedBox(
-      height: kToolbarHeight + 10, // espaço extra para avatar maior
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                Center(
-                  child: AvatarGroupWidget(
-                    groupId: groupId,
-                    avatarUrl: _groupDetails?.avatarUrl,
-                    radius: 31,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Nome do grupo
-                Expanded(
-                  child: Text(
-                    _groupDetails?.name ?? groupName,
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBalanceChart(Color primaryBlue, Color darkBlue) {
     // Calculate max value for chart scaling
@@ -603,119 +552,135 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                           ),
                         ),
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 100 - payPercent,
-                                    child: const SizedBox(),
-                                  ),
-                                  // Bar
-                                  if (toPay > 0)
-                                    Expanded(
-                                      flex: payPercent,
-                                      child: LayoutBuilder(
-                                        builder: (context, constraints) {
-                                          return Container(
-                                            height: 32,
-                                            constraints: BoxConstraints(
-                                              minWidth: _calculateMinBarWidth(
-                                                toPay,
-                                              ),
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: darkBlue,
-                                              borderRadius:
-                                                  const BorderRadius.horizontal(
-                                                    left: Radius.circular(8),
-                                                    right: Radius.circular(8),
-                                                  ),
-                                            ),
-                                            alignment: Alignment.centerLeft,
-                                            padding: const EdgeInsets.only(
-                                              left: 8,
-                                              right: 8,
-                                            ),
-                                            child: Text(
-                                              '€${toPay.toStringAsFixed(2)}',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.visible,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                ],
+                        if (toPay == 0 && toReceive == 0)
+                          Center(
+                            child: Text(
+                              '€0',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: darkBlue,
                               ),
                             ),
+                          )
+                        else
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 100 - payPercent,
+                                      child: const SizedBox(),
+                                    ),
+                                    // Bar
+                                    if (toPay > 0)
+                                      Expanded(
+                                        flex: payPercent,
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            return Container(
+                                              height: 32,
+                                              constraints: BoxConstraints(
+                                                minWidth: _calculateMinBarWidth(
+                                                  toPay,
+                                                ),
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: darkBlue,
+                                                borderRadius:
+                                                    const BorderRadius
+                                                        .horizontal(
+                                                      left:
+                                                          Radius.circular(8),
+                                                      right: Radius.circular(8),
+                                                    ),
+                                              ),
+                                              alignment: Alignment.centerLeft,
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                right: 8,
+                                              ),
+                                              child: Text(
+                                                '€${toPay.toStringAsFixed(2)}',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.visible,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
 
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  // Bar
-                                  if (toReceive > 0)
-                                    Expanded(
-                                      flex: receivePercent,
-                                      child: LayoutBuilder(
-                                        builder: (context, constraints) {
-                                          return Container(
-                                            height: 32,
-                                            constraints: BoxConstraints(
-                                              minWidth: _calculateMinBarWidth(
-                                                toReceive,
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    // Bar
+                                    if (toReceive > 0)
+                                      Expanded(
+                                        flex: receivePercent,
+                                        child: LayoutBuilder(
+                                          builder: (context, constraints) {
+                                            return Container(
+                                              height: 32,
+                                              constraints: BoxConstraints(
+                                                minWidth: _calculateMinBarWidth(
+                                                  toReceive,
+                                                ),
                                               ),
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: primaryBlue,
-                                              borderRadius:
-                                                  const BorderRadius.horizontal(
-                                                    right: Radius.circular(8),
-                                                    left: Radius.circular(8),
-                                                  ),
-                                            ),
-                                            alignment: Alignment.centerRight,
-                                            padding: const EdgeInsets.only(
-                                              left: 8,
-                                              right: 8,
-                                            ),
-                                            child: Text(
-                                              '€${toReceive.toStringAsFixed(2)}',
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                                color: Colors.white,
+                                              decoration: BoxDecoration(
+                                                color: primaryBlue,
+                                                borderRadius:
+                                                    const BorderRadius
+                                                        .horizontal(
+                                                      right:
+                                                          Radius.circular(8),
+                                                      left: Radius.circular(8),
+                                                    ),
                                               ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.visible,
-                                            ),
-                                          );
-                                        },
+                                              alignment: Alignment.centerRight,
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                right: 8,
+                                              ),
+                                              child: Text(
+                                                '€${toReceive.toStringAsFixed(2)}',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.white,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.visible,
+                                              ),
+                                            );
+                                          },
+                                        ),
                                       ),
+                                    // Empty space
+                                    Expanded(
+                                      flex: 100 - receivePercent,
+                                      child: const SizedBox(),
                                     ),
-                                  // Empty space
-                                  Expanded(
-                                    flex: 100 - receivePercent,
-                                    child: const SizedBox(),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
                       ],
                     ),
                   );
                 }).toList(),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           // Legend
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -782,13 +747,30 @@ class _ExpensesScreenState extends State<ExpensesScreen>
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Text(
-            isReceiving ? "Nobody owes you anything" : "You don't owe anything",
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Opacity(
+                opacity: 0.12,
+                child: Image.asset(
+                  'lib/images/logo_v3.png',
+                  height: 120,
+                  width: 120,
+                ),
+              ),
+              const SizedBox(height: 30),
+              Flexible(
+                child: Text(
+                  isReceiving ? "Nobody owes you anything" : "You don't owe anything",
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -885,16 +867,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     } catch (e) {
       return 'User';
     }
-  }
-
-  double _calculateTabViewHeight() {
-    final receiveCount = _getParticipantsToReceive().length;
-    final payCount = _getParticipantsToPay().length;
-    final maxCount = receiveCount > payCount ? receiveCount : payCount;
-
-    if (maxCount == 0) return 100;
-
-    return (maxCount * 70.0) + 16.0;
   }
 
   double _calculateMinBarWidth(double amount) {

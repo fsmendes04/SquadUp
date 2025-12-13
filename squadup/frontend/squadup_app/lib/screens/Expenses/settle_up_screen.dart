@@ -4,6 +4,7 @@ import '../../models/settle_up_transaction.dart';
 import '../../services/payments_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../widgets/header.dart';
 
 class SettleUpScreen extends StatefulWidget {
   final String groupId;
@@ -74,6 +75,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final txCount = _transactions?.length ?? 0;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -82,9 +84,9 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
           message: 'Settling up...',
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 14.0, right: 14.0, top: 12.0),
-                child: _buildHeader(),
+                CustomHeader(
+                darkBlue: darkBlue,
+                title: 'Settle Up${_transactions != null ? ' ($txCount)' : ''}',
               ),
               Expanded(
                 child: _buildBody(),
@@ -171,7 +173,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 70),
             Text(
               "You're all settled up!",
               style: GoogleFonts.poppins(
@@ -201,31 +203,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    final txCount = _transactions?.length ?? 0;
-    return SizedBox(
-      height: kToolbarHeight,
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 31),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Settle Up${_transactions != null ? ' ($txCount)' : ''}',
-              style: GoogleFonts.poppins(
-                fontSize: 24,
-                fontWeight: FontWeight.w600,
-                color: darkBlue,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // _buildHeader removido, pois agora usamos CustomHeader
 
   Widget _buildTransactionCard(SettleUpTransaction transaction, int step, String? currentUserId) {
     // Determine if current user is involved
@@ -243,9 +221,9 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     }
 
     // Determine box colors based on current user
-    final fromBoxColor = isUserPayer ? primaryBlue.withOpacity(0.15) : darkBlue.withOpacity(0.1);
+    final fromBoxColor = isUserPayer ? primaryBlue.withValues(alpha: 0.15) : darkBlue.withValues(alpha: 0.1);
     final fromTextColor = isUserPayer ? primaryBlue : darkBlue;
-    final toBoxColor = isUserReceiver ? primaryBlue.withOpacity(0.15) : darkBlue.withOpacity(0.1);
+    final toBoxColor = isUserReceiver ? primaryBlue.withValues(alpha: 0.15) : darkBlue.withValues(alpha: 0.1);
     final toTextColor = isUserReceiver ? primaryBlue : darkBlue;
 
     return Container(
@@ -256,7 +234,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
+            color: Colors.grey.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

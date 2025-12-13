@@ -225,24 +225,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                         if (mounted) {
                           Navigator.pop(context);
                           await _fetchGroup();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Member added successfully'),
-                              backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
                         }
+                      // ignore: empty_catches
                       } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Error adding member: $e'),
-                              backgroundColor: Colors.red,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(

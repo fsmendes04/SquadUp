@@ -355,7 +355,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                     child: GestureDetector(
                                       onTap: () => _removeImage(index),
                                       child: Container(
-                                        padding: const EdgeInsets.all(4),
+                                        padding: const EdgeInsets.all(3),
                                         decoration: const BoxDecoration(
                                           color: Colors.red,
                                           shape: BoxShape.circle,
@@ -363,7 +363,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                         child: const Icon(
                                           Icons.close,
                                           color: Colors.white,
-                                          size: 16,
+                                          size: 14,
                                         ),
                                       ),
                                     ),

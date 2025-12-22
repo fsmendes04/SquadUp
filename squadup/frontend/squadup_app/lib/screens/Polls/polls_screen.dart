@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../widgets/avatar_widget.dart';
 import 'create_poll_screen.dart';
 import 'poll_details_screen.dart';
 import '../../widgets/header_avatar.dart';
@@ -35,6 +36,7 @@ class _PollsScreenState extends State<PollsScreen> {
   Map<String, String?> _userVotes = {};
   final Map<String, bool> _expandedPolls = {};
   String _selectedStatus = 'all';
+  String _selectedType = 'voting';
   @override
   void initState() {
     super.initState();
@@ -148,11 +150,15 @@ class _PollsScreenState extends State<PollsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (!_isLoading) ...[
+                        const SizedBox(height: 4),
+                        _buildTypeSelector(darkBlue),
                         const SizedBox(height: 16),
                         _buildStatsCard(),
                         const SizedBox(height: 20),
-                        _buildTypeSelector(darkBlue),
-                        const SizedBox(height: 20),
+                        _buildStatusSelector(darkBlue),
+                        if (_activePolls.where((p) => p['type'] == _selectedType).isNotEmpty ||
+                            _finishedPolls.where((p) => p['type'] == _selectedType).isNotEmpty)
+                          const SizedBox(height: 20),
                       ],
                       _buildPollsList(),
                       const SizedBox(height: 20),
@@ -208,20 +214,24 @@ class _PollsScreenState extends State<PollsScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    // Filtrar as enquetes pelo tipo selecionado
+    List<dynamic> filteredActivePolls = _activePolls.where((p) => p['type'] == _selectedType).toList();
+    List<dynamic> filteredFinishedPolls = _finishedPolls.where((p) => p['type'] == _selectedType).toList();
+
     List<dynamic> displayPolls = [];
 
     if (_selectedStatus == 'all') {
-      displayPolls = [..._activePolls, ..._finishedPolls];
+      displayPolls = [...filteredActivePolls, ...filteredFinishedPolls];
     } else if (_selectedStatus == 'active') {
-      displayPolls = _activePolls;
-      } else {
-      displayPolls = _finishedPolls;
+      displayPolls = filteredActivePolls;
+    } else {
+      displayPolls = filteredFinishedPolls;
     }
 
     if (displayPolls.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -241,7 +251,9 @@ class _PollsScreenState extends State<PollsScreen> {
               ),
             ),
             Text(
-              'No polls found',
+              _selectedType == 'voting'
+                  ? 'No polls found.'
+                  : 'No bets found.',
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w400,
@@ -345,7 +357,77 @@ class _PollsScreenState extends State<PollsScreen> {
     );
   }
 
-  Widget _buildTypeSelector(Color darkBlue) {
+    Widget _buildTypeSelector(Color darkBlue) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Botão Polls
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedType = 'voting';
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: _selectedType == 'voting' ? darkBlue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    'Polls',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: _selectedType == 'voting' ? Colors.white : darkBlue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          // Botão Bets
+          Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedType = 'betting';
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: _selectedType == 'betting' ? darkBlue : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    'Bets',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: _selectedType == 'betting' ? Colors.white : darkBlue,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusSelector(Color darkBlue) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -493,6 +575,22 @@ class _PollsScreenState extends State<PollsScreen> {
   }) {
     final pollId = poll['id'] ?? '';
     final title = poll['title'] ?? '';
+    final createdByData = poll['created_by'];
+    Map<String, dynamic>? createdBy;
+    // Lookup creator name from group members
+    if (createdByData is String && _groupDetails != null) {
+      final member = _groupDetails!.getMember(createdByData);
+      if (member != null) {
+        createdBy = {
+          'name': member.name ?? 'Unknown',
+          'avatar_url': member.avatarUrl,
+        };
+      }
+    } else if (createdByData is Map<String, dynamic>) {
+      createdBy = createdByData;
+    }
+    final pollType = poll['type'] ?? 'voting';
+    final isBet = pollType == 'betting';
     final options = (poll['options'] as List?)?.map((opt) {
       return {
         'id': opt['id'],
@@ -614,7 +712,8 @@ class _PollsScreenState extends State<PollsScreen> {
                   ),
                 ),
                 // Conteúdo condicional (colapsado ou expandido)
-                if (isExpanded)
+                // For bets, don't show options
+                if (!isBet && isExpanded)
                   // Versão expandida: mostrar todas as opções
                   Padding(
                     padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
@@ -640,7 +739,7 @@ class _PollsScreenState extends State<PollsScreen> {
                       ],
                     ),
                   )
-                else if (winningOptions.isNotEmpty)
+                else if (!isBet && winningOptions.isNotEmpty)
                   // Versão colapsada: mostrar opções vencedoras (podendo haver empate)
                   Padding(
                     padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
@@ -666,9 +765,38 @@ class _PollsScreenState extends State<PollsScreen> {
                       ],
                     ),
                   ),
+                // Show creator name for bets when expanded
+                if (isBet && isExpanded && createdBy != null)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 10),
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 15),
+                      padding: const EdgeInsets.only(left: 12, right: 12),
+                      child: Row(
+                        children: [
+                          UserAvatarDisplay(
+                            avatarUrl: createdBy['avatar_url'] as String?,
+                            radius: 24,
+                            onTap: null,
+                          ),
+                          const SizedBox(width: 15),
+                          Expanded(
+                            child: Text(
+                              createdBy['name'] ?? 'Unknown',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: darkBlue,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 // Divider
                 Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 20, bottom: 20, right: 20),
+                  padding: const EdgeInsets.only(left: 20, top: 6, bottom: 20, right: 20),
                   child: Row(
                     children: [
                       Expanded(
@@ -677,13 +805,15 @@ class _PollsScreenState extends State<PollsScreen> {
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.people_outline, 
+                                Icon(isBet ? Icons.monetization_on : Icons.people_outline, 
                                   size: 18, 
                                   color: darkBlue,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
-                                  '$participants votes',
+                                  isBet 
+                                    ? '${options.length} ${options.length == 1 ? "Challenger" : "Challengers"}'
+                                    : '$participants votes',
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,

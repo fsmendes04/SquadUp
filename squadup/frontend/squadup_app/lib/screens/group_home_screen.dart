@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/groups_service.dart';
 import '../models/groups.dart';
 import '../widgets/avatar_widget.dart';
-import '../widgets/avatar_group.dart';
+import '../widgets/header_avatar.dart';
 import '../widgets/loading_overlay.dart';
 import 'edit_group_screen.dart';
 import 'Polls/polls_screen.dart';
@@ -102,24 +102,26 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     color: primaryBlue,
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14.0,
-                          vertical: 20.0,
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildTopBar(),
-                            const SizedBox(height: 25),
-                            _buildAvatarsSection(),
-                            _buildCalendarSection(),
-                            const SizedBox(height: 24),
-                            _buildActivitySection(),
-                            _buildNavigationCards(),
-                            const SizedBox(height: 32),
-                          ],
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTopBar(),
+                          const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildAvatarsSection(),
+                                _buildCalendarSection(),
+                                const SizedBox(height: 24),
+                                _buildActivitySection(),
+                                _buildNavigationCards(),
+                                const SizedBox(height: 32),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -129,52 +131,26 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
   }
 
   Widget _buildTopBar() {
-    return SizedBox(
-      height: kToolbarHeight + 10, // espaço extra para avatar maior
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
-                  onPressed: () => Navigator.pop(context, _groupDetails?.name),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-                Center(
-                  child: AvatarGroupWidget(
-                    groupId: widget.groupId,
-                    avatarUrl: _groupDetails?.avatarUrl,
-                    radius: 31,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                // Nome do grupo
-                Expanded(
-                  child: Text(
-                    _groupDetails?.name ?? '',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: darkBlue,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
+    return Stack(
+      alignment: Alignment.centerRight,
+      children: [
+        HeaderAvatar(
+          darkBlue: darkBlue,
+          title: _groupDetails?.name ?? '',
+          groupId: widget.groupId,
+          avatarUrl: _groupDetails?.avatarUrl,
+          onBack: () => Navigator.pop(context, _groupDetails?.name),
+          avatarRadius: 31,
+        ),
+        Positioned(
+          right: 20,
+          child: IconButton(
             icon: Icon(Icons.edit, color: darkBlue, size: 32),
             onPressed: () async {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => EditGroupScreen(groupId: widget.groupId),
+                  builder: (context) => EditGroupScreen(groupId: widget.groupId),
                 ),
               );
               if (result == true) {
@@ -183,8 +159,8 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
             },
             tooltip: 'Opções do grupo',
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -11,9 +11,7 @@ import { GroupsService } from '../Groups/groupsService';
 import * as DOMPurify from 'isomorphic-dompurify';
 import { CreatePollDto } from './dto/create-poll.dto';
 import { UpdatePollDto } from './dto/update-poll.dto';
-import { CreateVoteDto } from './dto/create-vote.dto';
-import { CreateOptionDto } from './dto/create-option.dto';
-import { Poll, PollOption, PollVote } from './pollModel';
+import { Poll, PollVote } from './pollModel';
 
 @Injectable()
 export class PollsService {
@@ -61,9 +59,12 @@ export class PollsService {
 
       // Sanitize inputs
       const sanitizedTitle = this.sanitizeString(createPollDto.title);
-      const sanitizedOptions = createPollDto.options.map(option =>
-        this.sanitizeString(option),
-      );
+      const sanitizedOptions = createPollDto.options.map(option => ({
+        text: this.sanitizeString(option.text),
+        proposer_reward: option.proposer_reward,
+        challenger_reward: option.challenger_reward,
+        challenger_user_id: option.challenger_user_id,
+      }));
 
       // Validate title length
       if (sanitizedTitle.length > this.MAX_TITLE_LENGTH) {
@@ -74,7 +75,7 @@ export class PollsService {
 
       // Validate option text lengths
       for (const option of sanitizedOptions) {
-        if (option.length > this.MAX_OPTION_TEXT_LENGTH) {
+        if (option.text.length > this.MAX_OPTION_TEXT_LENGTH) {
           throw new BadRequestException(
             `Option text cannot exceed ${this.MAX_OPTION_TEXT_LENGTH} characters`,
           );
@@ -111,11 +112,16 @@ export class PollsService {
       }
 
       // Create poll options
-      const optionsToInsert = sanitizedOptions.map(optionText => ({
+      const optionsToInsert = sanitizedOptions.map(option => ({
         poll_id: pollData.id,
-        text: optionText,
+        text: option.text,
         vote_count: 0,
         created_at: new Date().toISOString(),
+        proposer_reward_amount: option.proposer_reward?.amount || null,
+        proposer_reward_text: option.proposer_reward?.text || null,
+        challenger_reward_amount: option.challenger_reward?.amount || null,
+        challenger_reward_text: option.challenger_reward?.text || null,
+        challenger_user_id: option.challenger_user_id || null,
       }));
 
       const { data: optionsData, error: optionsError } = await userClient
@@ -538,6 +544,23 @@ export class PollsService {
 
         // O trigger na base de dados trata do incremento/decremento do vote_count
 
+        // Para betting polls, atualizar challenger_user_id
+        if (poll.type === 'betting') {
+          // Remove challenger_user_id from old option
+          await userClient
+            .from('poll_options')
+            .update({ challenger_user_id: null })
+            .eq('id', oldOptionId);
+
+          // Add challenger_user_id to new option se não for o criador
+          if (userId !== poll.created_by) {
+            await userClient
+              .from('poll_options')
+              .update({ challenger_user_id: userId })
+              .eq('id', optionId);
+          }
+        }
+
         this.logger.log(`Vote updated: poll ${pollId}, user ${userId}, from ${oldOptionId} to ${optionId}`);
       } else {
         // User is voting for the first time
@@ -557,6 +580,19 @@ export class PollsService {
         }
 
         vote = newVote;
+
+        // Para betting polls, registar challenger_user_id se não for o criador
+        if (poll.type === 'betting' && userId !== poll.created_by) {
+          const { error: updateError } = await userClient
+            .from('poll_options')
+            .update({ challenger_user_id: userId })
+            .eq('id', optionId);
+
+          if (updateError) {
+            this.logger.warn('Error registering challenger user', updateError.message);
+            // Continua mesmo se houver erro, pois o voto foi criado
+          }
+        }
       }
       const updatedPoll = await this.getPollWithDetails(pollId, token);
 

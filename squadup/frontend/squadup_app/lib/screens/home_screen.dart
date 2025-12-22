@@ -429,9 +429,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                       size: 34,
                                     ),
                                     color: darkBlue,
-                                    onPressed: () {
-                                      // TODO: Implementar navegação para notificações
-                                    },
+                                      onPressed: () {
+                                        Navigator.pushNamed(context, '/notifications');
+                                      },
                                     tooltip: 'Notificações',
                                   ),
                                   Positioned(
@@ -519,7 +519,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       // Section title and add button
-                                      if (!_isSearching) ...[
+                                      
                                         AnimatedContainer(
                                           duration: const Duration(
                                             milliseconds: 300,
@@ -601,7 +601,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                           ),
                                         ),
                                         const SizedBox(height: 20),
-                                      ],
 
                                       // Search bar
                                       GroupSearchBar(

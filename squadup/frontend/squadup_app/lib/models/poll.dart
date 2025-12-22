@@ -1,3 +1,27 @@
+class Reward {
+  final num? amount;
+  final String? text;
+
+  Reward({
+    this.amount,
+    this.text,
+  });
+
+  factory Reward.fromJson(Map<String, dynamic> json) {
+    return Reward(
+      amount: json['amount'] as num?,
+      text: json['text'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'amount': amount,
+      'text': text,
+    };
+  }
+}
+
 class Poll {
   final String id;
   final String groupId;
@@ -102,6 +126,9 @@ class PollOption {
   final String text;
   final int voteCount;
   final DateTime createdAt;
+  final Reward? proposerReward;
+  final Reward? challengerReward;
+  final String? challengerUserId; // Para betting polls: ID do user que contradiz
 
   PollOption({
     required this.id,
@@ -109,6 +136,9 @@ class PollOption {
     required this.text,
     required this.voteCount,
     required this.createdAt,
+    this.proposerReward,
+    this.challengerReward,
+    this.challengerUserId,
   });
 
   factory PollOption.fromJson(Map<String, dynamic> json) {
@@ -118,6 +148,13 @@ class PollOption {
       text: json['text'] as String,
       voteCount: json['vote_count'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
+      proposerReward: json['proposer_reward'] != null
+          ? Reward.fromJson(json['proposer_reward'] as Map<String, dynamic>)
+          : null,
+      challengerReward: json['challenger_reward'] != null
+          ? Reward.fromJson(json['challenger_reward'] as Map<String, dynamic>)
+          : null,
+      challengerUserId: json['challenger_user_id'] as String?,
     );
   }
 
@@ -128,6 +165,9 @@ class PollOption {
       'text': text,
       'vote_count': voteCount,
       'created_at': createdAt.toIso8601String(),
+      'proposer_reward': proposerReward?.toJson(),
+      'challenger_reward': challengerReward?.toJson(),
+      'challenger_user_id': challengerUserId,
     };
   }
 }

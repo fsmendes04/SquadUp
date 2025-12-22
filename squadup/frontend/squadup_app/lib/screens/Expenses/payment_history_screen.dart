@@ -159,7 +159,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 darkBlue: darkBlue,
                 title: 'Payment History',
               ),
-              Container(
+              Expanded(
                 child: _payments.isEmpty
                     ? _buildEmptyState(darkBlue)
                     : _buildPaymentsList(primaryBlue, darkBlue),
@@ -292,7 +292,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!, width: 1),
+        border: Border.all(color: Colors.grey[300]!, width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -339,13 +339,13 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               text: fromUserName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      // ...existing code...
+                      const SizedBox(height: 4),
                       RichText(
                         text: TextSpan(
                           style: GoogleFonts.poppins(
@@ -358,7 +358,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                               text: toUserName,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                fontSize: 14,
                               ),
                             ),
                           ],

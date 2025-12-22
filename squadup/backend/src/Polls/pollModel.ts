@@ -1,11 +1,21 @@
 export type PollType = 'voting' | 'betting';
 
+export type Reward = {
+  amount?: number;
+  text?: string;
+};
+
 export interface PollOption {
   id: string;
   poll_id: string;
   text: string;
   vote_count: number;
   created_at: string;
+  proposer_reward_amount?: number;
+  proposer_reward_text?: string;
+  challenger_reward_amount?: number;
+  challenger_reward_text?: string;
+  challenger_user_id?: string;
 }
 
 export interface PollVote {

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
-import 'package:google_fonts/google_fonts.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/loading_overlay.dart';
 import '../services/groups_service.dart';
+import '../widgets/header.dart';
+import '../widgets/squadup_input.dart';
+import '../widgets/squadup_button.dart';
 
 class CreateGroupScreen extends StatefulWidget {
   final Future<void> Function(
@@ -93,178 +94,65 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       isLoading: _isLoading,
       message: 'Creating group...',
       child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            'Create New Group',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-          ),
-          backgroundColor: Colors.white,
-          foregroundColor: darkBlue,
-          elevation: 0,
-          centerTitle: true,
-        ),
         backgroundColor: Colors.white,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: GroupAvatarDisplay(avatarUrl: _avatarPath, radius: 90),
-                ),
-                const SizedBox(height: 30),
-                Text(
-                  'Group Name',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: darkBlue,
+        body: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CustomHeader(
+                darkBlue: darkBlue,
+                title: 'New Group',
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 10),
+                        Center(
+                          child: GroupAvatarDisplay(avatarUrl: _avatarPath, radius: 90),
+                        ),
+                        const SizedBox(height: 30),
+                        SquadUpInput(
+                          controller: _groupNameController,
+                          label: 'Group Name',
+                          icon: Icons.groups_rounded,
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Please enter a group name';
+                            }
+                            if (value.trim().length < 3) {
+                              return 'Group name must be at least 3 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                        SquadUpInput(
+                          controller: _membersController,
+                          label: 'Group Members (IDs, comma separated)',
+                          icon: Icons.person_add_rounded,
+                          keyboardType: TextInputType.multiline,
+                        ),
+                        const SizedBox(height: 30),
+                        SquadUpButton(
+                          text: 'Create',
+                          onPressed: _isLoading ? null : _createGroup,
+                          isLoading: _isLoading,
+                          backgroundColor: darkBlue,
+                          disabledColor: darkBlue.withAlpha(128),
+                          textColor: Colors.white,
+                          borderRadius: 16,
+                          height: 55,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _groupNameController,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a group name';
-                    }
-                    if (value.trim().length < 3) {
-                      return 'Group name must be at least 3 characters';
-                    }
-                    return null;
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'e.g., College Friends',
-                    hintStyle: GoogleFonts.poppins(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                    ),
-                    prefixIcon: Icon(
-                      Icons.groups_rounded,
-                      color: darkBlue,
-                      size: 20,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: primaryBlue, width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Colors.red, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  'Group Members',
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: darkBlue,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: _membersController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    hintText:
-                        'Enter user IDs separated by commas\ne.g., user1, user2, user3',
-                    hintStyle: GoogleFonts.poppins(
-                      color: Colors.grey[400],
-                      fontSize: 14,
-                    ),
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.only(bottom: 40),
-                      child: Icon(
-                        Icons.person_add_rounded,
-                        color: darkBlue,
-                        size: 20,
-                      ),
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(
-                        color: Colors.grey.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: primaryBlue, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                ),
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _createGroup,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: darkBlue,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                    shadowColor: darkBlue,
-                  ),
-                  child:
-                      _isLoading
-                          ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                          : Text(
-                            'Create',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

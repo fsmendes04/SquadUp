@@ -33,14 +33,6 @@ export class PollsController {
     @GetToken() token: string,
   ) {
     try {
-      if (!createPollDto.group_id) {
-        throw new BadRequestException('Group ID is required');
-      }
-
-      if (!createPollDto.options || createPollDto.options.length < 2) {
-        throw new BadRequestException('At least 2 options are required');
-      }
-
       const poll = await this.pollsService.createPoll(createPollDto, user.id, token);
 
       return {

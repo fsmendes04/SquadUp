@@ -87,6 +87,7 @@ class MyApp extends StatelessWidget {
           );
         },
         '/payment-history': (context) => const PaymentHistoryScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
       },
     );
   }

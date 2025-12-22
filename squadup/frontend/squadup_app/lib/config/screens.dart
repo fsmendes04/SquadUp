@@ -19,3 +19,4 @@ export '../screens/Albums/album_detail_screen.dart';
 export '../models/gallery.dart';
 export '../screens/Expenses/make_payment_screen.dart';
 export '../screens/Expenses/payment_history_screen.dart';
+export '../screens/notifications_screen.dart';

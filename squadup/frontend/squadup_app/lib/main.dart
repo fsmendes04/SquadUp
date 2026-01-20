@@ -18,7 +18,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ...existing code...
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SquadUp',
@@ -27,6 +26,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
+        '/email-confirmation': (context) => const EmailConfirmationScreen(),
         '/home': (context) => const HomeScreen(),
         '/add-name': (context) => const AddNameScreen(),
         '/profile': (context) => const ProfileScreen(),

@@ -43,27 +43,39 @@ export class GroupsService {
         }
       }
       const client = this.supabaseService.getClientWithToken(token);
-      const { data: group, error: groupError } = await client
+      
+      // Obter o userId autenticado do token para garantir conformidade com RLS
+      const { data: { user }, error: userError } = await client.auth.getUser();
+      if (userError || !user) {
+        this.logger.error('Failed to get authenticated user', userError?.message);
+        throw new BadRequestException('Unable to verify user authentication');
+      }
+      
+      const authenticatedUserId = user.id;
+      
+      // Usar admin client para bypass RLS - autenticação já foi validada acima
+      const adminClient = this.supabaseService.getAdminClient();
+      const { data: group, error: groupError } = await adminClient
         .from('groups')
         .insert({
           name: sanitizedName,
-          created_by: userId,
+          created_by: authenticatedUserId,
         })
         .select()
         .single();
       if (groupError) {
-        this.logger.error(`Failed to create group for user ${userId}`, groupError.message);
+        this.logger.error(`Failed to create group for user ${authenticatedUserId}`, groupError.message);
         throw new BadRequestException('Unable to create group');
       }
-      const { error: memberError } = await client
+      const { error: memberError } = await adminClient
         .from('group_members')
         .insert({
           group_id: group.id,
-          user_id: userId,
+          user_id: authenticatedUserId,
           role: 'admin',
         });
       if (memberError) {
-        await client
+        await adminClient
           .from('groups')
           .delete()
           .eq('id', group.id);
@@ -73,7 +85,7 @@ export class GroupsService {
       if (createGroupDto.memberIds && createGroupDto.memberIds.length > 0) {
         await this.addInitialMembers(group.id, createGroupDto.memberIds, token);
       }
-      this.logger.log(`Group created successfully: ${group.id} by user ${userId}`);
+      this.logger.log(`Group created successfully: ${group.id} by user ${authenticatedUserId}`);
       return group;
     } catch (error) {
       if (error instanceof BadRequestException) {

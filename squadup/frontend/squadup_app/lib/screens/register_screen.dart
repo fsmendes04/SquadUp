@@ -72,16 +72,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (response['success'] == true) {
-        setState(() {
-          _message =
-              response['message'] ??
-              'Conta criada! Verifique seu email para ativar a conta.';
-          _isSuccessMessage = true;
-        });
-
         _emailController.clear();
         _passwordController.clear();
         _confirmPasswordController.clear();
+
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/email-confirmation');
       } else {
         setState(() {
           _message = response['message'] ?? 'Falha no registro';

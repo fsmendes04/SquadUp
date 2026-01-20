@@ -82,7 +82,6 @@ class _AddNameScreenState extends State<AddNameScreen> {
           _isLoading = false;
         });
       }
-      // Se não navegou, o finally deve desativar o loading.
       if (mounted) {
         setState(() {
           _isLoading = false;

@@ -115,7 +115,7 @@ export class UserController {
   }
 
   @Post('login')
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 requests per minute
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async login(@Body() loginDto: LoginDto) {
     try {
       // Additional input validation
@@ -128,7 +128,6 @@ export class UserController {
         loginDto.password,
       );
 
-      // Return minimal necessary data
       return {
         success: true,
         message: 'Login successful',

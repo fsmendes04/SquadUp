@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_button.dart';
 import '../widgets/squadup_input.dart';
+import '../config/responsive_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -109,6 +110,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -117,47 +120,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(left: 30, right: 30, top: 50),
+                padding: r.padding(left: 30, right: 30, top: 50),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        height: 190,
+                        height: r.height(190),
                         child: Center(
                           child: Image.asset(
                             'lib/images/logo_v3.png',
-                            height: 150,
-                            width: 290,
+                            height: r.height(150),
+                            width: r.width(290),
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      r.verticalSpace(10),
 
                       Text(
                         "Join SquadUp",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 30,
+                          fontSize: r.fontSize(30),
                           fontWeight: FontWeight.w600,
                           color: const Color.fromARGB(221, 0, 0, 0),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      r.verticalSpace(10),
 
                       Text(
                         "Create your Account",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: r.fontSize(16),
                           color: const Color.fromARGB(255, 130, 130, 130),
                         ),
                       ),
-                      const SizedBox(height: 40),
+                      r.verticalSpace(40),
 
                       SquadUpInput(
                         controller: _emailController,
@@ -166,7 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         keyboardType: TextInputType.emailAddress,
                       ),
 
-                      const SizedBox(height: 4),
+                      r.verticalSpace(4),
 
                       SquadUpInput(
                         controller: _passwordController,
@@ -174,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock_outline,
                         obscureText: _obscurePassword,
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+                          padding: r.padding(right: 8),
                           child: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -191,7 +194,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 4),
+                      r.verticalSpace(4),
 
                       SquadUpInput(
                         controller: _confirmPasswordController,
@@ -199,7 +202,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         icon: Icons.lock_outline,
                         obscureText: _obscureConfirmPassword,
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+                          padding: r.padding(right: 8),
                           child: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
@@ -218,13 +221,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
 
                       if (_message.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        r.verticalSpace(4),
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
+                            padding: r.symmetricPadding(horizontal: 12, vertical: 4),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -237,7 +237,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                               ? Colors.green.shade600
                                               : Colors.red.shade600,
                                       fontWeight: FontWeight.w500,
-                                      fontSize: 13,
+                                      fontSize: r.fontSize(13),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -248,23 +248,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ],
 
-                      if (!_message.isNotEmpty) ...[const SizedBox(height: 20)],
+                      if (!_message.isNotEmpty) ...[r.verticalSpace(20)],
 
-                      const SizedBox(height: 20),
+                      r.verticalSpace(20),
 
                       SquadUpButton(
                         text: "Sign Up",
                         onPressed: _register,
                         isLoading: _isLoading,
-                        width: 175,
-                        height: 55,
                         backgroundColor: const Color.fromARGB(255, 19, 85, 146),
                         disabledColor: const Color.fromARGB(255, 19, 85, 146),
                         textColor: Colors.white,
-                        borderRadius: 15,
                       ),
 
-                      const SizedBox(height: 40),
+                      r.verticalSpace(40),
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -272,7 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Text(
                             "Already have an account? ",
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: r.fontSize(16),
                               fontWeight: FontWeight.w400,
                               color: Colors.black87,
                             ),
@@ -289,7 +286,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: Text(
                               "Log In",
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: r.fontSize(16),
                                 fontWeight: FontWeight.w600,
                                 color: const Color.fromARGB(255, 19, 85, 146),
                               ),
@@ -298,7 +295,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      r.verticalSpace(16),
                     ],
                   ),
                 ),

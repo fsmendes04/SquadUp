@@ -5,7 +5,7 @@ import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FilterExpensesDto } from './dto/filter-expenses.dto';
 import { ExpenseWithParticipants } from './expenseModel';
-import * as DOMPurify from 'isomorphic-dompurify';
+import xss from 'xss';
 
 @Injectable()
 export class ExpensesService {
@@ -607,10 +607,10 @@ export class ExpensesService {
 
   private sanitizeString(input: string): string {
     if (!input) return '';
-    const cleaned = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: []
-    });
-    return cleaned.trim();
+    return xss(input, {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    }).trim();
   }
 }

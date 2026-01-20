@@ -8,7 +8,7 @@ import {
 import { SupabaseService } from '../Supabase/supabaseService';
 import { SessionService } from './sessionService';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import * as DOMPurify from 'isomorphic-dompurify';
+import xss from 'xss';
 
 @Injectable()
 export class UserService {
@@ -502,11 +502,11 @@ export class UserService {
 
   private sanitizeString(input: string): string {
     if (!input) return '';
-    const cleaned = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: []
-    });
-    return cleaned.trim();
+    return xss(input, {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    }).trim();
   }
 
   private validateAvatarFile(file: Express.Multer.File): void {

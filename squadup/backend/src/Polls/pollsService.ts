@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { SupabaseService } from '../Supabase/supabaseService';
 import { GroupsService } from '../Groups/groupsService';
-import * as DOMPurify from 'isomorphic-dompurify';
+import xss from 'xss';
 import { CreatePollDto } from './dto/create-poll.dto';
 import { UpdatePollDto } from './dto/update-poll.dto';
 import { Poll, PollVote } from './pollModel';
@@ -753,10 +753,10 @@ export class PollsService {
 
   private sanitizeString(input: string): string {
     if (!input) return '';
-    const cleaned = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: [],
-    });
-    return cleaned.trim();
+    return xss(input, {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    }).trim();
   }
 }

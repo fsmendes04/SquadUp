@@ -9,7 +9,7 @@ import { SupabaseService } from '../Supabase/supabaseService';
 import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group, GroupMember, GroupWithMembers } from './groupModel';
-import * as DOMPurify from 'isomorphic-dompurify';
+import xss from 'xss';
 
 @Injectable()
 export class GroupsService {
@@ -692,11 +692,11 @@ export class GroupsService {
 
   private sanitizeString(input: string): string {
     if (!input) return '';
-    const cleaned = DOMPurify.sanitize(input, {
-      ALLOWED_TAGS: [],
-      ALLOWED_ATTR: []
-    });
-    return cleaned.trim();
+    return xss(input, {
+      whiteList: {},
+      stripIgnoreTag: true,
+      stripIgnoreTagBody: ['script']
+    }).trim();
   }
 
   private validateAvatarFile(file: Express.Multer.File): void {

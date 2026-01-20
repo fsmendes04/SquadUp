@@ -5,6 +5,7 @@ import '../widgets/squadup_input.dart';
 import '../widgets/bubble_page_route.dart';
 import 'home_screen.dart';
 import '../widgets/squadup_button.dart';
+import '../config/responsive_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -130,6 +131,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
+    
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
@@ -138,11 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.only(
-                  right: 30.0,
-                  left: 30.0,
-                  top: 50,
-                ),
+                padding: r.padding(left: 30, right: 30, top: 50),
 
                 child: Form(
                   key: _formKey,
@@ -151,41 +150,41 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       // Logo principal - usando o logotipo da empresa
                       SizedBox(
-                        height: 190,
+                        height: r.height(190),
                         child: Center(
                           child: Image.asset(
                             'lib/images/logo_v3.png',
-                            height: 150, // Reduced height
-                            width: 290, // Reduced width
+                            height: r.height(150),
+                            width: r.width(290),
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      r.verticalSpace(10),
 
                       Text(
                         "Welcome Back",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 30,
+                          fontSize: r.fontSize(30),
                           fontWeight: FontWeight.w600,
                           color: const Color.fromARGB(221, 0, 0, 0),
                         ),
                       ),
 
-                      const SizedBox(height: 10),
+                      r.verticalSpace(10),
 
                       Text(
                         "Log in to your Account",
                         textAlign: TextAlign.left,
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: r.fontSize(16),
                           color: const Color.fromARGB(255, 130, 130, 130),
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      r.verticalSpace(40),
 
                       SquadUpInput(
                         controller: _emailController,
@@ -223,7 +222,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
 
                         suffixIcon: Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
+                          padding: r.padding(right: 8),
                           child: IconButton(
                             icon: Icon(
                               _obscurePassword
@@ -243,15 +242,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
 
                       if (_message.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        r.verticalSpace(4),
 
                         Center(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-
-                              vertical: 4,
-                            ),
+                            padding: r.symmetricPadding(horizontal: 12, vertical: 4),
 
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -266,7 +261,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                       fontWeight: FontWeight.w500,
 
-                                      fontSize: 13,
+                                      fontSize: r.fontSize(13),
                                     ),
 
                                     textAlign: TextAlign.center,
@@ -278,12 +273,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
 
-                      const SizedBox(height: 8),
+                      r.verticalSpace(8),
 
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
+                          padding: r.padding(left: 10),
                           child: TextButton(
                             onPressed: () {
                               Navigator.pushReplacementNamed(
@@ -299,7 +294,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               "Forgot Password?",
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: r.fontSize(14),
                                 color: const Color.fromARGB(255, 0, 0, 0),
                                 fontWeight: FontWeight.w400,
                               ),
@@ -308,23 +303,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
 
-                      const SizedBox(height: 40),
+                      r.verticalSpace(40),
 
                       // Botão de login
                       SquadUpButton(
                         text: "Log In",
                         onPressed: _login,
                         isLoading: _isLoading,
-                        width: 175,
-                        height: 55,
                         backgroundColor: const Color.fromARGB(255, 17, 80, 138),
                         disabledColor: const Color.fromARGB(255, 19, 85, 146),
                         textColor: Colors.white,
-                        borderRadius: 15,
                         buttonKey: _loginButtonKey,
                       ),
 
-                      const SizedBox(height: 40),
+                      r.verticalSpace(40),
 
                       // Link para registro
                       Row(
@@ -333,7 +325,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Text(
                             "Don't have an account? ",
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: r.fontSize(16),
                               fontWeight: FontWeight.w400,
                               color: Colors.black87,
                             ),
@@ -354,7 +346,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: Text(
                               "Sign Up",
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: r.fontSize(16),
                                 fontWeight: FontWeight.w600,
                                 color: const Color.fromARGB(255, 19, 85, 146),
                               ),
@@ -363,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ],
                       ),
 
-                      const SizedBox(height: 16),
+                      r.verticalSpace(16),
                     ],
                   ),
                 ),

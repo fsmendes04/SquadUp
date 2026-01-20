@@ -4,13 +4,13 @@ class AppConfig {
   AppConfig._();
 
   static const String _devBaseUrl = 'http://10.0.2.2:3000';
-  static const String _prodBaseUrl = 'https://api.yourapp.com';
+  static const String _prodBaseUrl = 'https://squadup-production.up.railway.app';
 
   static String get baseUrl => kReleaseMode ? _prodBaseUrl : _devBaseUrl;
 
-  static const Duration connectTimeout = Duration(seconds: 15);
-  static const Duration receiveTimeout = Duration(seconds: 15);
-  static const Duration sendTimeout = Duration(seconds: 15);
+  static const Duration connectTimeout = Duration(seconds: 60);
+  static const Duration receiveTimeout = Duration(seconds: 60);
+  static const Duration sendTimeout = Duration(seconds: 30);
 
   static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',

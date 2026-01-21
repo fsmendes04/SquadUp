@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../config/locale_provider.dart';
 import '../config/responsive_utils.dart';
+import '../widgets/header.dart';
 
 class LanguageScreen extends StatelessWidget {
   const LanguageScreen({super.key});
@@ -10,26 +11,22 @@ class LanguageScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = context.responsive;
+    const darkBlue = Color(0xFF1D385F);
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Select Language',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: r.fontSize(22),
-          ),
-        ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1D385F),
-        elevation: 0,
-        centerTitle: true,
-      ),
       backgroundColor: Colors.white,
-      body: Padding(
-        padding: r.padding(left: 24, top: 24, right: 24, bottom: 24),
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            CustomHeader(
+              darkBlue: darkBlue,
+              title: 'Language',
+            ),
+            Expanded(
+              child: Padding(
+                padding: r.padding(left: 24, top: 24, right: 24, bottom: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
             Text(
               'Choose your preferred language:',
               style: GoogleFonts.poppins(
@@ -63,6 +60,10 @@ class LanguageScreen extends StatelessWidget {
                 ).setLocale(const Locale('pt'));
                 Navigator.pop(context);
               },
+            ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

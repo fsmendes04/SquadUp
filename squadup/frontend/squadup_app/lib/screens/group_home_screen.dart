@@ -7,7 +7,7 @@ import '../widgets/header_avatar.dart';
 import '../widgets/loading_overlay.dart';
 import 'edit_group_screen.dart';
 import 'Polls/polls_screen.dart';
-import '../config/responsive_utils.dart';
+import 'Chat/chat_screen.dart';
 
 class GroupHomeScreen extends StatefulWidget {
   final String groupId;
@@ -568,7 +568,14 @@ class _GroupHomeScreenState extends State<GroupHomeScreen> {
                     ),
                   ],
                 ),
-                onTap: () => _showFeatureSnackBar('Chat'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ChatPage(),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(width: 12),

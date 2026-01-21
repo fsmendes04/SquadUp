@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../config/responsive_utils.dart';
+import '../widgets/header.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -10,31 +11,18 @@ class SettingsScreen extends StatelessWidget {
     final r = context.responsive;
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        leading: Padding(
-          padding: r.padding(left: 18),
-          child: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: r.iconSize(32)),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Back',
-          ),
-        ),
-        centerTitle: true,
-        title: Text(
-          'Settings',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: r.fontSize(22),
-            color: darkBlue,
-          ),
-        ),
-        iconTheme: IconThemeData(color: darkBlue),
-      ),
       backgroundColor: Colors.white,
-      body: ListView(
-        padding: r.symmetricPadding(horizontal: 18, vertical: 24),
-        children: [
+      body: SafeArea(
+        child: Column(
+          children: [
+            CustomHeader(
+              darkBlue: darkBlue,
+              title: 'Settings',
+            ),
+            Expanded(
+              child: ListView(
+                padding: r.symmetricPadding(horizontal: 18, vertical: 24),
+                children: [
           _buildSectionTitle('Account', darkBlue, r),
           _buildSettingsCard(
             icon: Icons.person,
@@ -69,7 +57,11 @@ class SettingsScreen extends StatelessWidget {
             darkBlue: darkBlue,
             r: r,
           ),
-        ],
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

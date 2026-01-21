@@ -30,16 +30,13 @@ export class GroupsService {
       if (sanitizedName.length > this.MAX_NAME_LENGTH) {
         throw new BadRequestException(`Group name cannot exceed ${this.MAX_NAME_LENGTH} characters`);
       }
-      if (createGroupDto.memberIds && createGroupDto.memberIds.length > 0) {
-        if (createGroupDto.memberIds.length > this.MAX_MEMBERS_PER_GROUP) {
+      if (createGroupDto.memberEmails && createGroupDto.memberEmails.length > 0) {
+        if (createGroupDto.memberEmails.length > this.MAX_MEMBERS_PER_GROUP) {
           throw new BadRequestException(`Cannot add more than ${this.MAX_MEMBERS_PER_GROUP} members at once`);
         }
-        const uniqueMemberIds = new Set(createGroupDto.memberIds);
-        if (uniqueMemberIds.size !== createGroupDto.memberIds.length) {
-          throw new BadRequestException('Duplicate member IDs are not allowed');
-        }
-        if (createGroupDto.memberIds.includes(userId)) {
-          throw new BadRequestException('Creator is automatically added as admin');
+        const uniqueMemberEmails = new Set(createGroupDto.memberEmails);
+        if (uniqueMemberEmails.size !== createGroupDto.memberEmails.length) {
+          throw new BadRequestException('Duplicate member emails are not allowed');
         }
       }
       const client = this.supabaseService.getClientWithToken(token);
@@ -82,8 +79,8 @@ export class GroupsService {
         this.logger.error(`Failed to add creator as admin for group ${group.id}`, memberError.message);
         throw new BadRequestException('Unable to initialize group membership');
       }
-      if (createGroupDto.memberIds && createGroupDto.memberIds.length > 0) {
-        await this.addInitialMembers(group.id, createGroupDto.memberIds, token);
+      if (createGroupDto.memberEmails && createGroupDto.memberEmails.length > 0) {
+        await this.addInitialMembers(group.id, createGroupDto.memberEmails, token, authenticatedUserId);
       }
       this.logger.log(`Group created successfully: ${group.id} by user ${authenticatedUserId}`);
       return group;
@@ -320,15 +317,29 @@ export class GroupsService {
     }
   }
 
-  async addMember(groupId: string, userIdToAdd: string, requesterId: string, token: string): Promise<GroupMember> {
+  async addMember(groupId: string, userEmail: string, requesterId: string, token: string): Promise<GroupMember> {
     try {
-      if (userIdToAdd === requesterId) {
-        throw new BadRequestException('Cannot add yourself as a member');
-      }
-
       const isAdmin = await this.isUserAdmin(groupId, requesterId, token);
       if (!isAdmin) {
         throw new ForbiddenException('Only administrators can add members');
+      }
+
+      // Get user ID from email
+      const adminClient = this.supabaseService.getAdminClient();
+      const { data: profile, error: profileError } = await adminClient
+        .from('profiles')
+        .select('id, email')
+        .eq('email', userEmail)
+        .single();
+
+      if (profileError || !profile) {
+        throw new BadRequestException(`User with email ${userEmail} not found`);
+      }
+
+      const userIdToAdd = profile.id;
+
+      if (userIdToAdd === requesterId) {
+        throw new BadRequestException('Cannot add yourself as a member');
       }
 
       const client = this.supabaseService.getClientWithToken(token);
@@ -352,7 +363,7 @@ export class GroupsService {
         throw new BadRequestException(`Group has reached maximum capacity of ${this.MAX_MEMBERS_PER_GROUP} members`);
       }
 
-      const { data: member, error } = await client
+      const { data: member, error } = await adminClient
         .from('group_members')
         .insert({
           group_id: groupId,
@@ -367,7 +378,7 @@ export class GroupsService {
         throw new BadRequestException('Unable to add member');
       }
 
-      this.logger.log(`User ${userIdToAdd} added to group ${groupId} by ${requesterId}`);
+      this.logger.log(`User ${userEmail} (${userIdToAdd}) added to group ${groupId} by ${requesterId}`);
       return member;
 
     } catch (error) {
@@ -540,21 +551,52 @@ export class GroupsService {
 
 
 
-  private async addInitialMembers(groupId: string, memberIds: string[], token: string): Promise<void> {
+  private async addInitialMembers(groupId: string, memberEmails: string[], token: string, creatorUserId: string): Promise<void> {
     try {
-      const membersToAdd = memberIds.map(memberId => ({
-        group_id: groupId,
-        user_id: memberId,
-        role: 'member' as const,
-      }));
+      const adminClient = this.supabaseService.getAdminClient();
+      
+      // Get user IDs from emails
+      const { data: profiles, error: profileError } = await adminClient
+        .from('profiles')
+        .select('id, email')
+        .in('email', memberEmails);
 
-      const client = this.supabaseService.getClientWithToken(token);
-      const { error } = await client
+      if (profileError) {
+        this.logger.warn(`Failed to fetch profiles for emails: ${profileError.message}`);
+        return;
+      }
+
+      if (!profiles || profiles.length === 0) {
+        this.logger.warn(`No users found for provided emails`);
+        return;
+      }
+
+      // Filter out creator if they're in the list
+      const membersToAdd = profiles
+        .filter(profile => profile.id !== creatorUserId)
+        .map(profile => ({
+          group_id: groupId,
+          user_id: profile.id,
+          role: 'member' as const,
+        }));
+
+      if (membersToAdd.length === 0) {
+        return;
+      }
+
+      const { error } = await adminClient
         .from('group_members')
         .insert(membersToAdd);
 
       if (error) {
         this.logger.warn(`Some members could not be added to group ${groupId}: ${error.message}`);
+      }
+
+      const notFoundEmails = memberEmails.filter(
+        email => !profiles.some(p => p.email === email)
+      );
+      if (notFoundEmails.length > 0) {
+        this.logger.warn(`Users not found for emails: ${notFoundEmails.join(', ')}`);
       }
     } catch (error) {
       this.logger.warn('Error adding initial members', error);

@@ -221,7 +221,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                       try {
                         await _groupsService.addMember(
                           groupId: widget.groupId,
-                          userId: foundUser!['id'],
+                          userEmail: foundUser!['email'],
                         );
                         if (mounted) {
                           Navigator.pop(context);

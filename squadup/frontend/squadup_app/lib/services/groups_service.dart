@@ -9,13 +9,13 @@ class GroupsService {
 
   Future<Map<String, dynamic>> createGroup({
     required String name,
-    List<String>? memberIds,
+    List<String>? memberEmails,
   }) async {
     try {
       final data = <String, dynamic>{'name': name};
 
-      if (memberIds != null && memberIds.isNotEmpty) {
-        data['memberIds'] = memberIds;
+      if (memberEmails != null && memberEmails.isNotEmpty) {
+        data['memberEmails'] = memberEmails;
       }
 
       final response = await _apiService.post(
@@ -91,12 +91,12 @@ class GroupsService {
 
   Future<Map<String, dynamic>> addMember({
     required String groupId,
-    required String userId,
+    required String userEmail,
   }) async {
     try {
       final response = await _apiService.post(
         ApiService.groupMembers(groupId),
-        data: {'userId': userId},
+        data: {'userEmail': userEmail},
       );
       return _handleResponse(response);
     } on DioException catch (e) {

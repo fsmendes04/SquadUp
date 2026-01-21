@@ -217,13 +217,13 @@ export class GroupsController {
     @GetToken() token: string,
   ) {
     try {
-      if (!addMemberDto.userId) {
-        throw new BadRequestException('User ID is required');
+      if (!addMemberDto.userEmail) {
+        throw new BadRequestException('User email is required');
       }
 
       const member = await this.groupsService.addMember(
         groupId,
-        addMemberDto.userId,
+        addMemberDto.userEmail,
         user.id,
         token,
       );

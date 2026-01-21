@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, MaxLength, ArrayUnique, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsArray, MaxLength, ArrayUnique, IsEmail } from 'class-validator';
 
 export class CreateGroupDto {
   @IsString()
@@ -10,9 +10,9 @@ export class CreateGroupDto {
   @IsOptional()
   avatar_url?: string | null;
 
-  @IsArray({ message: 'Member IDs must be an array' })
-  @IsUUID('4', { each: true, message: 'Each member ID must be a valid UUID' })
-  @ArrayUnique({ message: 'Member IDs must be unique' })
+  @IsArray({ message: 'Member emails must be an array' })
+  @IsEmail({}, { each: true, message: 'Each member email must be a valid email address' })
+  @ArrayUnique({ message: 'Member emails must be unique' })
   @IsOptional()
-  memberIds?: string[];
+  memberEmails?: string[];
 }

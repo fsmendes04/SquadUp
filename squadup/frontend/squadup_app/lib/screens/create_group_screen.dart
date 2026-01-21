@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/avatar_group.dart';
+import '../widgets/avatar_widget.dart';
 import '../widgets/loading_overlay.dart';
 import '../services/groups_service.dart';
+import '../services/user_service.dart';
 import '../widgets/header.dart';
 import '../widgets/squadup_input.dart';
 import '../widgets/squadup_button.dart';
@@ -28,8 +30,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final _searchController = TextEditingController();
   String? _avatarPath;
   bool _isLoading = false;
+  bool _isSearching = false;
   final GroupsService _groupsService = GroupsService();
+  final UserService _userService = UserService();
   final List<Map<String, String>> _selectedMembers = [];
+  Map<String, dynamic>? _searchedUser;
 
   final Color darkBlue = const Color(0xFF1D385F);
   final Color primaryBlue = const Color(0xFF51A3E6);
@@ -41,187 +46,66 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
     super.dispose();
   }
 
-  void _removeMember(String userId) {
+  void _removeMember(String email) {
     setState(() {
-      _selectedMembers.removeWhere((member) => member['id'] == userId);
+      _selectedMembers.removeWhere((member) => member['email'] == email);
     });
   }
 
-  void _showAddMembersBottomSheet() {
-    _searchController.clear();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildAddMembersSheet(),
-    );
-  }
-
-  Widget _buildAddMembersSheet() {
-    return StatefulBuilder(
-      builder: (context, setModalState) {
-        return Container(
-          height: MediaQuery.of(context).size.height * 0.75,
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Add Members',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: darkBlue,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Search field
-                    TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Search by email or username...',
-                        prefixIcon: Icon(Icons.search, color: darkBlue),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: primaryBlue, width: 2),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
-                      ),
-                      onChanged: (value) => setModalState(() {}),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1),
-              // Members list
-              Expanded(
-                child: _buildMembersList(setModalState),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMembersList(StateSetter setModalState) {
-    // Mock data - substituir por dados reais do serviço
-    final allMembers = [
-      {'id': '1', 'name': 'João Silva', 'username': '@joao'},
-      {'id': '2', 'name': 'Maria Santos', 'username': '@maria'},
-      {'id': '3', 'name': 'Pedro Costa', 'username': '@pedro'},
-      {'id': '4', 'name': 'Ana Ferreira', 'username': '@ana'},
-      {'id': '5', 'name': 'Carlos Oliveira', 'username': '@carlos'},
-    ];
-
-    final searchQuery = _searchController.text.toLowerCase();
-    final filteredMembers = searchQuery.isEmpty
-        ? allMembers
-        : allMembers.where((member) {
-            return member['name']!.toLowerCase().contains(searchQuery) ||
-                member['username']!.toLowerCase().contains(searchQuery);
-          }).toList();
-
-    if (filteredMembers.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person_off, size: 64, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            Text(
-              'No members found',
-              style: TextStyle(color: Colors.grey[600], fontSize: 16),
-            ),
-          ],
-        ),
-      );
+  Future<void> _searchUserByEmail(String email) async {
+    if (email.trim().isEmpty) {
+      setState(() {
+        _searchedUser = null;
+        _isSearching = false;
+      });
+      return;
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: filteredMembers.length,
-      itemBuilder: (context, index) {
-        final member = filteredMembers[index];
-        final isSelected = _selectedMembers.any((m) => m['id'] == member['id']);
+    setState(() {
+      _isSearching = true;
+    });
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? primaryBlue.withOpacity(0.1) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected ? primaryBlue : Colors.grey[300]!,
-              width: isSelected ? 2 : 1,
-            ),
-          ),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: primaryBlue,
-              child: Text(
-                member['name']![0].toUpperCase(),
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-            title: Text(
-              member['name']!,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              member['username']!,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            trailing: Checkbox(
-              value: isSelected,
-              activeColor: primaryBlue,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              onChanged: (bool? value) {
-                setState(() {
-                  if (value == true) {
-                    _selectedMembers.add(member);
-                  } else {
-                    _selectedMembers.removeWhere((m) => m['id'] == member['id']);
-                  }
-                });
-                setModalState(() {});
-              },
-            ),
-            onTap: () {
-              setState(() {
-                if (isSelected) {
-                  _selectedMembers.removeWhere((m) => m['id'] == member['id']);
-                } else {
-                  _selectedMembers.add(member);
-                }
-              });
-              setModalState(() {});
-            },
-          ),
-        );
-      },
-    );
+    try {
+      final response = await _userService.getUserByEmail(email.trim());
+      if (response['success'] == true && response['data'] != null) {
+        setState(() {
+          _searchedUser = response['data'];
+          _isSearching = false;
+        });
+      } else {
+        setState(() {
+          _searchedUser = null;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _searchedUser = null;
+        _isSearching = false;
+      });
+    }
+  }
+
+  void _addMemberFromSearch() {
+    if (_searchedUser == null) return;
+    
+    final userEmail = _searchedUser!['email']?.toString() ?? '';
+    final userName = _searchedUser!['name']?.toString() ?? 'Unknown';
+    final avatarUrl = _searchedUser!['avatar_url']?.toString();
+    
+    final isAlreadySelected = _selectedMembers.any((m) => m['email'] == userEmail);
+    
+    if (!isAlreadySelected) {
+      setState(() {
+        _selectedMembers.add({
+          'email': userEmail,
+          'name': userName,
+          'avatar_url': avatarUrl ?? '',
+        });
+        _searchController.clear();
+        _searchedUser = null;
+      });
+    }
   }
 
   Future<void> _createGroup() async {
@@ -230,11 +114,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
       _isLoading = true;
     });
     try {
-      final memberIds = _selectedMembers.map((m) => m['id']!).toList();
+      final memberEmails = _selectedMembers.map((m) => m['email']!).toList();
       // 1. Criar grupo
       final response = await _groupsService.createGroup(
         name: _groupNameController.text.trim(),
-        memberIds: memberIds,
+        memberEmails: memberEmails,
       );
       if (response['success'] == true && response['data'] != null) {
         final groupId = response['data']['id']?.toString();
@@ -319,117 +203,195 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             return null;
                           },
                         ),
-                        r.verticalSpace(20),
-                        // Members section
-                        Text(
-                          'Members',
-                          style: TextStyle(
-                            fontSize: r.fontSize(16),
-                            fontWeight: FontWeight.w600,
-                            color: darkBlue,
-                          ),
-                        ),
-                        r.verticalSpace(12),
-                        // Add members button
-                        InkWell(
-                          onTap: _showAddMembersBottomSheet,
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: EdgeInsets.all(r.width(16)),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey[300]!, width: 1.5),
-                              borderRadius: BorderRadius.circular(12),
-                              color: Colors.grey[40],
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.person_add_rounded,
-                                  color: const Color.fromARGB(255, 19, 85, 146),
-                                  size: r.width(24),
-                                ),
-                                SizedBox(width: r.width(12)),
-                                Text(
-                                  'Add Members',
-                                  style: GoogleFonts.poppins(
-                                  color: Colors.black54,
-                                  fontSize: r.fontSize(14),
-                                  fontWeight: FontWeight.w400,
-                                ),  
-                                ),
-                                const Spacer(),
-                                Icon(
-                                  Icons.arrow_forward_ios,
-                                  color: const Color.fromARGB(255, 19, 85, 146),
-                                  size: r.width(20),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        r.verticalSpace(14),
+                        // Selected members chips
                         if (_selectedMembers.isNotEmpty) ...[
-                          r.verticalSpace(20),
+                          Row(
+                            children: [
+                              Text(
+                                'Selected Members',
+                                style: GoogleFonts.poppins(
+                                  fontSize: r.fontSize(15),
+                                  fontWeight: FontWeight.w600,
+                                  color: darkBlue,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: r.width(8),
+                                  vertical: r.width(4),
+                                ),
+                                child: Text(
+                                  '${_selectedMembers.length}',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: r.fontSize(15),
+                                    fontWeight: FontWeight.w600,
+                                    color: darkBlue,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          r.verticalSpace(12),
                           Wrap(
-                            spacing: 10,
-                            runSpacing: 10,
+                            spacing: 8,
+                            runSpacing: 8,
                             children: _selectedMembers.map((member) {
                               return Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(20),
                                   border: Border.all(
                                     color: darkBlue.withOpacity(0.3),
-                                    width: 2.5,
+                                    width: 2,
                                   ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.1),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
                                 ),
                                 padding: EdgeInsets.symmetric(
-                                  horizontal: r.width(8),
-                                  vertical: r.width(6),
+                                  horizontal: r.width(12),
+                                  vertical: r.width(10),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    CircleAvatar(
-                                      backgroundColor: primaryBlue,
-                                      radius: r.width(14),
-                                      child: Text(
-                                        member['name']![0].toUpperCase(),
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: r.fontSize(12),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
+                                    AvatarWidget(
+                                      avatarUrl: member['avatar_url'],
+                                      radius: r.width(16),
                                     ),
                                     SizedBox(width: r.width(8)),
                                     Text(
                                       member['name']!,
                                       style: GoogleFonts.poppins(
-                                        fontSize: r.fontSize(13),
+                                        fontSize: r.fontSize(14),
                                         fontWeight: FontWeight.w500,
-                                        color: Colors.black87,
+                                        color: darkBlue,
                                       ),
                                     ),
-                                    SizedBox(width: r.width(6)),
+                                    SizedBox(width: r.width(10)),
                                     GestureDetector(
-                                      onTap: () => _removeMember(member['id']!),
-                                      child: Icon(
-                                        Icons.close,
-                                        size: r.width(16),
-                                        color: darkBlue,
+                                      onTap: () => _removeMember(member['email']!),
+                                      child: Container(
+                                        padding: EdgeInsets.all(r.width(2)),
+                                        decoration: BoxDecoration(
+                                          color: darkBlue.withOpacity(0.2),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          Icons.close,
+                                          size: r.width(14),
+                                          color: darkBlue,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               );
                             }).toList(),
+                          ),
+                          r.verticalSpace(16),
+                        ],
+                        // Search box
+                        SquadUpInput(
+                          controller: _searchController,
+                          label: 'Add Members',
+                          icon: Icons.search,
+                          keyboardType: TextInputType.emailAddress,
+                          onChanged: (value) => _searchUserByEmail(value),
+                          suffixIcon: _isSearching
+                              ? Padding(
+                                  padding: EdgeInsets.all(r.width(12)),
+                                  child: SizedBox(
+                                    width: r.width(20),
+                                    height: r.width(20),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: primaryBlue,
+                                    ),
+                                  ),
+                                )
+                              : _searchController.text.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        color: darkBlue,
+                                        size: r.iconSize(20),
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _searchController.clear();
+                                          _searchedUser = null;
+                                        });
+                                      },
+                                    )
+                                  : null,
+                        ),
+                        // Search results
+                        if (_searchedUser != null) ...[
+                          r.verticalSpace(8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey[300]!, width: 1),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _addMemberFromSearch,
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: EdgeInsets.all(r.width(12)),
+                                  child: Row(
+                                    children: [
+                                      AvatarWidget(
+                                        avatarUrl: _searchedUser!['avatar_url']?.toString(),
+                                        radius: r.width(20),
+                                      ),
+                                      SizedBox(width: r.width(12)),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              _searchedUser!['name']?.toString() ?? 'Unknown',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: r.fontSize(14),
+                                                fontWeight: FontWeight.w600,
+                                                color: darkBlue,
+                                              ),
+                                            ),
+                                            Text(
+                                              _searchedUser!['email']?.toString() ?? '',
+                                              style: GoogleFonts.poppins(
+                                                fontSize: r.fontSize(12),
+                                                color: Colors.grey[600],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Icon(
+                                        _selectedMembers.any((m) =>
+                                            m['email'] == _searchedUser!['email']?.toString())
+                                            ? Icons.check_circle
+                                            : Icons.add_circle_outline,
+                                        color: _selectedMembers.any((m) =>
+                                            m['email'] == _searchedUser!['email']?.toString())
+                                            ? Colors.green
+                                            : primaryBlue,
+                                        size: r.iconSize(24),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                         r.verticalSpace(30),

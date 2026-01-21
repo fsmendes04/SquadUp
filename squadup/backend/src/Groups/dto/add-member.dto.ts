@@ -1,8 +1,8 @@
-import { IsString, IsNotEmpty, IsUUID } from 'class-validator';
+import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
 
 export class AddMemberDto {
   @IsString()
-  @IsNotEmpty({ message: 'User ID is required' })
-  @IsUUID('4', { message: 'User ID must be a valid UUID' })
-  userId: string;
+  @IsNotEmpty({ message: 'User email is required' })
+  @IsEmail({}, { message: 'User email must be a valid email address' })
+  userEmail: string;
 }

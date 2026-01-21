@@ -4,6 +4,7 @@ import '../widgets/navigation_bar.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/loading_overlay.dart';
 import '../services/user_service.dart';
+import '../config/responsive_utils.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -74,6 +75,7 @@ class _ProfileScreenState extends State {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     const darkBlue = Color.fromARGB(255, 29, 56, 95);
 
@@ -96,16 +98,16 @@ class _ProfileScreenState extends State {
               Stack(
                 children: [
                   // Background container
-                  SizedBox(height: 350.0, width: double.infinity),
+                  SizedBox(height: r.height(350), width: double.infinity),
                   // Blue header
                   Container(
-                    height: 200.0,
+                    height: r.height(200),
                     width: double.infinity,
                     color: darkBlue,
                   ),
                   // Back and Edit buttons com padding lateral
                   Padding(
-                    padding: EdgeInsets.only(
+                    padding: r.padding(
                       top: MediaQuery.of(context).padding.top + 10,
                       left: 15,
                       right: 15,
@@ -114,14 +116,14 @@ class _ProfileScreenState extends State {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.arrow_back_ios, size: 32),
+                          icon: Icon(Icons.arrow_back_ios, size: r.iconSize(32)),
                           onPressed: () {
                             Navigator.pop(context, _profileUpdated);
                           },
                           color: Colors.white,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 32),
+                          icon: Icon(Icons.edit_outlined, size: r.iconSize(32)),
                           onPressed: () async {
                             final result = await Navigator.pushNamed(
                               context,
@@ -139,25 +141,25 @@ class _ProfileScreenState extends State {
                   ),
                   // White card (ajustado para não cortar)
                   Positioned(
-                    top: 165.0,
-                    left: 15.0,
-                    right: 15.0,
+                    top: r.height(165),
+                    left: r.width(15),
+                    right: r.width(15),
                     child: Material(
                       elevation: 3.0,
-                      borderRadius: BorderRadius.circular(16.0),
+                      borderRadius: r.circularBorderRadius(16),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24.0,
-                          vertical: 20.0,
+                        padding: r.symmetricPadding(
+                          horizontal: 24,
+                          vertical: 20,
                         ),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16.0),
+                          borderRadius: r.circularBorderRadius(16),
                           color: Colors.white,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const SizedBox(height: 90),
+                            r.verticalSpace(90),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -166,16 +168,16 @@ class _ProfileScreenState extends State {
                                     _getDisplayName(),
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 20.0,
+                                      fontSize: r.fontSize(20),
                                       color: Colors.black87,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                                Icon(Icons.group, color: darkBlue, size: 22),
+                                Icon(Icons.group, color: darkBlue, size: r.iconSize(22)),
                               ],
                             ),
-                            const SizedBox(height: 2.0),
+                            r.verticalSpace(2),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -184,7 +186,7 @@ class _ProfileScreenState extends State {
                                     userData?['email'] ?? 'No email',
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w400,
-                                      fontSize: 15.0,
+                                      fontSize: r.fontSize(15),
                                       color: Colors.grey[700],
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -193,7 +195,7 @@ class _ProfileScreenState extends State {
                                 Text(
                                   '2', // Troque por userData?['groupsCount'] se disponível
                                   style: GoogleFonts.poppins(
-                                    fontSize: 17.0,
+                                    fontSize: r.fontSize(17),
                                     fontWeight: FontWeight.w500,
                                     color: Colors.black87,
                                   ),
@@ -207,12 +209,12 @@ class _ProfileScreenState extends State {
                   ),
                   // Avatar
                   Positioned(
-                    top: 90.0,
-                    left: (MediaQuery.of(context).size.width / 2 - 85.0),
+                    top: r.height(90),
+                    left: (MediaQuery.of(context).size.width / 2 - r.width(85)),
                     child: Container(
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 4),
+                        border: Border.all(color: Colors.white, width: r.borderWidth(4)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.1),
@@ -223,7 +225,7 @@ class _ProfileScreenState extends State {
                       ),
                       child: AvatarWidget(
                         key: ValueKey(userData?['avatar_url'] ?? 'no-avatar'),
-                        radius: 80,
+                        radius: r.width(80),
                         allowEdit: false,
                         avatarUrl: userData?['avatar_url'],
                       ),
@@ -232,24 +234,24 @@ class _ProfileScreenState extends State {
                   // ...removido, agora está dentro do card branco...
                 ],
               ),
-              const SizedBox(height: 35.0),
+              r.verticalSpace(35),
               // Recent expenses section
               Padding(
-                padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                padding: r.padding(left: 15, right: 15),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Recent Expenses',
                       style: GoogleFonts.poppins(
-                        fontSize: 17.0,
+                        fontSize: r.fontSize(17),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       'see all',
                       style: GoogleFonts.poppins(
-                        fontSize: 15.0,
+                        fontSize: r.fontSize(15),
                         color: Colors.grey,
                         fontWeight: FontWeight.w600,
                       ),
@@ -257,11 +259,11 @@ class _ProfileScreenState extends State {
                   ],
                 ),
               ),
-              const SizedBox(height: 15.0),
+              r.verticalSpace(15),
               Padding(
-                padding: const EdgeInsets.only(left: 15.0, right: 5.0),
+                padding: r.padding(left: 15, right: 5),
                 child: SizedBox(
-                  height: 125.0,
+                  height: r.height(125),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
                     children: [
@@ -287,24 +289,24 @@ class _ProfileScreenState extends State {
                   ),
                 ),
               ),
-              const SizedBox(height: 25.0),
+              r.verticalSpace(25),
               // Statistics section
               Padding(
-                padding: const EdgeInsets.only(left: 15.0, right: 15.0),
+                padding: r.padding(left: 15, right: 15),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Statistics',
                       style: GoogleFonts.poppins(
-                        fontSize: 17.0,
+                        fontSize: r.fontSize(17),
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
                       'this month',
                       style: GoogleFonts.poppins(
-                        fontSize: 15.0,
+                        fontSize: r.fontSize(15),
                         color: Colors.grey,
                         fontWeight: FontWeight.w600,
                       ),
@@ -312,12 +314,12 @@ class _ProfileScreenState extends State {
                   ],
                 ),
               ),
-              const SizedBox(height: 15.0),
+              r.verticalSpace(15),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                padding: r.symmetricPadding(horizontal: 15),
                 child: _buildStatisticsCard(darkBlue),
               ),
-              SizedBox(height: kBottomNavigationBarHeight + 30),
+              SizedBox(height: kBottomNavigationBarHeight + r.height(30)),
             ],
           ),
           bottomNavigationBar: CustomCircularNavBar(
@@ -339,13 +341,14 @@ class _ProfileScreenState extends State {
     String amount,
     Color primaryBlue,
   ) {
+    final r = context.responsive;
     return Padding(
-      padding: const EdgeInsets.only(right: 10.0),
+      padding: r.padding(right: 10),
       child: Container(
-        height: 100.0,
-        width: 125.0,
+        height: r.height(100),
+        width: r.width(125),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(7.0),
+          borderRadius: r.circularBorderRadius(7),
           gradient: LinearGradient(
             colors: [primaryBlue, primaryBlue.withValues(alpha: 0.7)],
             begin: Alignment.topLeft,
@@ -354,34 +357,34 @@ class _ProfileScreenState extends State {
           boxShadow: [
             BoxShadow(
               color: primaryBlue.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              blurRadius: r.width(8),
+              offset: Offset(0, r.height(4)),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(12.0),
+          padding: r.padding(left: 12, top: 12, right: 12, bottom: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: Colors.white, size: 32),
+              Icon(icon, color: Colors.white, size: r.iconSize(32)),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
                     style: GoogleFonts.poppins(
-                      fontSize: 14.0,
+                      fontSize: r.fontSize(14),
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  r.verticalSpace(4),
                   Text(
                     amount,
                     style: GoogleFonts.poppins(
-                      fontSize: 16.0,
+                      fontSize: r.fontSize(16),
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -396,13 +399,14 @@ class _ProfileScreenState extends State {
   }
 
   Widget _buildStatisticsCard(Color primaryBlue) {
+    final r = context.responsive;
     return Material(
       elevation: 4.0,
-      borderRadius: BorderRadius.circular(7.0),
+      borderRadius: r.circularBorderRadius(7),
       child: Container(
-        padding: const EdgeInsets.all(20.0),
+        padding: r.padding(left: 20, top: 20, right: 20, bottom: 20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(7.0),
+          borderRadius: r.circularBorderRadius(7),
           color: Colors.white,
         ),
         child: Column(
@@ -414,7 +418,7 @@ class _ProfileScreenState extends State {
                 _buildStatItem('Groups', '2', primaryBlue),
               ],
             ),
-            const SizedBox(height: 20),
+            r.verticalSpace(20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -429,21 +433,22 @@ class _ProfileScreenState extends State {
   }
 
   Widget _buildStatItem(String label, String value, Color primaryBlue) {
+    final r = context.responsive;
     return Column(
       children: [
         Text(
           value,
           style: GoogleFonts.poppins(
-            fontSize: 20.0,
+            fontSize: r.fontSize(20),
             fontWeight: FontWeight.bold,
             color: primaryBlue,
           ),
         ),
-        const SizedBox(height: 4),
+        r.verticalSpace(4),
         Text(
           label,
           style: GoogleFonts.poppins(
-            fontSize: 13.0,
+            fontSize: r.fontSize(13),
             color: Colors.grey,
             fontWeight: FontWeight.w500,
           ),

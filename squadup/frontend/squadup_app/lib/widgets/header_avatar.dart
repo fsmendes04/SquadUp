@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'avatar_group.dart';
+import '../config/responsive_utils.dart';
 
 class HeaderAvatar extends StatelessWidget {
   final Color darkBlue;
@@ -22,8 +23,9 @@ class HeaderAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+      padding: r.symmetricPadding(horizontal: 20, vertical: 10),
       child: SizedBox(
         height: kToolbarHeight + 10,
         child: Row(

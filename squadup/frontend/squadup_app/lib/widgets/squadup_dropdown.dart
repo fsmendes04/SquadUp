@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config/responsive_utils.dart';
 
 class SquadUpDropdown extends StatelessWidget {
   final String label;
@@ -21,51 +22,50 @@ class SquadUpDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
+    
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: r.verticalPadding(8),
       child: DropdownButtonFormField<String>(
         value: value,
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(
             color: Colors.black54,
-            fontSize: 14,
+            fontSize: r.fontSize(14),
             fontWeight: FontWeight.w400,
           ),
           prefixIcon: Container(
-            margin: const EdgeInsets.only(left: 12, right: 8),
+            margin: r.padding(left: 12, right: 8),
             child: Icon(icon, color: const Color.fromARGB(255, 19, 85, 146)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+            borderRadius: r.circularBorderRadius(16),
+            borderSide: BorderSide(color: Colors.grey.shade300, width: r.borderWidth(1.5)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
+            borderRadius: r.circularBorderRadius(16),
+            borderSide: BorderSide(
               color: Color.fromARGB(255, 19, 85, 146),
-              width: 2,
+              width: r.borderWidth(2),
             ),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
+            borderRadius: r.circularBorderRadius(16),
+            borderSide: BorderSide(color: Colors.red.shade400, width: r.borderWidth(1.5)),
           ),
           focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: Colors.red.shade400, width: 2),
+            borderRadius: r.circularBorderRadius(16),
+            borderSide: BorderSide(color: Colors.red.shade400, width: r.borderWidth(2)),
           ),
           filled: true,
           fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 18,
-            horizontal: 16,
-          ),
+          contentPadding: r.symmetricPadding(vertical: 18, horizontal: 16),
           floatingLabelBehavior: FloatingLabelBehavior.auto,
         ),
         style: GoogleFonts.poppins(
           color: Colors.black87,
-          fontSize: 14,
+          fontSize: r.fontSize(14),
           fontWeight: FontWeight.w500,
         ),
         items: items
@@ -74,7 +74,7 @@ class SquadUpDropdown extends StatelessWidget {
                   child: Text(
                     item,
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: r.fontSize(14),
                       fontWeight: FontWeight.w500,
                       color: Colors.black87,
                     ),
@@ -84,7 +84,7 @@ class SquadUpDropdown extends StatelessWidget {
         onChanged: onChanged,
         validator: validator,
         dropdownColor: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: r.circularBorderRadius(12),
         isExpanded: true,
       ),
     );

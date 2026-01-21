@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:squadup_app/models/groups.dart';
 import 'avatar_group.dart';
+import '../config/responsive_utils.dart';
 
 class GroupCard extends StatefulWidget {
   final GroupWithMembers group;
@@ -63,6 +64,7 @@ class _GroupCardState extends State<GroupCard> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final darkBlue = const Color(0xFF1D385F);
 
     return GestureDetector(
@@ -73,22 +75,22 @@ class _GroupCardState extends State<GroupCard> {
         duration: const Duration(milliseconds: 150),
         transform: Matrix4.identity()..scale(_isPressed ? 0.98 : 1.0),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          padding: r.symmetricPadding(vertical: 10, horizontal: 4),
           decoration: BoxDecoration(
             color:
                 _isPressed
                     ? Colors.grey.withValues(alpha: 0.05)
                     : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: r.circularBorderRadius(16),
           ),
           child: Row(
             children: [
               AvatarGroupWidget(
                 groupId: widget.group.id,
                 avatarUrl: widget.group.avatarUrl,
-                radius: 33,
+                radius: r.width(33),
               ),
-              const SizedBox(width: 20),
+              r.horizontalSpace(20),
 
               // Group info
               Expanded(
@@ -99,7 +101,7 @@ class _GroupCardState extends State<GroupCard> {
                     Text(
                       widget.group.name,
                       style: GoogleFonts.poppins(
-                        fontSize: 19,
+                        fontSize: r.fontSize(19),
                         fontWeight: FontWeight.w600,
                         color: darkBlue,
                         height: 1.2,
@@ -107,7 +109,7 @@ class _GroupCardState extends State<GroupCard> {
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
-                    const SizedBox(height: 2),
+                    r.verticalSpace(2),
 
                     // Informações adicionais (membros + última atividade)
                     Row(
@@ -115,32 +117,32 @@ class _GroupCardState extends State<GroupCard> {
                         // Número de membros
                         Icon(
                           Icons.people_outline,
-                          size: 14,
+                          size: r.iconSize(14),
                           color: Colors.grey[600],
                         ),
-                        const SizedBox(width: 4),
+                        r.horizontalSpace(4),
                         Text(
                           '${widget.group.memberCount}',
                           style: GoogleFonts.poppins(
-                            fontSize: 13,
+                            fontSize: r.fontSize(13),
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        r.horizontalSpace(12),
 
                         // Última atividade
                         Icon(
                           Icons.access_time,
-                          size: 14,
+                          size: r.iconSize(14),
                           color: Colors.grey[600],
                         ),
-                        const SizedBox(width: 4),
+                        r.horizontalSpace(4),
                         Expanded(
                           child: Text(
                             _getLastActivity(),
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
+                              fontSize: r.fontSize(13),
                               color: Colors.grey[600],
                               fontWeight: FontWeight.w500,
                             ),

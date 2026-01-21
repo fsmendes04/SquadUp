@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../widgets/header.dart';
+import '../config/responsive_utils.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -126,6 +127,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -136,20 +138,20 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               darkBlue: darkBlue,
               title: 'Notifications',
             ),
-            const SizedBox(height: 6),
+            r.verticalSpace(6),
             // Content
             Expanded(
               child: _notifications.isEmpty
                   ? _buildEmptyState()
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                      padding: r.symmetricPadding(horizontal: 18),
                       child: Column(
                         children: [
-                          const SizedBox(height: 12),
+                          r.verticalSpace(12),
                           ..._notifications.map((notification) {
-                            return _buildNotificationCard(notification);
+                            return _buildNotificationCard(notification, r);
                           }).toList(),
-                          const SizedBox(height: 30),
+                          r.verticalSpace(30),
                         ],
                       ),
                     ),
@@ -161,15 +163,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final r = context.responsive;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+        padding: r.symmetricPadding(horizontal: 32, vertical: 10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 400,
-              height: 400,
+              width: r.width(400),
+              height: r.height(400),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
@@ -183,29 +186,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             Text(
               'Sem notificações',
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: r.fontSize(22),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
+            r.verticalSpace(40),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNotificationCard(Map<String, dynamic> notification) {
+  Widget _buildNotificationCard(Map<String, dynamic> notification, ResponsiveUtils r) {
     final isRead = notification['isRead'] as bool;
     final timestamp = notification['timestamp'] as DateTime;
     final isProcessing = _processingNotifications.contains(notification['id']);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: r.padding(bottom: 14),
       decoration: BoxDecoration(
         color: isRead ? const Color(0xFFE0E0E0) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: r.circularBorderRadius(24),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.07),
@@ -227,11 +230,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               isRead
                   ? const Color(0xFFBDBDBD)
                   : primaryBlue.withValues(alpha: .18),
-          width: 2.2,
+          width: r.borderWidth(2.2),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        padding: r.symmetricPadding(horizontal: 10, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -239,28 +242,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: r.padding(left: 10, top: 10, right: 10, bottom: 10),
                   decoration: BoxDecoration(
                     color:
                         isRead
                             ? Colors.white
                             : primaryBlue.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: r.circularBorderRadius(14),
                     border: Border.all(
                       color:
                           isRead
                               ? const Color(0xFFB2DFDB)
                               : primaryBlue.withValues(alpha: 0.18),
-                      width: 1.2,
+                      width: r.borderWidth(1.2),
                     ),
                   ),
                   child: Icon(
                     isRead ? Icons.check_circle : notification['icon'],
                     color:darkBlue,
-                    size: 20,
+                    size: r.iconSize(20),
                   ),
                 ),
-                const SizedBox(width: 10),
+                r.horizontalSpace(10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,26 +271,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       Text(
                         notification['title'],
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
+                          fontSize: r.fontSize(15),
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                           height: 1.3,
                           letterSpacing: 0.1,
                         ),
                       ),
-                      const SizedBox(height: 6),
+                      r.verticalSpace(6),
                       Row(
                         children: [
                           Icon(
                             Icons.access_time,
-                            size: 15,
+                            size: r.iconSize(15),
                             color: darkBlue,
                           ),
-                          const SizedBox(width: 5),
+                          r.horizontalSpace(5),
                           Text(
                             DateFormat('dd/MM/yyyy HH:mm').format(timestamp),
                             style: GoogleFonts.poppins(
-                              fontSize: 10,
+                              fontSize: r.fontSize(10),
                               color: darkBlue,
                               fontWeight: FontWeight.w500,
                             ),
@@ -299,12 +302,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 if (!isRead)
                   Padding(
-                    padding: const EdgeInsets.only(left: 8),
+                    padding: r.padding(left: 8),
                     child: IconButton(
                       icon: Icon(
                         Icons.check_circle_outline,
                         color: darkBlue,
-                        size: 23,
+                        size: r.iconSize(23),
                       ),
                       tooltip: 'Marcar como lida',
                       onPressed:
@@ -314,12 +317,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.only(left: 0),
+                  padding: r.padding(left: 0),
                   child: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
-                      color: Color(0xFFE53935),
-                      size: 23,
+                      color: const Color(0xFFE53935),
+                      size: r.iconSize(23),
                     ),
                     tooltip: 'Excluir notificação',
                     onPressed:
@@ -331,18 +334,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               ],
             ),
             Container(
-              padding: const EdgeInsets.all(7),
+              padding: r.padding(left: 7, top: 7, right: 7, bottom: 7),
               decoration: BoxDecoration(
                 color:
                     isRead
                         ? const Color(0xFFE0E0E0)
                         : primaryBlue.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: r.circularBorderRadius(10),
               ),
               child: Text(
                 notification['message'],
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: r.fontSize(15),
                   color: Colors.black,
                   height: 1.5,
                 ),

@@ -9,6 +9,7 @@ import '../services/user_service.dart';
 import '../services/groups_service.dart';
 import '../models/groups.dart';
 import '../screens/group_home_screen.dart';
+import '../config/responsive_utils.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -119,11 +120,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGroupsList(Color primaryBlue) {
+    final r = context.responsive;
+    
     if (_isLoadingGroups) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40.0),
-          child: CircularProgressIndicator(),
+          padding: r.padding(top: 40, bottom: 40, left: 40, right: 40),
+          child: const CircularProgressIndicator(),
         ),
       );
     }
@@ -133,21 +136,21 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-            const SizedBox(height: 16),
+            Icon(Icons.error_outline, size: r.iconSize(48), color: Colors.grey[400]),
+            r.verticalSpace(16),
             Text(
               'Error loading groups',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+              style: GoogleFonts.poppins(fontSize: r.fontSize(16), color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            r.verticalSpace(16),
             ElevatedButton(
               onPressed: _refreshGroups,
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryBlue,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: r.circularBorderRadius(12),
                 ),
               ),
               child: Text(
@@ -178,24 +181,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   opacity: 0.12,
                   child: Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 300,
-                    height: 300,
+                    width: r.width(300),
+                    height: r.height(300),
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            r.verticalSpace(32),
             Text(
               "You're not part of any group yet",
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: r.fontSize(16),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            r.verticalSpace(8),
             Text(
               'Create or join a group to get started!',
               style: GoogleFonts.poppins(

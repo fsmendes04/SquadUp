@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config/responsive_utils.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
         leading: Padding(
-          padding: const EdgeInsets.only(left: 18.0),
+          padding: r.padding(left: 18),
           child: IconButton(
-            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
+            icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: r.iconSize(32)),
             onPressed: () => Navigator.of(context).pop(),
             tooltip: 'Back',
           ),
@@ -23,7 +25,7 @@ class SettingsScreen extends StatelessWidget {
           'Settings',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
-            fontSize: 22,
+            fontSize: r.fontSize(22),
             color: darkBlue,
           ),
         ),
@@ -31,50 +33,54 @@ class SettingsScreen extends StatelessWidget {
       ),
       backgroundColor: Colors.white,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+        padding: r.symmetricPadding(horizontal: 18, vertical: 24),
         children: [
-          _buildSectionTitle('Account', darkBlue),
+          _buildSectionTitle('Account', darkBlue, r),
           _buildSettingsCard(
             icon: Icons.person,
             label: 'Account Info',
             onTap: () {},
             darkBlue: darkBlue,
+            r: r,
           ),
-          const SizedBox(height: 18),
-          _buildSectionTitle('Preferences', darkBlue),
+          r.verticalSpace(18),
+          _buildSectionTitle('Preferences', darkBlue, r),
           _buildSettingsCard(
             icon: Icons.notifications,
             label: 'Notifications',
             onTap: () {},
             darkBlue: darkBlue,
+            r: r,
           ),
-          const SizedBox(height: 18),
+          r.verticalSpace(18),
           _buildSettingsCard(
             icon: Icons.lock,
             label: 'Privacy',
             onTap: () {},
             darkBlue: darkBlue,
+            r: r,
           ),
-          const SizedBox(height: 18),
-          _buildSectionTitle('About', darkBlue),
+          r.verticalSpace(18),
+          _buildSectionTitle('About', darkBlue, r),
           _buildSettingsCard(
             icon: Icons.info_outline,
             label: 'About',
             onTap: () {},
             darkBlue: darkBlue,
+            r: r,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, Color darkBlue) {
+  Widget _buildSectionTitle(String title, Color darkBlue, ResponsiveUtils r) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      padding: r.padding(left: 4, bottom: 8),
       child: Text(
         title,
         style: GoogleFonts.poppins(
-          fontSize: 14,
+          fontSize: r.fontSize(14),
           fontWeight: FontWeight.w600,
           color: darkBlue.withValues(alpha: 0.8),
           letterSpacing: 1.1,
@@ -88,32 +94,33 @@ class SettingsScreen extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
     required Color darkBlue,
+    required ResponsiveUtils r,
   }) {
     return Material(
       color: Colors.white,
       elevation: 3,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: r.circularBorderRadius(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: r.circularBorderRadius(14),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          padding: r.symmetricPadding(horizontal: 16, vertical: 18),
           child: Row(
             children: [
               Container(
                 decoration: BoxDecoration(
                   color: darkBlue.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: r.circularBorderRadius(10),
                 ),
-                padding: const EdgeInsets.all(10),
-                child: Icon(icon, color: darkBlue, size: 26),
+                padding: r.padding(left: 10, top: 10, right: 10, bottom: 10),
+                child: Icon(icon, color: darkBlue, size: r.iconSize(26)),
               ),
-              const SizedBox(width: 18),
+              r.horizontalSpace(18),
               Expanded(
                 child: Text(
                   label,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: r.fontSize(16),
                     fontWeight: FontWeight.w500,
                     color: darkBlue,
                   ),
@@ -122,7 +129,7 @@ class SettingsScreen extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 color: darkBlue.withValues(alpha: 0.5),
-                size: 18,
+                size: r.iconSize(18),
               ),
             ],
           ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/responsive_utils.dart';
 
 class CustomCircularNavBar extends StatefulWidget {
   final int currentIndex;
@@ -27,7 +28,7 @@ class CustomCircularNavBar extends StatefulWidget {
 class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
+    final r = context.responsive;
     final List<IconData> icons = widget.icons ?? [Icons.home, Icons.person];
     final List<IconData> outlinedIcons =
         widget.outlinedIcons ?? [Icons.home_outlined, Icons.person_outline];
@@ -38,7 +39,7 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
 
     return Container(
       width: double.infinity,
-      height: widget.barHeight ?? kBottomNavigationBarHeight + 5,
+      height: widget.barHeight ?? kBottomNavigationBarHeight + r.height(5),
       decoration: BoxDecoration(
         color: darkBlue,
         boxShadow: const [
@@ -69,15 +70,15 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
                       margin: EdgeInsets.only(
-                        bottom: index == widget.currentIndex ? 4 : 14,
+                        bottom: index == widget.currentIndex ? r.height(4) : r.height(14),
                       ),
-                      width: size.width * .025,
+                      width: r.width(10),
                       height:
-                          index == widget.currentIndex ? size.width * .014 : 0,
+                          index == widget.currentIndex ? r.height(6) : 0,
                       decoration: BoxDecoration(
                         color: white,
-                        borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(10),
+                        borderRadius: BorderRadius.vertical(
+                          bottom: Radius.circular(r.borderRadius(10)),
                         ),
                       ),
                     ),
@@ -85,10 +86,10 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
                       index == widget.currentIndex
                           ? icons[index]
                           : outlinedIcons[index],
-                      size: size.width * .076,
+                      size: r.iconSize(31),
                       color: white,
                     ),
-                    const SizedBox(height: 15),
+                    r.verticalSpace(15),
                   ],
                 ),
               ),

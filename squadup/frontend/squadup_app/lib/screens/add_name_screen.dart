@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../widgets/squadup_input.dart';
 import '../services/user_service.dart';
+import '../config/responsive_utils.dart';
 
 class AddNameScreen extends StatefulWidget {
   const AddNameScreen({super.key});
@@ -92,6 +93,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final backgroundColor = Colors.white;
     final buttonColor = const Color.fromARGB(255, 17, 80, 138);
 
@@ -100,52 +102,52 @@ class _AddNameScreenState extends State<AddNameScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30.0),
+            padding: r.horizontalPadding(30),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 90),
+                  r.verticalSpace(90),
 
                   // Logo
                   SizedBox(
-                    height: 160,
+                    height: r.height(160),
                     child: Center(
                       child: Image.asset(
                         'lib/images/logo_v3.png',
-                        height: 120,
-                        width: 250,
+                        height: r.height(120),
+                        width: r.width(250),
                         fit: BoxFit.contain,
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 30),
+                  r.verticalSpace(30),
 
                   // Welcome text
                   Text(
                     "Welcome to SquadUp!",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontSize: 28,
+                      fontSize: r.fontSize(28),
                       fontWeight: FontWeight.w600,
                       color: const Color.fromARGB(221, 0, 0, 0),
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  r.verticalSpace(15),
 
                   Text(
                     "Choose your name to get started.",
                     textAlign: TextAlign.center,
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: r.fontSize(16),
                       color: const Color.fromARGB(255, 130, 130, 130),
                     ),
                   ),
 
-                  const SizedBox(height: 50),
+                  r.verticalSpace(50),
 
                   // Name input
                   SquadUpInput(
@@ -168,18 +170,15 @@ class _AddNameScreenState extends State<AddNameScreen> {
                   ),
 
                   if (_message.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    r.verticalSpace(16),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
+                      padding: r.symmetricPadding(horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         color:
                             _isSuccessMessage
                                 ? Colors.green.shade50
                                 : Colors.red.shade50,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: r.circularBorderRadius(8),
                         border: Border.all(
                           color:
                               _isSuccessMessage

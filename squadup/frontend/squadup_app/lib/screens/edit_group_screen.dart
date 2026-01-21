@@ -6,6 +6,7 @@ import '../models/groups.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/loading_overlay.dart';
+import '../config/responsive_utils.dart';
 
 class EditGroupScreen extends StatefulWidget {
   final String groupId;
@@ -249,6 +250,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
     return LoadingOverlay(
@@ -278,13 +280,13 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                           children: [
                             // Blue header
                             Container(
-                              height: 320.0,
+                              height: r.height(320),
                               width: double.infinity,
                               color: darkBlue,
                             ),
                             // Back and Save buttons
                             Padding(
-                              padding: EdgeInsets.only(
+                              padding: r.padding(
                                 top: MediaQuery.of(context).padding.top + 10,
                                 left: 15,
                                 right: 15,
@@ -294,9 +296,9 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.arrow_back_ios,
-                                      size: 32,
+                                      size: r.iconSize(32),
                                     ),
                                     onPressed:
                                         () => Navigator.of(context).pop(false),
@@ -308,7 +310,7 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                     child: Text(
                                       'Save',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 22,
+                                        fontSize: r.fontSize(22),
                                         fontWeight: FontWeight.w600,
                                         color: Colors.white,
                                       ),
@@ -319,19 +321,19 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                             ),
                             // White card elevated
                             Positioned(
-                              top: 240.0,
-                              left: 15.0,
-                              right: 15.0,
+                              top: r.height(240),
+                              left: r.width(15),
+                              right: r.width(15),
                               child: Material(
                                 elevation: 3.0,
-                                borderRadius: BorderRadius.circular(16.0),
+                                borderRadius: r.circularBorderRadius(16),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24.0,
-                                    vertical: 50.0,
+                                  padding: r.symmetricPadding(
+                                    horizontal: 24,
+                                    vertical: 50,
                                   ),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(16.0),
+                                    borderRadius: r.circularBorderRadius(16),
                                     color: Colors.white,
                                   ),
                                   child: Form(

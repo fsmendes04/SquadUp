@@ -56,7 +56,7 @@ class _CustomCircularNavBarState extends State<CustomCircularNavBar> {
           icons.length,
           (index) => Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
+              padding: r.symmetricPadding(horizontal: 1),
               child: InkWell(
                 onTap: () {
                   widget.onTap(index);

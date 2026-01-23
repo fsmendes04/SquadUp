@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config/responsive_utils.dart';
 
 class LoadingOverlay extends StatefulWidget {
   final bool isLoading;
@@ -38,6 +39,7 @@ class _LoadingOverlayState extends State<LoadingOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return Stack(
       children: [
         widget.child,
@@ -53,12 +55,12 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                   // Logo estático
                   Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 150,
-                    height: 150,
+                    width: r.width(150),
+                    height: r.height(150),
                     fit: BoxFit.contain,
                   ),
 
-                  const SizedBox(height: 60),
+                  SizedBox(height: r.height(60)),
 
                   // Bolas de carregamento animadas
                   Row(
@@ -78,9 +80,9 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                           return Transform.scale(
                             scale: scale,
                             child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 8),
-                              width: 16,
-                              height: 16,
+                              margin: r.symmetricPadding(horizontal: 8),
+                              width: r.width(16),
+                              height: r.height(16),
                               decoration: BoxDecoration(
                                 color: const Color.fromARGB(255, 81, 163, 230),
                                 shape: BoxShape.circle,
@@ -93,13 +95,13 @@ class _LoadingOverlayState extends State<LoadingOverlay>
                   ),
 
                   if (widget.message != null) ...[
-                    const SizedBox(height: 40),
+                    SizedBox(height: r.height(40)),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      padding: r.symmetricPadding(horizontal: 40),
                       child: Text(
                         widget.message!,
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: r.fontSize(16),
                           fontWeight: FontWeight.w500,
                           color: const Color.fromARGB(255, 29, 56, 95),
                           decoration: TextDecoration.none,

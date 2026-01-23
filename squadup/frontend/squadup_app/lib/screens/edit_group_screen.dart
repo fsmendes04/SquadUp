@@ -534,53 +534,6 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                                   },
                                                 ),
                                         ),
-                                        const SizedBox(height: 40),
-                                        SizedBox(
-                                          width: double.infinity,
-                                          child: ElevatedButton.icon(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: darkBlue,
-                                              foregroundColor: Colors.white,
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              elevation: 2,
-                                            ),
-                                            icon: const Icon(
-                                              Icons.save,
-                                              size: 22,
-                                            ),
-                                            label:
-                                                _saving
-                                                    ? const SizedBox(
-                                                      width: 24,
-                                                      height: 24,
-                                                      child: CircularProgressIndicator(
-                                                        strokeWidth: 2,
-                                                        valueColor:
-                                                            AlwaysStoppedAnimation<
-                                                              Color
-                                                            >(Colors.white),
-                                                      ),
-                                                    )
-                                                    : Text(
-                                                      'Save changes',
-                                                      style:
-                                                          GoogleFonts.poppins(
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                            fontSize: 16,
-                                                          ),
-                                                    ),
-                                            onPressed:
-                                                _saving ? null : _saveChanges,
-                                          ),
-                                        ),
                                         // ...mensagem de erro/sucesso pode ser adicionada aqui...
                                       ],
                                     ),

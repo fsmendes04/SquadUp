@@ -9,7 +9,7 @@ class HeaderAvatar extends StatelessWidget {
   final String groupId;
   final String? avatarUrl;
   final VoidCallback? onBack;
-  final double avatarRadius;
+  final double? avatarRadius;
 
   const HeaderAvatar({
     super.key,
@@ -18,16 +18,17 @@ class HeaderAvatar extends StatelessWidget {
     required this.groupId,
     this.avatarUrl,
     this.onBack,
-    this.avatarRadius = 31,
+    this.avatarRadius,
   });
 
   @override
   Widget build(BuildContext context) {
     final r = context.responsive;
+    final double radius = avatarRadius ?? r.width(31);
     return Padding(
       padding: r.symmetricPadding(horizontal: 20, vertical: 10),
       child: SizedBox(
-        height: kToolbarHeight + 10,
+        height: kToolbarHeight + r.height(10),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -36,7 +37,7 @@ class HeaderAvatar extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 32),
+                    icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: r.iconSize(32)),
                     onPressed: onBack ?? () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -45,15 +46,15 @@ class HeaderAvatar extends StatelessWidget {
                     child: AvatarGroupWidget(
                       groupId: groupId,
                       avatarUrl: avatarUrl,
-                      radius: avatarRadius,
+                      radius: radius,
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  SizedBox(width: r.width(20)),
                   Expanded(
                     child: Text(
                       title,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: r.fontSize(18),
                         fontWeight: FontWeight.w600,
                         color: darkBlue,
                       ),

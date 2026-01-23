@@ -196,9 +196,9 @@ class _AddNameScreenState extends State<AddNameScreen> {
                                 _isSuccessMessage
                                     ? Colors.green.shade600
                                     : Colors.red.shade600,
-                            size: 20,
+                            size: r.iconSize(20),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: r.width(8)),
                           Expanded(
                             child: Text(
                               _message,
@@ -208,7 +208,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                                         ? Colors.green.shade700
                                         : Colors.red.shade600,
                                 fontWeight: FontWeight.w500,
-                                fontSize: 14,
+                                fontSize: r.fontSize(14),
                               ),
                             ),
                           ),
@@ -217,19 +217,19 @@ class _AddNameScreenState extends State<AddNameScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 50),
+                  r.verticalSpace(50),
 
                   // Confirm button
                   SizedBox(
-                    width: 175, // largura reduzida do botão
-                    height: 55,
+                    width: r.width(175), // largura reduzida do botão
+                    height: r.height(55),
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _confirmName,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: buttonColor,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(r.borderRadius(15)),
                         ),
                         elevation: 2,
                         disabledBackgroundColor: buttonColor.withValues(
@@ -239,10 +239,10 @@ class _AddNameScreenState extends State<AddNameScreen> {
                       ),
                       child:
                           _isLoading
-                              ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
+                              ? SizedBox(
+                                width: r.width(20),
+                                height: r.height(20),
+                                child: const CircularProgressIndicator(
                                   color: Colors.white,
                                   strokeWidth: 2,
                                 ),
@@ -253,7 +253,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                                   Text(
                                     "Get Started",
                                     style: GoogleFonts.poppins(
-                                      fontSize: 18,
+                                      fontSize: r.fontSize(18),
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -262,7 +262,7 @@ class _AddNameScreenState extends State<AddNameScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 40),
+                  r.verticalSpace(40),
                 ],
               ),
             ),

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/groups_service.dart';
+import '../config/responsive_utils.dart';
 
 class AvatarGroupWidget extends StatefulWidget {
   final String groupId;
@@ -54,35 +55,36 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
 
   Future<void> _showImageSourceDialog() async {
     if (_isLoading) return;
+    final r = context.responsive;
 
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(r.borderRadius(20))),
       ),
       builder: (BuildContext context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: r.padding(left: 20, top: 20, right: 20, bottom: 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 40,
-                  height: 4,
+                  width: r.width(40),
+                  height: r.height(4),
                   decoration: BoxDecoration(
                     color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(r.borderRadius(2)),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: r.height(20)),
                 Text(
                   'Escolher foto do grupo',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: r.height(20)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
@@ -104,7 +106,7 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: r.height(20)),
               ],
             ),
           ),
@@ -118,23 +120,24 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
     required String label,
     required VoidCallback onTap,
   }) {
+    final r = context.responsive;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: r.padding(left: 20, top: 20, right: 20, bottom: 20),
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(r.borderRadius(12)),
+          border: Border.all(color: Colors.grey[200]!, width: r.borderWidth(1)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 32, color: Theme.of(context).primaryColor),
-            const SizedBox(height: 8),
+            Icon(icon, size: r.iconSize(32), color: Theme.of(context).primaryColor),
+            SizedBox(height: r.height(8)),
             Text(
               label,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: TextStyle(fontSize: r.fontSize(14), fontWeight: FontWeight.w500),
             ),
           ],
         ),
@@ -313,14 +316,14 @@ class _AvatarGroupWidgetState extends State<AvatarGroupWidget> {
         if (widget.allowEdit && !_isLoading)
           Positioned(
             bottom: 0,
-            right: 10,
+            right: context.responsive.width(10),
             child: GestureDetector(
               onTap: _showImageSourceDialog,
               child: Container(
                 decoration: BoxDecoration(
                   color: primaryBlue, // Fundo azul
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: Colors.white, width: context.responsive.borderWidth(2)),
                 ),
                 padding: EdgeInsets.all(widget.radius * 0.1),
                 child: Icon(

@@ -41,7 +41,7 @@ class _ProfileScreenState extends State {
         final data = response['data'] as Map?;
 
         if (data != null) {
-          await _userService.getProfileFromStorage(); // This will trigger save
+          await _userService.getProfileFromStorage(); 
         }
 
         if (mounted) {
@@ -218,8 +218,8 @@ class _ProfileScreenState extends State {
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
+                            blurRadius: r.width(10),
+                            offset: Offset(0, r.height(5)),
                           ),
                         ],
                       ),

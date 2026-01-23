@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/user_service.dart';
 import '../widgets/squadup_input.dart';
-import '../widgets/bubble_page_route.dart';
 import 'home_screen.dart';
 import '../widgets/squadup_button.dart';
 import '../config/responsive_utils.dart';
@@ -83,24 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
           if (name == null || name.toString().trim().isEmpty) {
             Navigator.pushReplacementNamed(context, '/add-name');
           } else {
-            final RenderBox? buttonBox =
-                _loginButtonKey.currentContext?.findRenderObject()
-                    as RenderBox?;
-
-            final Offset bubbleCenter =
-                buttonBox != null
-                    ? buttonBox.localToGlobal(
-                      buttonBox.size.center(Offset.zero),
-                    )
-                    : (MediaQuery.of(context).size.center(Offset.zero));
-
             Navigator.of(context).pushReplacement(
-              BubblePageRoute(
-                page: const HomeScreen(),
-
-                bubbleCenter: bubbleCenter,
-
-                bubbleColor: const Color.fromARGB(255, 17, 80, 138),
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
               ),
             );
           }

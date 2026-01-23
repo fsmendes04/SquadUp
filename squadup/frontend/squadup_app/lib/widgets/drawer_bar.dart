@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' as math;
+import '../config/responsive_utils.dart';
 
 class _RoundedBorderPainter extends CustomPainter {
   final double borderRadius;
@@ -135,12 +136,13 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             child: AnimatedBuilder(
               animation: _sidebarAnim,
               builder: (context, child) {
-                final borderRadius = _sidebarAnim.value * 30;
+                final r = context.responsive;
+                final borderRadius = _sidebarAnim.value * r.borderRadius(30);
                 final showBorder = (_sidebarAnim.value >= 0.8);
                 return Transform.scale(
                   scale: 1 - (_sidebarAnim.value * 0.1),
                   child: Transform.translate(
-                    offset: Offset(-_sidebarAnim.value * 265, 0),
+                    offset: Offset(-_sidebarAnim.value * r.width(265), 0),
                     child: Transform(
                       alignment: Alignment.center,
                       transform:
@@ -160,7 +162,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                                 child: CustomPaint(
                                   painter: _RoundedBorderPainter(
                                     borderRadius: borderRadius,
-                                    borderWidth: 4,
+                                    borderWidth: r.borderWidth(4),
                                     borderColor: Colors.white,
                                   ),
                                 ),
@@ -188,6 +190,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             child: AnimatedBuilder(
               animation: _sidebarAnim,
               builder: (context, child) {
+                final r = context.responsive;
                 return Align(
                   alignment: Alignment.centerRight,
                   child: Transform(
@@ -198,7 +201,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                           ..rotateY(
                             ((1 - _sidebarAnim.value) * 30) * math.pi / 180,
                           )
-                          ..translate((1 - _sidebarAnim.value) * 300),
+                          ..translate((1 - _sidebarAnim.value) * r.width(300)),
                     child: child,
                   ),
                 );
@@ -217,28 +220,29 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
   }
 
   Widget _buildSideMenu() {
+    final r = context.responsive;
     return Container(
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + 20,
-        bottom: MediaQuery.of(context).padding.bottom + 20,
+        top: MediaQuery.of(context).padding.top + r.height(20),
+        bottom: MediaQuery.of(context).padding.bottom + r.height(20),
       ),
-      constraints: const BoxConstraints(maxWidth: 288),
+      constraints: BoxConstraints(maxWidth: r.width(288)),
       decoration: const BoxDecoration(color: darkBlue),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // User info
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: r.padding(left: 24, top: 24, right: 24, bottom: 24),
             child: Row(
               children: [
                 CircleAvatar(
                   backgroundColor: Colors.white.withValues(alpha: 0.2),
                   foregroundColor: Colors.white,
-                  radius: 24,
-                  child: const Icon(Icons.person_outline, size: 28),
+                  radius: r.width(24),
+                  child: Icon(Icons.person_outline, size: r.iconSize(28)),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: r.width(12)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,7 +251,7 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                         widget.userName ?? 'User',
                         style: GoogleFonts.poppins(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: r.fontSize(18),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -258,14 +262,14 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
             ),
           ),
 
-          const Divider(
+          Divider(
             color: Colors.white,
-            thickness: 1,
-            indent: 24,
-            endIndent: 24,
+            thickness: r.borderWidth(1),
+            indent: r.width(24),
+            endIndent: r.width(24),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
 
           // Menu items
           Expanded(
@@ -274,12 +278,12 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(left: 24, bottom: 12),
+                    padding: r.padding(left: 24, bottom: 12),
                     child: Text(
                       'MENU',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
-                        fontSize: 12,
+                        fontSize: r.fontSize(12),
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.2,
                       ),
@@ -293,21 +297,21 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
 
           // Interruptor para alternar entre dark/light mode (sem lógica)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 45),
+            padding: r.symmetricPadding(horizontal: 24, vertical: 45),
             child: Row(
               children: [
                 Icon(
                   _darkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                   color: Colors.white,
-                  size: 26,
+                  size: r.iconSize(26),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: r.width(12)),
                 Expanded(
                   child: Text(
                     _darkMode ? 'Dark Mode' : 'Light Mode',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: r.fontSize(15),
                       color: Colors.white,
                     ),
                   ),
@@ -332,23 +336,24 @@ class CustomDrawerBarState extends State<CustomDrawerBar>
   }
 
   Widget _buildMenuItem(DrawerMenuItem item) {
+    final r = context.responsive;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      margin: r.symmetricPadding(horizontal: 12, vertical: 4),
       // Sem destaque visual para o item selecionado
       child: InkWell(
         onTap: () => _onMenuItemTap(item),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(r.borderRadius(12)),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: r.symmetricPadding(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(item.icon, color: Colors.white, size: 24),
-              const SizedBox(width: 16),
+              Icon(item.icon, color: Colors.white, size: r.iconSize(24)),
+              SizedBox(width: r.width(16)),
               Expanded(
                 child: Text(
                   item.title,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: r.fontSize(16),
                     color: Colors.white,
                     fontWeight: FontWeight.w500,
                   ),

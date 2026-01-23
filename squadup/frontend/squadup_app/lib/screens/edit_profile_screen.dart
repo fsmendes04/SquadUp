@@ -249,7 +249,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.arrow_back_ios, size: 32),
+                              icon: Icon(Icons.arrow_back_ios, size: r.iconSize(32)),
                               onPressed: () => Navigator.pop(context),
                               color: Colors.white,
                               tooltip: 'Back',
@@ -259,7 +259,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               child: Text(
                                 'Save',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 22,
+                                  fontSize: r.fontSize(22),
                                   fontWeight: FontWeight.w600,
                                   color: Colors.white,
                                 ),
@@ -341,12 +341,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             ),
                                           ),
                                           enabledBorder: OutlineInputBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
+                                            borderRadius: r.circularBorderRadius(12),
                                             borderSide: BorderSide(
                                               color: darkBlue,
-                                              width: 1.5,
+                                              width: r.borderWidth(1.5),
                                             ),
                                           ),
                                           focusedBorder: OutlineInputBorder(
@@ -416,6 +414,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                           borderRadius: r.circularBorderRadius(12),
                                           border: Border.all(
                                             color: Colors.grey.shade300,
+                                            width: r.borderWidth(1),
                                           ),
                                         ),
                                         child: Row(

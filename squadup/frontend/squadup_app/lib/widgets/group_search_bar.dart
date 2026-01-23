@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config/responsive_utils.dart';
 
 class GroupSearchBar extends StatefulWidget {
   final void Function(String)? onChanged;
@@ -64,50 +65,51 @@ class _GroupSearchBarState extends State<GroupSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      height: 50,
+      height: r.height(50),
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
         onTap: _onTap,
-        style: GoogleFonts.poppins(fontSize: 14, color: darkBlue),
+        style: GoogleFonts.poppins(fontSize: r.fontSize(14), color: darkBlue),
         decoration: InputDecoration(
           hintText: 'Search groups...',
           hintStyle: GoogleFonts.poppins(
-            fontSize: 17,
+            fontSize: r.fontSize(17),
             color: darkBlue,
             fontWeight: FontWeight.w500,
           ),
-          prefixIcon: Icon(Icons.search, color: darkBlue, size: 30),
+          prefixIcon: Icon(Icons.search, color: darkBlue, size: r.iconSize(30)),
           suffixIcon:
               _searchQuery.isNotEmpty || _isSearching
                   ? IconButton(
                     icon: Icon(
                       _searchQuery.isNotEmpty ? Icons.clear : Icons.close,
                       color: darkBlue,
-                      size: 28,
+                      size: r.iconSize(28),
                     ),
                     onPressed: _onClose,
                   )
                   : null,
           filled: true,
           fillColor: Colors.transparent,
-          contentPadding: const EdgeInsets.symmetric(
+          contentPadding: r.symmetricPadding(
             vertical: 12,
             horizontal: 16,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(r.borderRadius(15)),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(r.borderRadius(15)),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(15),
+            borderRadius: BorderRadius.circular(r.borderRadius(15)),
             borderSide: BorderSide.none,
           ),
         ),

@@ -235,15 +235,15 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           ),
                           r.verticalSpace(12),
                           Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                            spacing: r.width(8),
+                            runSpacing: r.height(8),
                             children: _selectedMembers.map((member) {
                               return Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
+                                  borderRadius: BorderRadius.circular(r.borderRadius(20)),
                                   border: Border.all(
                                     color: darkBlue.withOpacity(0.3),
-                                    width: 2,
+                                    width: r.borderWidth(2),
                                   ),
                                 ),
                                 padding: EdgeInsets.symmetric(
@@ -330,13 +330,13 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                           Container(
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[300]!, width: 1),
+                              borderRadius: BorderRadius.circular(r.borderRadius(12)),
+                              border: Border.all(color: Colors.grey[300]!, width: r.borderWidth(1)),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
+                                  blurRadius: r.width(8),
+                                  offset: Offset(0, r.height(2)),
                                 ),
                               ],
                             ),
@@ -344,7 +344,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                               color: Colors.transparent,
                               child: InkWell(
                                 onTap: _addMemberFromSearch,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(r.borderRadius(12)),
                                 child: Padding(
                                   padding: EdgeInsets.all(r.width(12)),
                                   child: Row(

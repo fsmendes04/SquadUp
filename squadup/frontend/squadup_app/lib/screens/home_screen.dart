@@ -168,14 +168,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_userGroups.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 60.0),
+        padding: r.symmetricPadding(horizontal: 32, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Logo com gradiente e sombra
             SizedBox(
-              width: 300,
-              height: 300,
+              width: r.width(300),
+              height: r.height(300),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
@@ -202,13 +202,13 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               'Create or join a group to get started!',
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: r.fontSize(16),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
+            r.verticalSpace(40),
             GestureDetector(
               onTap:
                   () => Navigator.of(context).pushNamed('/create-group').then((
@@ -217,13 +217,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     await _refreshGroups();
                   }),
               child: Container(
-                padding: const EdgeInsets.symmetric(
+                padding: r.symmetricPadding(
                   horizontal: 32,
                   vertical: 16,
                 ),
                 decoration: BoxDecoration(
                   color: const Color.fromARGB(255, 15, 74, 128),
-                  borderRadius: BorderRadius.circular(15),
+                  borderRadius: BorderRadius.circular(r.borderRadius(15)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -231,7 +231,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       'Create Group',
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: r.fontSize(16),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
@@ -248,30 +248,30 @@ class _HomeScreenState extends State<HomeScreen> {
     if (groupsToShow.isEmpty && _searchQuery.isNotEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 60.0),
+        padding: r.symmetricPadding(horizontal: 32, vertical: 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 300,
-              height: 300,
+              width: r.width(300),
+              height: r.height(300),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
                   child: Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 300,
-                    height: 300,
+                    width: r.width(300),
+                    height: r.height(300),
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 32),
+            r.verticalSpace(32),
             Text(
               'No groups found',
               style: GoogleFonts.poppins(
-                fontSize: 18,
+                fontSize: r.fontSize(18),
                 fontWeight: FontWeight.w600,
                 color: Colors.grey[600],
               ),
@@ -355,6 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final theme = Theme.of(context);
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
@@ -383,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0),
+              padding: r.symmetricPadding(horizontal: 14),
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
                 onTap: () {
@@ -405,15 +406,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Image.asset(
                                 'lib/images/logo_v3.png',
-                                height: 40,
-                                width: 40,
+                                height: r.height(40),
+                                width: r.width(40),
                                 fit: BoxFit.contain,
                               ),
-                              const SizedBox(width: 10),
+                              SizedBox(width: r.width(10)),
                               Text(
                                 'SquadUp',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 24,
+                                  fontSize: r.fontSize(24),
                                   fontWeight: FontWeight.w500,
                                   color: darkBlue,
                                 ),
@@ -427,9 +428,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 clipBehavior: Clip.none,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.notifications_none_outlined,
-                                      size: 34,
+                                      size: r.iconSize(34),
                                     ),
                                     color: darkBlue,
                                       onPressed: () {
@@ -438,22 +439,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                     tooltip: 'Notificações',
                                   ),
                                   Positioned(
-                                    right: 6,
-                                    top: 6,
+                                    right: r.width(6),
+                                    top: r.height(6),
                                     child: Container(
-                                      padding: const EdgeInsets.all(4.5),
+                                      padding: r.padding(left: 4.5, top: 4.5, right: 4.5, bottom: 4.5),
                                       decoration: BoxDecoration(
                                         color: primaryBlue,
                                         shape: BoxShape.circle,
                                         border: Border.all(
                                           color: theme.scaffoldBackgroundColor,
-                                          width: 1.5,
+                                          width: r.borderWidth(1.5),
                                         ),
                                       ),
-                                      child: const Text(
+                                      child: Text(
                                         '1',
                                         style: TextStyle(
-                                          fontSize: 9,
+                                          fontSize: r.fontSize(9),
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -463,7 +464,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ],
                               ),
                               IconButton(
-                                icon: const Icon(Icons.menu_rounded, size: 34),
+                                icon: Icon(Icons.menu_rounded, size: r.iconSize(34)),
                                 color: darkBlue,
                                 onPressed: _openDrawer,
                                 tooltip: 'Menu',
@@ -474,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 25),
+                    r.verticalSpace(25),
                     // Greeting
                     Align(
                       alignment: Alignment.centerLeft,
@@ -484,7 +485,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 'Hi, ${_getDisplayName()}!',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 24,
+                                  fontSize: r.fontSize(24),
                                   fontWeight: FontWeight.w600,
                                   color: darkBlue,
                                 ),
@@ -493,7 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 25),
+                    r.verticalSpace(25),
 
                     // Scrollable main content
                     Expanded(
@@ -502,7 +503,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         color: primaryBlue,
                         child: SingleChildScrollView(
                           padding: EdgeInsets.only(
-                            bottom: kBottomNavigationBarHeight + 12,
+                            bottom: kBottomNavigationBarHeight + r.height(12),
                           ),
                           physics: const AlwaysScrollableScrollPhysics(),
                           child:
@@ -514,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         MediaQuery.of(context).size.height -
                                         kToolbarHeight -
                                         kBottomNavigationBarHeight -
-                                        200,
+                                        r.height(200),
                                     child: _buildGroupsList(primaryBlue),
                                   )
                                   : Column(
@@ -603,7 +604,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ],
                                           ),
                                         ),
-                                        const SizedBox(height: 20),
+                                        r.verticalSpace(20),
 
                                       // Search bar
                                       GroupSearchBar(
@@ -619,12 +620,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                         },
                                       ),
 
-                                      const SizedBox(height: 14),
+                                      r.verticalSpace(14),
 
                                       // Groups list
                                       _buildGroupsList(primaryBlue),
 
-                                      const SizedBox(height: 8),
+                                      r.verticalSpace(8),
                                     ],
                                   ),
                         ),

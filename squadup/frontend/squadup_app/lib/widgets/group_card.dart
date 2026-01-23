@@ -46,13 +46,13 @@ class _GroupCardState extends State<GroupCard> {
     if (difference.inMinutes < 1) {
       return 'Agora';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} min atrás';
+      return '${difference.inMinutes} min';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h atrás';
+      return '${difference.inHours}h';
     } else if (difference.inDays < 7) {
-      return '${difference.inDays}d atrás';
+      return '${difference.inDays}d';
     } else {
-      return '${(difference.inDays / 7).floor()}sem atrás';
+      return '${(difference.inDays / 7).floor()}';
     }
   }
 
@@ -154,24 +154,24 @@ class _GroupCardState extends State<GroupCard> {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: r.width(8)),
 
               // Activity indicator dot (verde se ativo nas últimas 24h)
               if (_isActive)
                 Container(
-                  width: 8,
-                  height: 8,
+                  width: r.width(8),
+                  height: r.height(8),
                   decoration: const BoxDecoration(
                     color: Color(0xFF2ECC71),
                     shape: BoxShape.circle,
                   ),
                 ),
-              const SizedBox(width: 8),
+              SizedBox(width: r.width(8)),
 
               // Subtle arrow indicator
               Icon(
                 Icons.chevron_right_rounded,
-                size: 28,
+                size: r.iconSize(28),
                 color: Colors.grey[600],
               ),
             ],

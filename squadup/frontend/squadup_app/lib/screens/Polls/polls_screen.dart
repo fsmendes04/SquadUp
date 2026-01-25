@@ -9,6 +9,7 @@ import '../../widgets/navigation_bar.dart';
 import '../../services/polls_service.dart';
 import '../../services/groups_service.dart';
 import '../../models/groups.dart';
+import '../../config/responsive_utils.dart';
 
 class PollsScreen extends StatefulWidget {
   final String groupId;
@@ -134,6 +135,7 @@ class _PollsScreenState extends State<PollsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return LoadingOverlay(
       isLoading: _isLoading,
       message: 'Loading polls...',
@@ -145,23 +147,23 @@ class _PollsScreenState extends State<PollsScreen> {
               _buildHeader(darkBlue),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  padding: EdgeInsets.symmetric(horizontal: r.width(14)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (!_isLoading) ...[
-                        const SizedBox(height: 4),
+                        SizedBox(height: r.height(4)),
                         _buildTypeSelector(darkBlue),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
                         _buildStatsCard(),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildStatusSelector(darkBlue),
                         if (_activePolls.where((p) => p['type'] == _selectedType).isNotEmpty ||
                             _finishedPolls.where((p) => p['type'] == _selectedType).isNotEmpty)
-                          const SizedBox(height: 20),
+                          SizedBox(height: r.height(20)),
                       ],
                       _buildPollsList(),
-                      const SizedBox(height: 20),
+                      SizedBox(height: r.height(20)),
                     ],
                   ),
                 ),
@@ -210,6 +212,7 @@ class _PollsScreenState extends State<PollsScreen> {
   }
 
   Widget _buildPollsList() {
+    final r = context.responsive;
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -231,20 +234,20 @@ class _PollsScreenState extends State<PollsScreen> {
     if (displayPolls.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
+        padding: EdgeInsets.symmetric(horizontal: r.width(32), vertical: 0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 400,
-              height: 400,
+              width: r.width(400),
+              height: r.height(400),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
                   child: Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 300,
-                    height: 300,
+                    width: r.width(300),
+                    height: r.height(300),
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -255,13 +258,13 @@ class _PollsScreenState extends State<PollsScreen> {
                   ? 'No polls found.'
                   : 'No bets found.',
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: r.fontSize(22),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: r.height(40)),
           ],
         ),
       );
@@ -280,7 +283,7 @@ class _PollsScreenState extends State<PollsScreen> {
         final pollIconColor = pollIsClosed ? Colors.green : darkBlue;
         
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: EdgeInsets.only(bottom: r.height(16)),
           child: _buildPollCard(
             poll: poll,
             icon: pollIcon,
@@ -302,20 +305,21 @@ class _PollsScreenState extends State<PollsScreen> {
 
 
   Widget _buildStatsCard() {
+    final r = context.responsive;
     final totalPolls = _activePolls.length + _finishedPolls.length;
     final activeCount = _activePolls.length;
     final closedCount = _finishedPolls.length;
 
     return Container(
-      height: 110,
-      padding: const EdgeInsets.all(20),
+      height: r.height(110),
+      padding: EdgeInsets.all(r.width(20)),
       decoration: BoxDecoration(
        gradient: LinearGradient(
           colors: [primaryBlue, darkBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(r.borderRadius(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -335,12 +339,13 @@ class _PollsScreenState extends State<PollsScreen> {
   }
 
   Widget _buildStatItem(String value, String label) {
+    final r = context.responsive;
     return Column(
       children: [
         Text(
           value,
           style: GoogleFonts.poppins(
-            fontSize: 30,
+            fontSize: r.fontSize(30),
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),
@@ -348,7 +353,7 @@ class _PollsScreenState extends State<PollsScreen> {
         Text(
           label,
           style: GoogleFonts.poppins(
-          fontSize: 17,
+          fontSize: r.fontSize(17),
           fontWeight: FontWeight.w500,
           color: Colors.white.withValues(alpha: 0.9),
           ), 
@@ -358,12 +363,13 @@ class _PollsScreenState extends State<PollsScreen> {
   }
 
     Widget _buildTypeSelector(Color darkBlue) {
+    final r = context.responsive;
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(r.borderRadius(12)),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(r.width(4)),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -376,16 +382,16 @@ class _PollsScreenState extends State<PollsScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: EdgeInsets.symmetric(vertical: r.height(10), horizontal: r.width(16)),
                 decoration: BoxDecoration(
                   color: _selectedType == 'voting' ? darkBlue : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(r.borderRadius(10)),
                 ),
                 child: Center(
                   child: Text(
                     'Polls',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: r.fontSize(15),
                       fontWeight: FontWeight.w600,
                       color: _selectedType == 'voting' ? Colors.white : darkBlue,
                     ),
@@ -394,7 +400,7 @@ class _PollsScreenState extends State<PollsScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          SizedBox(width: r.width(4)),
           // Botão Bets
           Expanded(
             child: GestureDetector(
@@ -404,16 +410,16 @@ class _PollsScreenState extends State<PollsScreen> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding: EdgeInsets.symmetric(vertical: r.height(10), horizontal: r.width(16)),
                 decoration: BoxDecoration(
                   color: _selectedType == 'betting' ? darkBlue : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(r.borderRadius(10)),
                 ),
                 child: Center(
                   child: Text(
                     'Bets',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: r.fontSize(15),
                       fontWeight: FontWeight.w600,
                       color: _selectedType == 'betting' ? Colors.white : darkBlue,
                     ),
@@ -428,6 +434,7 @@ class _PollsScreenState extends State<PollsScreen> {
   }
 
   Widget _buildStatusSelector(Color darkBlue) {
+    final r = context.responsive;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -441,16 +448,16 @@ class _PollsScreenState extends State<PollsScreen> {
           child: Row(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: r.width(20),
+                height: r.height(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: darkBlue, width: 2),
+                  border: Border.all(color: darkBlue, width: r.borderWidth(2)),
                 ),
                 child: Center(
                   child: Container(
-                    width: 12,
-                    height: 12,
+                    width: r.width(12),
+                    height: r.height(12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color:
@@ -461,11 +468,11 @@ class _PollsScreenState extends State<PollsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: r.width(8)),
               Text(
                 'All',
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: r.fontSize(15),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
@@ -473,7 +480,7 @@ class _PollsScreenState extends State<PollsScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 24),
+        SizedBox(width: r.width(24)),
         // Botão Active
         GestureDetector(
           onTap: () {
@@ -484,16 +491,16 @@ class _PollsScreenState extends State<PollsScreen> {
           child: Row(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: r.width(20),
+                height: r.height(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: darkBlue, width: 2),
+                  border: Border.all(color: darkBlue, width: r.borderWidth(2)),
                 ),
                 child: Center(
                   child: Container(
-                    width: 12,
-                    height: 12,
+                    width: r.width(12),
+                    height: r.height(12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color:
@@ -504,11 +511,11 @@ class _PollsScreenState extends State<PollsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: r.width(8)),
               Text(
                 'Open',
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: r.fontSize(15),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
@@ -516,7 +523,7 @@ class _PollsScreenState extends State<PollsScreen> {
             ],
           ),
         ),
-        const SizedBox(width: 24),
+        SizedBox(width: r.width(24)),
         // Botão Closed
         GestureDetector(
           onTap: () {
@@ -527,16 +534,16 @@ class _PollsScreenState extends State<PollsScreen> {
           child: Row(
             children: [
               Container(
-                width: 20,
-                height: 20,
+                width: r.width(20),
+                height: r.height(20),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: darkBlue, width: 2),
+                  border: Border.all(color: darkBlue, width: r.borderWidth(2)),
                 ),
                 child: Center(
                   child: Container(
-                    width: 12,
-                    height: 12,
+                    width: r.width(12),
+                    height: r.height(12),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color:
@@ -547,11 +554,11 @@ class _PollsScreenState extends State<PollsScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: r.width(8)),
               Text(
                 'Finished',
                 style: GoogleFonts.poppins(
-                  fontSize: 15,
+                  fontSize: r.fontSize(15),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
@@ -573,6 +580,7 @@ class _PollsScreenState extends State<PollsScreen> {
     required bool isExpanded,
     required VoidCallback onExpandToggle,
   }) {
+    final r = context.responsive;
     final pollId = poll['id'] ?? '';
     final title = poll['title'] ?? '';
     final createdByData = poll['created_by'];
@@ -623,12 +631,12 @@ class _PollsScreenState extends State<PollsScreen> {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(r.borderRadius(24)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              blurRadius: r.width(16),
+              offset: Offset(0, r.height(4)),
             ),
           ],
         ),
@@ -639,7 +647,7 @@ class _PollsScreenState extends State<PollsScreen> {
               top: 0,
               left: 0,
               right: 0,
-              height: 8,
+              height: r.height(8),
               child: Container(
                 decoration: BoxDecoration(
                   color: iconColor,
@@ -652,19 +660,19 @@ class _PollsScreenState extends State<PollsScreen> {
               children: [
                 // Header com ícone e título
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+                  padding: EdgeInsets.fromLTRB(r.width(20), r.height(24), r.width(20), r.height(16)),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(10),
+                        padding: EdgeInsets.all(r.width(10)),
                         decoration: BoxDecoration(
                           color: iconColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(r.borderRadius(16)),
                         ),
-                        child: Icon(icon, color: iconColor, size: 32),
+                        child: Icon(icon, color: iconColor, size: r.iconSize(32)),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: r.width(16)),
                       // Título e ícone de expandir juntos
                       Expanded(
                         child: Row(
@@ -677,31 +685,31 @@ class _PollsScreenState extends State<PollsScreen> {
                                   Text(
                                     title,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 17,
+                                      fontSize: r.fontSize(17),
                                       fontWeight: FontWeight.w800,
                                       color: darkBlue,
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: r.height(8)),
                                   Container(
-                                    width: 50,
-                                    height: 3,
+                                    width: r.width(50),
+                                    height: r.height(3),
                                     decoration: BoxDecoration(
                                       color: iconColor,
-                                      borderRadius: BorderRadius.circular(2),
+                                      borderRadius: BorderRadius.circular(r.borderRadius(2)),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: r.width(12)),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: EdgeInsets.symmetric(horizontal: r.width(12)),
                               child: Icon(
                                 isExpanded ? Icons.expand_less : Icons.expand_more,
-                                size: 22,
+                                size: r.iconSize(22),
                                 color: darkBlue,
                               ),
                             ),
@@ -716,7 +724,7 @@ class _PollsScreenState extends State<PollsScreen> {
                 if (!isBet && isExpanded)
                   // Versão expandida: mostrar todas as opções
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
+                    padding: EdgeInsets.only(left: r.width(20), right: r.width(20), bottom: r.height(10)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -725,7 +733,7 @@ class _PollsScreenState extends State<PollsScreen> {
                           final option = entry.value;
                           return Padding(
                             padding: EdgeInsets.only(
-                              bottom: idx < options.length - 1 ? 16 : 0,
+                              bottom: idx < options.length - 1 ? r.height(16) : 0,
                             ),
                             child: _buildPollOption(
                               pollId: pollId,
@@ -742,7 +750,7 @@ class _PollsScreenState extends State<PollsScreen> {
                 else if (!isBet && winningOptions.isNotEmpty)
                   // Versão colapsada: mostrar opções vencedoras (podendo haver empate)
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20, bottom: 10),
+                    padding: EdgeInsets.only(left: r.width(20), right: r.width(20), bottom: r.height(10)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -751,7 +759,7 @@ class _PollsScreenState extends State<PollsScreen> {
                           final winningOption = entry.value;
                           return Padding(
                             padding: EdgeInsets.only(
-                              bottom: idx < winningOptions.length - 1 ? 12 : 0,
+                              bottom: idx < winningOptions.length - 1 ? r.height(12) : 0,
                             ),
                             child: _buildWinningOptionCompact(
                               pollId: pollId,
@@ -768,23 +776,23 @@ class _PollsScreenState extends State<PollsScreen> {
                 // Show creator name for bets when expanded
                 if (isBet && isExpanded && createdBy != null)
                   Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 10),
+                    padding: EdgeInsets.only(left: r.width(20), right: r.width(20), top: r.height(4), bottom: r.height(10)),
                     child: Container(
-                      margin: const EdgeInsets.only(bottom: 15),
-                      padding: const EdgeInsets.only(left: 12, right: 12),
+                      margin: EdgeInsets.only(bottom: r.height(15)),
+                      padding: EdgeInsets.only(left: r.width(12), right: r.width(12)),
                       child: Row(
                         children: [
                           UserAvatarDisplay(
                             avatarUrl: createdBy['avatar_url'] as String?,
-                            radius: 24,
+                            radius: r.width(24),
                             onTap: null,
                           ),
-                          const SizedBox(width: 15),
+                          SizedBox(width: r.width(15)),
                           Expanded(
                             child: Text(
                               createdBy['name'] ?? 'Unknown',
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: r.fontSize(16),
                                 fontWeight: FontWeight.w600,
                                 color: darkBlue,
                               ),
@@ -796,7 +804,7 @@ class _PollsScreenState extends State<PollsScreen> {
                   ),
                 // Divider
                 Padding(
-                  padding: const EdgeInsets.only(left: 20, top: 6, bottom: 20, right: 20),
+                  padding: EdgeInsets.only(left: r.width(20), top: r.height(6), bottom: r.height(20), right: r.width(20)),
                   child: Row(
                     children: [
                       Expanded(
@@ -806,35 +814,35 @@ class _PollsScreenState extends State<PollsScreen> {
                             Row(
                               children: [
                                 Icon(isBet ? Icons.monetization_on : Icons.people_outline, 
-                                  size: 18, 
+                                  size: r.iconSize(18), 
                                   color: darkBlue,
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: r.width(6)),
                                 Text(
                                   isBet 
                                     ? '${options.length} ${options.length == 1 ? "Challenger" : "Challengers"}'
                                     : '$participants votes',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 13,
+                                    fontSize: r.fontSize(13),
                                     fontWeight: FontWeight.w600,
                                     color: darkBlue,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            SizedBox(height: r.height(8)),
                             Row(
                               children: [
                                 Icon(Icons.access_time, 
-                                  size: 18, 
+                                  size: r.iconSize(18), 
                                   color: darkBlue,
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: r.width(6)),
                                 Expanded(
                                   child: Text(
                                     endDate,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 13,
+                                      fontSize: r.fontSize(13),
                                       fontWeight: FontWeight.w500,
                                       color: darkBlue,
                                     ),
@@ -856,7 +864,7 @@ class _PollsScreenState extends State<PollsScreen> {
                                   child: Text(
                                     'Details',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 14,
+                                      fontSize: r.fontSize(14),
                                       fontWeight: FontWeight.w600,
                                       color: darkBlue,
                                     ),
@@ -885,6 +893,7 @@ class _PollsScreenState extends State<PollsScreen> {
     required List? votes,
     required bool isActive,
   }) {
+    final r = context.responsive;
     final optionId = option['id'] as String;
     final optionText = option['text'] as String;
     final voteCount = option['vote_count'] as int;
@@ -900,21 +909,21 @@ class _PollsScreenState extends State<PollsScreen> {
         Row(
           children: [
             Container(
-              width: 28,
-              height: 28,
+              width: r.width(28),
+              height: r.height(28),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isUserVoted ? darkBlue : Colors.grey[300]!,
-                  width: isUserVoted ? 2.5 : 2,
+                  width: r.borderWidth(isUserVoted ? 2.5 : 2),
                 ),
                 color: isUserVoted ? darkBlue.withValues(alpha: 0.08) : Colors.transparent,
               ),
               child: isUserVoted
                   ? Center(
                       child: Container(
-                        width: 14,
-                        height: 14,
+                        width: r.width(14),
+                        height: r.height(14),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: darkBlue,
@@ -923,7 +932,7 @@ class _PollsScreenState extends State<PollsScreen> {
                     )
                   : null,
             ),
-            const SizedBox(width: 14),
+            SizedBox(width: r.width(14)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -935,7 +944,7 @@ class _PollsScreenState extends State<PollsScreen> {
                         child: Text(
                           optionText,
                           style: GoogleFonts.poppins(
-                            fontSize: 15,
+                            fontSize: r.fontSize(15),
                             fontWeight: isUserVoted ? FontWeight.w700 : FontWeight.w500,
                             color: darkBlue,
                           ),
@@ -944,19 +953,19 @@ class _PollsScreenState extends State<PollsScreen> {
                       Text(
                         '$voteCount',
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
+                          fontSize: r.fontSize(15),
                           fontWeight: FontWeight.w700,
                           color: darkBlue,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: r.height(8)),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(r.borderRadius(8)),
                     child: LinearProgressIndicator(
                       value: totalVotes > 0 ? voteCount / totalVotes : 0,
-                      minHeight: 12,
+                      minHeight: r.height(12),
                       backgroundColor: Colors.grey[200],
                       valueColor: AlwaysStoppedAnimation<Color>(!isActive ? Colors.green : primaryBlue),
                     ),
@@ -977,6 +986,7 @@ class _PollsScreenState extends State<PollsScreen> {
     required bool isActive,
     required int maxVotes,
   }) {
+    final r = context.responsive;
     final optionId = option['id'] as String;
     final optionText = option['text'] as String;
     final voteCount = option['vote_count'] as int;
@@ -1000,21 +1010,21 @@ class _PollsScreenState extends State<PollsScreen> {
                 GestureDetector(
                   onTap: isActive ? () => _castVote(pollId, optionId) : null,
                   child: Container(
-                    width: 28,
-                    height: 28,
+                    width: r.width(28),
+                    height: r.height(28),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: isSelected ? darkBlue : Colors.grey[300]!,
-                        width: isSelected ? 2.5 : 2,
+                        width: r.borderWidth(isSelected ? 2.5 : 2),
                       ),
                       color: isSelected ? darkBlue.withValues(alpha: 0.08) : Colors.transparent,
                     ),
                     child: isSelected
                         ? Center(
                             child: Container(
-                              width: 14,
-                              height: 14,
+                              width: r.width(14),
+                              height: r.height(14),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: darkBlue,
@@ -1024,7 +1034,7 @@ class _PollsScreenState extends State<PollsScreen> {
                         : null,
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: r.width(14)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1036,7 +1046,7 @@ class _PollsScreenState extends State<PollsScreen> {
                             child: Text(
                               optionText,
                               style: GoogleFonts.poppins(
-                                fontSize: 15,
+                                fontSize: r.fontSize(15),
                                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 color: darkBlue,
                               ),
@@ -1045,14 +1055,14 @@ class _PollsScreenState extends State<PollsScreen> {
                           Text(
                             '$voteCount',
                             style: GoogleFonts.poppins(
-                              fontSize: 15,
+                              fontSize: r.fontSize(15),
                               fontWeight: FontWeight.w700,
                               color: darkBlue,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: r.height(8)),
                       _buildVoteProgressBar(option, votes, isWinner)
                     ],
                   ),
@@ -1081,6 +1091,7 @@ class _PollsScreenState extends State<PollsScreen> {
   }
 
   Widget _buildVoteProgressBar(Map<String, dynamic> option, List? votes, bool isWinner) {
+    final r = context.responsive;
     final voteCount = option['vote_count'] as int;
     final totalVotes = votes?.length ?? 0;
 
@@ -1088,10 +1099,10 @@ class _PollsScreenState extends State<PollsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(r.borderRadius(8)),
           child: LinearProgressIndicator(
             value: totalVotes > 0 ? voteCount / totalVotes : 0,
-            minHeight: 12,
+            minHeight: r.height(12),
             backgroundColor: Colors.grey[200],
             valueColor: AlwaysStoppedAnimation<Color>(isWinner ? Colors.green : primaryBlue),
           ),

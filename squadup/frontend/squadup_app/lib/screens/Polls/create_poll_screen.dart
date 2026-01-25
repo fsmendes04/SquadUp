@@ -7,6 +7,8 @@ import '../../services/polls_service.dart';
 import '../../widgets/header.dart';
 import '../../services/groups_service.dart';
 import '../../widgets/avatar_widget.dart';
+import '../../config/responsive_utils.dart';
+import '../../widgets/squadup_date_picker_dialog.dart';
 
 class CreatePollScreen extends StatefulWidget {
   final String groupId;
@@ -114,6 +116,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   void _addOption() {
+    final r = context.responsive;
     if (_options.length < 10) {
       setState(() {
         _options.add(_createOptionData());
@@ -125,9 +128,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(r.borderRadius(12)),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(r.width(16)),
         ),
       );
     }
@@ -143,24 +146,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Future<void> _selectEndDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showSquadUpDatePicker(
       context: context,
       initialDate: DateTime.now().add(const Duration(days: 7)),
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryBlue,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: darkBlue,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
@@ -171,6 +161,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Future<void> _createPoll() async {
+    final r = context.responsive;
     if (_formKey.currentState!.validate()) {
       if (_endDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -179,9 +170,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(r.borderRadius(12)),
             ),
-            margin: const EdgeInsets.all(16),
+            margin: EdgeInsets.all(r.width(16)),
           ),
         );
         return;
@@ -262,9 +253,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                 backgroundColor: Colors.green,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(r.borderRadius(12)),
                 ),
-                margin: const EdgeInsets.all(16),
+                margin: EdgeInsets.all(r.width(16)),
               ),
             );
             Navigator.pop(context, true);
@@ -280,9 +271,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(r.borderRadius(12)),
               ),
-              margin: const EdgeInsets.all(16),
+              margin: EdgeInsets.all(r.width(16)),
             ),
           );
         }
@@ -296,6 +287,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -309,10 +301,10 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
               child: Form(
                 key: _formKey,
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(r.width(20)),
                   children: [
                     _buildSectionTitle('Basic Information'),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.height(16)),
                     _buildTextField(
                       controller: _titleController,
                       label: 'Title',
@@ -325,23 +317,23 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: r.height(20)),
                     _buildSectionTitle('Poll Type'),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.height(12)),
                     _buildPollTypeSelector(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: r.height(20)),
                     _buildSectionTitle('Answer Options'),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.height(16)),
                     ..._buildOptionFields(),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.height(12)),
                     _buildAddOptionButton(),
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.height(24)),
                     _buildSectionTitle('End Date'),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.height(12)),
                     _buildDateSelector(),
-                    const SizedBox(height: 32),
+                    SizedBox(height: r.height(32)),
                     _buildCreateButton(),
-                    const SizedBox(height: 20),
+                    SizedBox(height: r.height(20)),
                   ],
                 ),
               ),
@@ -353,10 +345,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final r = context.responsive;
     return Text(
       title,
       style: GoogleFonts.poppins(
-        fontSize: 16,
+        fontSize: r.fontSize(16),
         fontWeight: FontWeight.w600,
         color: darkBlue,
       ),
@@ -382,10 +375,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
 
 
   List<Widget> _buildOptionFields() {
+    final r = context.responsive;
     return List.generate(_options.length, (index) {
       final option = _options[index];
       return Padding(
-        padding: const EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.only(bottom: r.height(12)),
         child: Row(
           children: [
             Expanded(
@@ -438,10 +432,11 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Widget _buildPollTypeSelector() {
+    final r = context.responsive;
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(r.borderRadius(12)),
       ),
       child: Column(
         children: [
@@ -449,7 +444,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             title: Text(
               'Voting',
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: r.fontSize(14),
                 fontWeight: FontWeight.w500,
                 color: darkBlue,
               ),
@@ -468,7 +463,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
             title: Text(
               'Betting',
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: r.fontSize(14),
                 fontWeight: FontWeight.w500,
                 color: darkBlue,
               ),
@@ -488,6 +483,7 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Widget _buildAddOptionButton() {
+    final r = context.responsive;
     final bool canAddMore = _options.length < 10;
     return SquadUpButton(
       text: canAddMore 
@@ -496,9 +492,9 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
       onPressed: canAddMore ? _addOption : () {},
       backgroundColor: canAddMore ? primaryBlue : Colors.grey,
       textColor: Colors.white,
-      borderRadius: 12,
+      borderRadius: r.borderRadius(12),
       width: double.infinity,
-      height: 48,
+      height: r.height(48),
       buttonKey: const Key('add_option_button'),
     );
   }
@@ -520,13 +516,14 @@ class _CreatePollScreenState extends State<CreatePollScreen> {
   }
 
   Widget _buildCreateButton() {
+    final r = context.responsive;
     return SquadUpButton(
       text: _isCreating ? 'Creating...' : 'Create Poll',
       onPressed: _isCreating ? () {} : _createPoll,
       backgroundColor: darkBlue,
       width: double.infinity,
-      height: 55,
-      borderRadius: 12,
+      height: r.height(55),
+      borderRadius: r.borderRadius(12),
     );
   }
 }
@@ -557,6 +554,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -568,19 +566,19 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 6),
+                padding: EdgeInsets.only(left: r.width(24), right: r.width(24), top: r.height(6)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Proposer',
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
+                        fontSize: r.fontSize(20),
                         fontWeight: FontWeight.w600,
                         color: widget.darkBlue,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.height(16)),
                     Row(
                       children: [
                         Expanded(
@@ -597,7 +595,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                             },
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: r.width(12)),
                         Expanded(
                           child: _buildRewardTypeButton(
                             label: 'Other',
@@ -615,7 +613,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ],
                     ),
                     if (widget.option.proposerRewardType == 'amount') ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: r.height(12)),
                       SquadUpInput(
                         controller: widget.option.proposerRewardAmountController,
                         label: 'Amount',
@@ -624,7 +622,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ),
                     ],
                     if (widget.option.proposerRewardType == 'other') ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: r.height(12)),
                       SquadUpInput(
                         controller: widget.option.proposerRewardTextController,
                         label: 'Reward',
@@ -632,7 +630,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ),
                     ],
                     
-                    const SizedBox(height: 10),
+                    SizedBox(height: r.height(10)),
                     Theme(
                       data: Theme.of(context).copyWith(
                         dividerColor: Colors.transparent,
@@ -652,7 +650,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                         title: Text(
                           'Challenger',
                           style: GoogleFonts.poppins(
-                            fontSize: 20,
+                            fontSize: r.fontSize(20),
                             fontWeight: FontWeight.w600,
                             color: widget.darkBlue,
                           ),
@@ -668,11 +666,11 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                                 widget.groupMembers.isEmpty
                                     ? Center(
                                         child: Padding(
-                                          padding: const EdgeInsets.all(16),
+                                          padding: EdgeInsets.all(r.width(16)),
                                           child: Text(
                                             'Loading members...',
                                             style: GoogleFonts.poppins(
-                                              fontSize: 12,
+                                              fontSize: r.fontSize(12),
                                               color: Colors.grey,
                                             ),
                                           ),
@@ -694,8 +692,8 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                                               });
                                             },
                                             child: Container(
-                                              margin: const EdgeInsets.only(bottom: 8),
-                                              padding: const EdgeInsets.all(12),
+                                              margin: EdgeInsets.only(bottom: r.height(8)),
+                                              padding: EdgeInsets.all(r.width(12)),
                                               decoration: BoxDecoration(
                                                 color: isSelected 
                                                     ? widget.primaryBlue.withValues(alpha: 0.1)
@@ -704,9 +702,9 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                                                   color: isSelected 
                                                       ? widget.primaryBlue 
                                                       : Colors.grey.shade300,
-                                                  width: isSelected ? 2 : 1,
+                                                  width: r.borderWidth(isSelected ? 2 : 1),
                                                 ),
-                                                borderRadius: BorderRadius.circular(12),
+                                                borderRadius: BorderRadius.circular(r.borderRadius(12)),
                                               ),
                                               child: Row(
                                                 children: [
@@ -746,7 +744,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: r.height(16)),
                     
                     Row(
                       children: [
@@ -764,7 +762,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                             },
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: r.width(12)),
                         Expanded(
                           child: _buildRewardTypeButton(
                             label: 'Other',
@@ -782,7 +780,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ],
                     ),
                     if (widget.option.challengerRewardType == 'amount') ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: r.height(12)),
                       SquadUpInput(
                         controller: widget.option.challengerRewardAmountController,
                         label: 'Amount',
@@ -791,7 +789,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ),
                     ],
                     if (widget.option.challengerRewardType == 'other') ...[
-                      const SizedBox(height: 12),
+                      SizedBox(height: r.height(12)),
                       SquadUpInput(
                         controller: widget.option.challengerRewardTextController,
                         label: 'Reward',
@@ -799,7 +797,7 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       ),
                     ],
                     
-                    const SizedBox(height: 24),
+                    SizedBox(height: r.height(24)),
                     SquadUpButton(
                       text: 'Done',
                       onPressed: () {
@@ -808,8 +806,8 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
                       },
                       backgroundColor: widget.darkBlue,
                       width: double.infinity,
-                      height: 48,
-                      borderRadius: 12,
+                      height: r.height(48),
+                      borderRadius: r.borderRadius(12),
                     ),
                   ],
                 ),
@@ -827,17 +825,18 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final r = context.responsive;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: EdgeInsets.symmetric(vertical: r.height(12)),
         decoration: BoxDecoration(
           color: isSelected ? widget.primaryBlue : Colors.white,
           border: Border.all(
             color: isSelected ? widget.primaryBlue : Colors.grey.shade300,
-            width: 2,
+            width: r.borderWidth(2),
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.borderRadius(12)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -845,13 +844,13 @@ class _RewardSettingsScreenState extends State<_RewardSettingsScreen> {
             Icon(
               icon,
               color: isSelected ? Colors.white : Colors.grey.shade600,
-              size: 20,
+              size: r.iconSize(20),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: r.width(8)),
             Text(
               label,
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: r.fontSize(14),
                 fontWeight: FontWeight.w600,
                 color: isSelected ? Colors.white : Colors.grey.shade600,
               ),

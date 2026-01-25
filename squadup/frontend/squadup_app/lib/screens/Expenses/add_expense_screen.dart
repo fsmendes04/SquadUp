@@ -10,6 +10,8 @@ import '../../models/groups.dart';
 import '../../widgets/squadup_button.dart';
 import '../../widgets/squadup_input.dart';
 import '../../widgets/squadup_date_picker.dart';
+import '../../widgets/squadup_date_picker_dialog.dart';
+import '../../config/responsive_utils.dart';
 
 class AddExpenseScreen extends StatefulWidget {
   final String? groupId;
@@ -108,23 +110,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showSquadUpDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: primaryBlue,
-              onPrimary: Colors.white,
-              onSurface: darkBlue,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null && picked != _selectedDate) {
@@ -181,6 +171,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
 
+    final r = context.responsive;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -192,8 +183,8 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
         ),
         backgroundColor: isError ? Colors.red[600] : primaryBlue,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.borderRadius(12))),
+        margin: EdgeInsets.all(r.width(16)),
         duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
@@ -201,6 +192,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return LoadingOverlay(
       isLoading: _isLoadingMembers || _isLoading,
       message: _isLoadingMembers ? 'Loading members...' : 'Creating expense...',
@@ -216,24 +208,24 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               // Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
+                  padding: EdgeInsets.all(r.width(20)),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildSectionTitle('Expense Details'),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
                         _buildDescriptionField(),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildAmountField(),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildDateSelector(),
-                        const SizedBox(height: 28),
+                        SizedBox(height: r.height(28)),
                         _buildSectionTitle('Category'),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
                         _buildCategorySelector(),
-                        const SizedBox(height: 28),
+                        SizedBox(height: r.height(28)),
                         _buildSectionTitle('Who Paid?'),
                         const SizedBox(height: 16),
                         _buildPayerSelector(),
@@ -258,10 +250,11 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
 
   Widget _buildSectionTitle(String title) {
+    final r = context.responsive;
     return Text(
       title,
       style: GoogleFonts.poppins(
-        fontSize: 16,
+        fontSize: r.fontSize(16),
         fontWeight: FontWeight.w600,
         color: darkBlue,
       ),
@@ -321,13 +314,14 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildCategorySelector() {
+    final r = context.responsive;
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 12,
+        crossAxisSpacing: r.width(16),
+        mainAxisSpacing: r.height(12),
         childAspectRatio: 1,
       ),
       itemCount: _categories.length,
@@ -346,13 +340,13 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   isSelected
                       ? primaryBlue.withValues(alpha: 0.15)
                       : darkBlue.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(r.borderRadius(16)),
               border: Border.all(
                 color:
                     isSelected
                         ? primaryBlue
                         : Colors.grey.withValues(alpha: 0.3),
-                width: isSelected ? 2.5 : 1,
+                width: r.borderWidth(isSelected ? 2.5 : 1),
               ),
             ),
             child: Column(
@@ -361,9 +355,9 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 Icon(
                   category['icon'] as IconData,
                   color: isSelected ? primaryBlue :darkBlue,
-                  size: 28,
+                  size: r.iconSize(28),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: r.height(6)),
               ],
             ),
           ),
@@ -373,17 +367,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildPayerSelector() {
+    final r = context.responsive;
     if (_groupMembers.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(r.width(20)),
         decoration: BoxDecoration(
           color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.borderRadius(12)),
           border: Border.all(color: Colors.grey[200]!),
         ),
         child: Text(
           'No members found',
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+          style: GoogleFonts.poppins(fontSize: r.fontSize(14), color: Colors.grey[600]),
         ),
       );
     }
@@ -399,26 +394,26 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                 });
               },
               child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
+                margin: EdgeInsets.only(bottom: r.height(12)),
+                padding: EdgeInsets.all(r.width(16)),
                 decoration: BoxDecoration(
                   color:
                       isSelected
                           ? primaryBlue.withValues(alpha: 0.1)
                           : Colors.grey[50],
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(r.borderRadius(12)),
                   border: Border.all(
                     color:
                         isSelected
                             ? primaryBlue
                             : Colors.grey.withValues(alpha: 0.3),
-                    width: isSelected ? 2 : 1,
+                    width: r.borderWidth(isSelected ? 2 : 1),
                   ),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
-                      radius: 20,
+                      radius: r.width(20),
                       backgroundColor:
                           isSelected ? primaryBlue : Colors.grey[300],
                       backgroundImage:
@@ -438,12 +433,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                               )
                               : null,
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: r.width(12)),
                     Expanded(
                       child: Text(
                         member.name ?? member.userId,
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: r.fontSize(14),
                           fontWeight:
                               isSelected ? FontWeight.w600 : FontWeight.w500,
                           color: isSelected ? primaryBlue : darkBlue,
@@ -451,12 +446,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       ),
                     ),
                     if (isSelected)
-                      Icon(Icons.check_circle, color: primaryBlue, size: 24)
+                      Icon(Icons.check_circle, color: primaryBlue, size: r.iconSize(24))
                     else
                       Icon(
                         Icons.radio_button_unchecked,
                         color: Colors.grey[400],
-                        size: 24,
+                        size: r.iconSize(24),
                       ),
                   ],
                 ),
@@ -467,17 +462,18 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildParticipantsSelector() {
+    final r = context.responsive;
     if (_groupMembers.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(r.width(20)),
         decoration: BoxDecoration(
           color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(r.borderRadius(12)),
           border: Border.all(color: Colors.grey[200]!),
         ),
         child: Text(
           'No members found',
-          style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey[600]),
+          style: GoogleFonts.poppins(fontSize: r.fontSize(14), color: Colors.grey[600]),
         ),
       );
     }
@@ -497,30 +493,30 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             });
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(22),
+            margin: EdgeInsets.only(bottom: r.height(12)),
+            padding: EdgeInsets.all(r.width(22)),
             decoration: BoxDecoration(
               color: _selectedParticipantIds.length == _groupMembers.length 
               ? primaryBlue.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(r.borderRadius(12)),
               border: Border.all(
                 color: _selectedParticipantIds.length == _groupMembers.length 
                 ? primaryBlue.withValues(alpha: 0.3) 
                 : Colors.grey.withValues(alpha: 0.3),
-                width: 1,
+                width: r.borderWidth(1),
               ),
             ),
             child: Row(
               children: [
-                Icon(Icons.group, color: _selectedParticipantIds.length == _groupMembers.length ? primaryBlue : Colors.grey, size: 24),
-                const SizedBox(width: 12),
+                Icon(Icons.group, color: _selectedParticipantIds.length == _groupMembers.length ? primaryBlue : Colors.grey, size: r.iconSize(24)),
+                SizedBox(width: r.width(12)),
                 Expanded(
                   child: Text(
                     _selectedParticipantIds.length == _groupMembers.length
                         ? 'Deselect All'
                         : 'Select All',
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: r.fontSize(14),
                       fontWeight: FontWeight.w600,
                       color: _selectedParticipantIds.length == _groupMembers.length
                           ? primaryBlue
@@ -535,7 +531,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   color: _selectedParticipantIds.length == _groupMembers.length
                       ? primaryBlue
                       : Colors.grey,
-                  size: 24,
+                  size: r.iconSize(24),
                 ),
               ],
             ),
@@ -556,26 +552,26 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               });
             },
             child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
+              margin: EdgeInsets.only(bottom: r.height(12)),
+              padding: EdgeInsets.all(r.width(16)),
               decoration: BoxDecoration(
                 color:
                     isSelected
                         ? primaryBlue.withValues(alpha: 0.1)
                         : Colors.grey[50],
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(r.borderRadius(12)),
                 border: Border.all(
                   color:
                       isSelected
                           ? primaryBlue
                           : Colors.grey.withValues(alpha: 0.3),
-                  width: isSelected ? 2 : 1,
+                  width: r.borderWidth(isSelected ? 2 : 1),
                 ),
               ),
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 20,
+                    radius: r.width(20),
                     backgroundColor:
                         isSelected ? primaryBlue : Colors.grey[300],
                     backgroundImage:
@@ -595,12 +591,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                             )
                             : null,
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: r.width(12)),
                   Expanded(
                     child: Text(
                       member.name ?? member.userId,
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
+                        fontSize: r.fontSize(14),
                         fontWeight:
                             isSelected ? FontWeight.w600 : FontWeight.w500,
                         color: isSelected ? primaryBlue : darkBlue,
@@ -608,12 +604,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     ),
                   ),
                   if (isSelected)
-                    Icon(Icons.check_box, color: primaryBlue, size: 24)
+                    Icon(Icons.check_box, color: primaryBlue, size: r.iconSize(24))
                   else
                     Icon(
                       Icons.check_box_outline_blank,
                       color: Colors.grey[400],
-                      size: 24,
+                      size: r.iconSize(24),
                     ),
                 ],
               ),
@@ -625,16 +621,17 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   }
 
   Widget _buildCreateButton() {
+    final r = context.responsive;
     return SquadUpButton(
       text: 'Add Expense',
       onPressed: _createExpense,
       isLoading: _isLoading,
       width: double.infinity,
-      height: 56,
+      height: r.height(56),
       backgroundColor: darkBlue,
       disabledColor: primaryBlue.withAlpha(128),
       textColor: Colors.white,
-      borderRadius: 16,
+      borderRadius: r.borderRadius(16),
     );
   }
 }

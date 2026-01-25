@@ -5,6 +5,7 @@ import '../../services/payments_service.dart';
 import '../../services/storage_service.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../widgets/header.dart';
+import '../../config/responsive_utils.dart';
 
 class SettleUpScreen extends StatefulWidget {
   final String groupId;
@@ -106,36 +107,37 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     }
 
     if (_errorMessage != null) {
+      final r = context.responsive;
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(r.width(24.0)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.error_outline,
-                size: 64,
+                size: r.iconSize(64),
                 color: Colors.red[300],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.height(16)),
               Text(
                 'Error',
                 style: GoogleFonts.poppins(
-                  fontSize: 20,
+                  fontSize: r.fontSize(20),
                   fontWeight: FontWeight.w600,
                   color: Colors.red[700],
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: r.height(8)),
               Text(
                 _errorMessage!,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: r.fontSize(14),
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: r.height(24)),
               ElevatedButton.icon(
                 onPressed: _loadSettleUpTransactions,
                 icon: const Icon(Icons.refresh),
@@ -152,32 +154,33 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     }
 
     if (_transactions == null || _transactions!.isEmpty) {
+      final r = context.responsive;
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 0.0),
+        padding: EdgeInsets.symmetric(horizontal: r.width(32.0), vertical: 0.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 350,
-              height: 350,
+              width: r.width(350),
+              height: r.height(350),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
                   child: Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 350,
-                    height: 350,
+                    width: r.width(350),
+                    height: r.height(350),
                     fit: BoxFit.contain,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 70),
+            SizedBox(height: r.height(70)),
             Text(
               "You're all settled up!",
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: r.fontSize(22),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
@@ -188,16 +191,17 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
       );
     }
 
+    final r = context.responsive;
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 14.0),
+      padding: EdgeInsets.symmetric(horizontal: r.width(14.0)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
           ..._transactions!.asMap().entries.map((entry) {
             return _buildTransactionCard(entry.value, entry.key + 1, _currentUserId);
           }).toList(),
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
         ],
       ),
     );
@@ -206,6 +210,7 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
   // _buildHeader removido, pois agora usamos CustomHeader
 
   Widget _buildTransactionCard(SettleUpTransaction transaction, int step, String? currentUserId) {
+    final r = context.responsive;
     // Determine if current user is involved
     final isUserPayer = currentUserId == transaction.from;
     final isUserReceiver = currentUserId == transaction.to;
@@ -227,16 +232,16 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     final toTextColor = isUserReceiver ? primaryBlue : darkBlue;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: r.height(12)),
+      padding: EdgeInsets.all(r.width(16)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(r.borderRadius(16)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: r.width(10),
+            offset: Offset(0, r.height(2)),
           ),
         ],
         border: Border.all(color: Colors.grey[200]!),
@@ -247,8 +252,8 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: r.width(36),
+                height: r.width(36),
                 decoration: BoxDecoration(
                   color: darkBlue,
                   shape: BoxShape.circle,
@@ -257,19 +262,19 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
                   child: Text(
                     '$step',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: r.fontSize(16),
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: r.width(12)),
               Expanded(
                 child: Text(
                   'Step $step',
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
+                    fontSize: r.fontSize(15),
                     fontWeight: FontWeight.w600,
                     color: darkBlue,
                   ),
@@ -278,14 +283,14 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
               Text(
                 '€${transaction.amount.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
+                  fontSize: r.fontSize(18),
                   fontWeight: FontWeight.w700,
                   color: amountColor,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: r.height(16)),
           Row(
             children: [
               Expanded(
@@ -296,11 +301,11 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                padding: EdgeInsets.symmetric(horizontal: r.width(12)),
                 child: Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: darkBlue,
-                  size: 24,
+                  size: r.iconSize(24),
                 ),
               ),
               Expanded(
@@ -322,18 +327,19 @@ class _SettleUpScreenState extends State<SettleUpScreen> {
     Color backgroundColor,
     Color textColor,
   ) {
+    final r = context.responsive;
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: EdgeInsets.symmetric(vertical: r.height(12), horizontal: r.width(8)),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(r.borderRadius(10)),
       ),
       child: Column(
         children: [
           Text(
             name,
             style: GoogleFonts.poppins(
-              fontSize: 13,
+              fontSize: r.fontSize(13),
               fontWeight: FontWeight.w600,
               color: textColor,
             ),

@@ -6,6 +6,7 @@ import '../../widgets/loading_overlay.dart';
 import '../../services/polls_service.dart';
 import '../../services/groups_service.dart';
 import '../../models/groups.dart';
+import '../../config/responsive_utils.dart';
 
 class PollDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> poll;
@@ -84,6 +85,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final pollIsClosed = widget.poll['status'] == 'closed' || 
       (widget.poll['closed_at'] != null && 
        DateTime.parse(widget.poll['closed_at']).isBefore(DateTime.now()));
@@ -122,14 +124,14 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(r.width(20)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildPollHeader(pollIsClosed),
-                      const SizedBox(height: 24),
+                      SizedBox(height: r.height(24)),
                       _buildPollInfo(pollIsClosed),
-                      const SizedBox(height: 24),
+                      SizedBox(height: r.height(24)),
                       _buildOptionsSection(options, maxVotes, pollIsClosed),
                     ],
                   ),
@@ -143,21 +145,22 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
   }
 
   Widget _buildPollHeader(bool isClosed) {
+    final r = context.responsive;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(r.width(20)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [primaryBlue, darkBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(r.borderRadius(20)),
         boxShadow: [
           BoxShadow(
             color: (primaryBlue).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            blurRadius: r.width(15),
+            offset: Offset(0, r.height(5)),
           ),
         ],
       ),
@@ -165,25 +168,25 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: EdgeInsets.symmetric(horizontal: r.width(12), vertical: r.height(6)),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(r.borderRadius(8)),
             ),
             child: Text(
               isClosed ? 'CLOSED' : 'ACTIVE',
               style: GoogleFonts.poppins(
-                fontSize: 12,
+                fontSize: r.fontSize(12),
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: r.height(12)),
           Text(
             widget.poll['title'] ?? 'Poll',
             style: GoogleFonts.poppins(
-              fontSize: 20,
+              fontSize: r.fontSize(20),
               fontWeight: FontWeight.w700,
               color: Colors.white,
             ),
@@ -194,6 +197,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
   }
 
   Widget _buildPollInfo(bool isClosed) {
+    final r = context.responsive;
     final totalVotes = (widget.poll['votes'] as List?)?.length ?? 0;
     final options = (widget.poll['options'] as List?)?.length ?? 0;
     final closedAt = widget.poll['closed_at'] != null
@@ -210,23 +214,23 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
     final votesCount = isBet ? options : totalVotes;
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(r.width(20)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(r.borderRadius(16)),
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: r.width(10),
+            offset: Offset(0, r.height(2)),
           ),
         ],
       ),
       child: Column(
         children: [
           _buildInfoRow(Icons.people_outline, votesLabel, '$votesCount'),
-          const SizedBox(height: 16),
+          SizedBox(height: r.height(16)),
           _buildInfoRow(
             isClosed ? Icons.event_busy : Icons.access_time,
             isClosed ? 'Closed' : 'Closes',
@@ -238,24 +242,25 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
+    final r = context.responsive;
     return Row(
       children: [
-        Icon(icon, size: 20, color: darkBlue),
-        const SizedBox(width: 12),
+        Icon(icon, size: r.iconSize(20), color: darkBlue),
+        SizedBox(width: r.width(12)),
         Text(
           '$label:',
           style: GoogleFonts.poppins(
-            fontSize: 14,
+            fontSize: r.fontSize(14),
             fontWeight: FontWeight.w600,
             color: Colors.grey[600],
           ),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: r.width(8)),
         Expanded(
           child: Text(
             value,
             style: GoogleFonts.poppins(
-              fontSize: 14,
+              fontSize: r.fontSize(14),
               fontWeight: FontWeight.w500,
               color: darkBlue,
             ),
@@ -267,6 +272,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
   }
 
   Widget _buildOptionsSection(List<Map<String, dynamic>> options, int maxVotes, bool isClosed) {
+    final r = context.responsive;
     final isBet = widget.poll['type'] == 'betting';
     
     return Column(
@@ -275,16 +281,16 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
         Text(
           isBet ? 'Bets' : 'Votes',
           style: GoogleFonts.poppins(
-            fontSize: 18,
+            fontSize: r.fontSize(18),
             fontWeight: FontWeight.w700,
             color: darkBlue,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: r.height(16)),
         ...options.map((option) {
           final isWinner = isClosed && option['vote_count'] == maxVotes && maxVotes > 0;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+            padding: EdgeInsets.only(bottom: r.height(16)),
             child: _buildOptionCard(option, isWinner, isClosed, isBet),
           );
         }),
@@ -293,6 +299,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
   }
 
   Widget _buildOptionCard(Map<String, dynamic> option, bool isWinner, bool isClosed, bool isBet) {
+    final r = context.responsive;
     final optionId = option['id'] as String;
     final optionText = option['text'] as String;
     final voteCount = option['vote_count'] as int;
@@ -333,16 +340,16 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(r.borderRadius(16)),
           border: Border.all(
             color: Colors.grey[200]!,
-            width: 1,
+            width: r.borderWidth(1),
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+              blurRadius: r.width(10),
+              offset: Offset(0, r.height(2)),
             ),
           ],
         ),
@@ -350,7 +357,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(r.width(16)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -358,23 +365,23 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                     children: [
                       if (isWinner)
                         Container(
-                          padding: const EdgeInsets.all(6),
+                          padding: EdgeInsets.all(r.width(6)),
                           decoration: BoxDecoration(
                             color: Colors.green,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(r.borderRadius(8)),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.emoji_events,
                             color: Colors.white,
-                            size: 16,
+                            size: r.iconSize(16),
                           ),
                         ),
-                      if (isWinner) const SizedBox(width: 12),
+                      if (isWinner) SizedBox(width: r.width(12)),
                       Expanded(
                         child: Text(
                           optionText,
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
+                            fontSize: r.fontSize(16),
                             fontWeight: FontWeight.w700,
                             color: darkBlue,
                           ),
@@ -382,25 +389,25 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                       ),
                       if (isBet || voters.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: EdgeInsets.only(right: r.width(8)),
                           child: Icon(
                             isExpanded ? Icons.expand_less : Icons.expand_more,
                             color: darkBlue,
-                            size: 24,
+                            size: r.iconSize(24),
                           ),
                         ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: EdgeInsets.symmetric(horizontal: r.width(12), vertical: r.height(6)),
                         decoration: BoxDecoration(
                           color: isWinner 
                             ? Colors.green.withValues(alpha: 0.15)
                             : darkBlue.withValues(alpha: 0.10),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(r.borderRadius(8)),
                         ),
                         child: Text(
                           '$voteCount',
                           style: GoogleFonts.poppins( 
-                            fontSize: 16,
+                            fontSize: r.fontSize(16),
                             fontWeight: FontWeight.w700,
                             color: isWinner ? Colors.green : darkBlue,
                           ),
@@ -410,7 +417,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                   ),
                   // Show progress bar only for voting polls, not for bets
                   if (!isBet) ...[
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.height(12)),
                     Row(
                       children: [
                         Expanded(
@@ -421,21 +428,21 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                                 alignment: Alignment.centerLeft,
                                 children: [
                                   Container(
-                                    height: 14,
+                                    height: r.height(14),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[200],
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(r.borderRadius(8)),
                                     ),
                                   ),
                                   if (percent > 0)
                                     Container(
-                                      height: 12,
+                                      height: r.height(12),
                                       width: constraints.maxWidth * percent,
                                       decoration: BoxDecoration(
                                         color: isWinner ? Colors.green : primaryBlue,
                                         borderRadius: BorderRadius.horizontal(
-                                          left: const Radius.circular(8),
-                                          right: percent >= 0.999 ? const Radius.circular(8) : const Radius.circular(0),
+                                          left: Radius.circular(r.borderRadius(8)),
+                                          right: percent >= 0.999 ? Radius.circular(r.borderRadius(8)) : Radius.circular(0),
                                         ),
                                       ),
                                     ),
@@ -444,11 +451,11 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                             },
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: r.width(8)),
                         Text(
                           '${totalVotes > 0 ? ((voteCount / totalVotes * 100).toStringAsFixed(1)) : "0"}%',
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
+                            fontSize: r.fontSize(12),
                             fontWeight: FontWeight.w600,
                             color: Colors.grey[600],
                           ),
@@ -462,7 +469,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
             // For bets: show challenger and reward
             if (isBet && isExpanded) ...[
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: EdgeInsets.fromLTRB(r.width(16), 0, r.width(16), r.height(16)),
                 child: Row(
                   children: [
                     if (challenger != null)
@@ -473,25 +480,25 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                             Text(
                               'Challenger',
                               style: GoogleFonts.poppins(
-                                fontSize: 12,
+                                fontSize: r.fontSize(12),
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[600],
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: r.height(12)),
                             Row(
                               children: [
                                 UserAvatarDisplay(
                                   avatarUrl: challengerAvatar,
-                                  radius: 16,
+                                  radius: r.width(16),
                                   onTap: null,
                                 ),
-                                const SizedBox(width: 8),
+                                SizedBox(width: r.width(8)),
                                 Expanded(
                                   child: Text(
                                     challenger,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 13,
+                                      fontSize: r.fontSize(13),
                                       fontWeight: FontWeight.w600,
                                       color: darkBlue,
                                     ),
@@ -503,7 +510,7 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                         ),
                       ),
                     if (challenger != null && (reward != null || rewardText != null))
-                      const SizedBox(width: 25),
+                      SizedBox(width: r.width(25)),
                     if (reward != null || rewardText != null)
                       Expanded(
                         child: Column(
@@ -512,21 +519,21 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
                             Text(
                               'Reward',
                               style: GoogleFonts.poppins(
-                                fontSize: 12,
+                                fontSize: r.fontSize(12),
                                 fontWeight: FontWeight.w600,
                                 color: Colors.grey[600],
                               ),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: r.height(12)),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: EdgeInsets.symmetric(horizontal: r.width(10), vertical: r.height(6)),
                               child: Row(
                                 children: [
                                   Expanded(
                                     child: Text(
                                       rewardText ?? (reward?.toString() ?? 'No reward'),
                                       style: GoogleFonts.poppins(
-                                        fontSize: 12,
+                                        fontSize: r.fontSize(12),
                                         fontWeight: FontWeight.w600,
                                         color: darkBlue,
                                       ),
@@ -547,37 +554,37 @@ class _PollDetailsScreenState extends State<PollDetailsScreen> {
             // For voting polls: show voters
             else if (!isBet && voters.isNotEmpty && isExpanded) ...[
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                padding: EdgeInsets.fromLTRB(r.width(16), r.height(12), r.width(16), r.height(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Voters',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: r.fontSize(12),
                         fontWeight: FontWeight.w600,
                         color: Colors.grey[600],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: r.height(12)),
                     ...voters.map((voter) {
                       final userName = voter['user_name'] ?? 'User';
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 15),
-                        padding: const EdgeInsets.only(left: 12, right: 12),
+                        margin: EdgeInsets.only(bottom: r.height(15)),
+                        padding: EdgeInsets.only(left: r.width(12), right: r.width(12)),
                         child: Row(
                           children: [
                             UserAvatarDisplay(
                               avatarUrl: voter['avatar_url'],
-                              radius: 18,
+                              radius: r.width(18),
                               onTap: null,
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: r.width(12)),
                             Expanded(
                               child: Text(
                                 userName,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14,
+                                  fontSize: r.fontSize(14),
                                   fontWeight: FontWeight.w600,
                                   color: darkBlue,
                                 ),

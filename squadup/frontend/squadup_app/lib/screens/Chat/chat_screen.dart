@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'individual_screen.dart';
 import '../../widgets/header_avatar.dart';
+import '../../config/responsive_utils.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key});
@@ -107,6 +108,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final primaryBlue = const Color(0xFF64AFE8);
     final darkBlue = const Color(0xFF1D385F);
 
@@ -131,19 +133,19 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                     avatarRadius: 0,
                   ),
                   Positioned(
-                    right: 20,
+                    right: r.width(20),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: Icon(Icons.search, size: 28, color: darkBlue),
+                          icon: Icon(Icons.search, size: r.iconSize(28), color: darkBlue),
                           onPressed: () {
                             // Search functionality
                           },
                           tooltip: 'Search',
                         ),
                         IconButton(
-                          icon: Icon(Icons.add_circle_outline, size: 28, color: primaryBlue),
+                          icon: Icon(Icons.add_circle_outline, size: r.iconSize(28), color: primaryBlue),
                           onPressed: () {
                             // New chat functionality
                           },
@@ -154,30 +156,30 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: r.height(10)),
               
               // Tab Bar
               Container(
-                margin: const EdgeInsets.symmetric(horizontal: 24),
+                margin: EdgeInsets.symmetric(horizontal: r.width(24)),
                 decoration: BoxDecoration(
                   color: darkBlue.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(r.borderRadius(12)),
                 ),
                 child: TabBar(
                   controller: _tabController,
                   indicator: BoxDecoration(
                     color: primaryBlue,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                   ),
                   indicatorSize: TabBarIndicatorSize.tab,
                   labelColor: Colors.white,
                   unselectedLabelColor: darkBlue,
                   labelStyle: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: r.fontSize(16),
                     fontWeight: FontWeight.w600,
                   ),
                   unselectedLabelStyle: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: r.fontSize(16),
                     fontWeight: FontWeight.w500,
                   ),
                   tabs: const [
@@ -187,7 +189,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 ),
               ),
               
-              const SizedBox(height: 16),
+              SizedBox(height: r.height(16)),
               
               // Tab content
               Expanded(
@@ -209,14 +211,15 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildChatsList() {
+    final r = context.responsive;
     final primaryBlue = const Color(0xFF64AFE8);
     final darkBlue = const Color(0xFF1D385F);
 
     return ListView.builder(
-      padding: const EdgeInsets.only(
-        left: 24,
-        right: 24,
-        bottom: kBottomNavigationBarHeight + 16,
+      padding: EdgeInsets.only(
+        left: r.width(24),
+        right: r.width(24),
+        bottom: kBottomNavigationBarHeight + r.height(16),
       ),
       itemCount: _chats.length,
       itemBuilder: (context, index) {
@@ -235,24 +238,24 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
             );
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            margin: EdgeInsets.only(bottom: r.height(12)),
+            padding: EdgeInsets.all(r.width(16)),
             decoration: BoxDecoration(
               color: primaryBlue.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(r.borderRadius(16)),
               border: Border.all(
                 color: chat['unread_count'] > 0
                     ? primaryBlue.withOpacity(0.3)
                     : Colors.transparent,
-                width: 1.5,
+                width: r.borderWidth(1.5),
               ),
             ),
             child: Row(
               children: [
                 // Avatar
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: r.width(50),
+                  height: r.width(50),
                   decoration: BoxDecoration(
                     color: primaryBlue,
                     shape: BoxShape.circle,
@@ -261,14 +264,14 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                     child: Text(
                       chat['avatar'],
                       style: GoogleFonts.poppins(
-                        fontSize: 20,
+                        fontSize: r.fontSize(20),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: r.width(14)),
                 // Name and message
                 Expanded(
                   child: Column(
@@ -278,15 +281,15 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                         chat['name'],
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                          fontSize: r.fontSize(16),
                           color: darkBlue,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: r.height(4)),
                       Text(
                         chat['last_message'],
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: r.fontSize(14),
                           color: darkBlue.withOpacity(0.7),
                         ),
                         maxLines: 1,
@@ -339,14 +342,15 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
   }
 
   Widget _buildGroupsList() {
+    final r = context.responsive;
     final primaryBlue = const Color(0xFF64AFE8);
     final darkBlue = const Color(0xFF1D385F);
 
     return ListView.builder(
-      padding: const EdgeInsets.only(
-        left: 24,
-        right: 24,
-        bottom: kBottomNavigationBarHeight + 16,
+      padding: EdgeInsets.only(
+        left: r.width(24),
+        right: r.width(24),
+        bottom: kBottomNavigationBarHeight + r.height(16),
       ),
       itemCount: _groups.length,
       itemBuilder: (context, index) {
@@ -363,46 +367,46 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                 backgroundColor: darkBlue,
                 behavior: SnackBarBehavior.floating,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(r.borderRadius(12)),
                 ),
               ),
             );
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
+            margin: EdgeInsets.only(bottom: r.height(12)),
+            padding: EdgeInsets.all(r.width(16)),
             decoration: BoxDecoration(
               color: darkBlue.withOpacity(0.06),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(r.borderRadius(16)),
               border: Border.all(
                 color: group['unread_count'] > 0
                     ? primaryBlue.withOpacity(0.3)
                     : Colors.transparent,
-                width: 1.5,
+                width: r.borderWidth(1.5),
               ),
             ),
             child: Row(
               children: [
                 // Group Avatar
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: r.width(50),
+                  height: r.width(50),
                   decoration: BoxDecoration(
                     color: darkBlue,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                   ),
                   child: Center(
                     child: Text(
                       group['avatar'],
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: r.fontSize(16),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: r.width(14)),
                 // Name and message
                 Expanded(
                   child: Column(
@@ -415,31 +419,31 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                               group['name'],
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
-                                fontSize: 16,
+                                fontSize: r.fontSize(16),
                                 color: darkBlue,
                               ),
                             ),
                           ),
                           Icon(
                             Icons.people,
-                            size: 16,
+                            size: r.iconSize(16),
                             color: darkBlue.withOpacity(0.5),
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: r.width(4)),
                           Text(
                             group['members_count'].toString(),
                             style: GoogleFonts.poppins(
-                              fontSize: 12,
+                              fontSize: r.fontSize(12),
                               color: darkBlue.withOpacity(0.5),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: r.height(4)),
                       Text(
                         group['last_message'],
                         style: GoogleFonts.poppins(
-                          fontSize: 14,
+                          fontSize: r.fontSize(14),
                           color: darkBlue.withOpacity(0.7),
                         ),
                         maxLines: 1,
@@ -448,7 +452,7 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                     ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: r.width(10)),
                 // Time and badge
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -456,27 +460,27 @@ class _ChatPageState extends State<ChatPage> with SingleTickerProviderStateMixin
                     Text(
                       group['timestamp'],
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
+                        fontSize: r.fontSize(12),
                         color: darkBlue.withOpacity(0.6),
                       ),
                     ),
                     if (group['unread_count'] > 0) ...[
-                      const SizedBox(height: 6),
+                      SizedBox(height: r.height(6)),
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: r.width(8),
+                          vertical: r.height(4),
                         ),
                         decoration: BoxDecoration(
                           color: primaryBlue,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(r.borderRadius(12)),
                         ),
                         child: Text(
                           group['unread_count'].toString(),
                           style: GoogleFonts.poppins(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
-                            fontSize: 12,
+                            fontSize: r.fontSize(12),
                           ),
                         ),
                       ),

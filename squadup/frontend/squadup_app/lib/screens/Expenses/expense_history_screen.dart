@@ -5,6 +5,7 @@ import '../../models/expense.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../widgets/header.dart';
 import 'update_expense_screen.dart';
+import '../../config/responsive_utils.dart';
 
 class ExpenseHistoryScreen extends StatefulWidget {
   final String? groupId;
@@ -73,6 +74,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
     return LoadingOverlay(
@@ -87,23 +89,23 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                   darkBlue: darkBlue,
                   title: 'Expense History',      
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: r.height(10)),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  padding: EdgeInsets.symmetric(horizontal: r.width(14.0)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (!_loading && _error == null) ...[
                         _buildPeriodSelector(darkBlue),
-                        const SizedBox(height: 4),
+                        SizedBox(height: r.height(4)),
                         if (_getFilteredExpenses().isNotEmpty) ...[
                           _buildSpendingByCategory(darkBlue),
-                          const SizedBox(height: 20),
+                          SizedBox(height: r.height(20)),
                         ],
                       ],
                       _buildExpensesList(darkBlue),
-                      const SizedBox(height: 20),
+                      SizedBox(height: r.height(20)),
                     ],
                   ),
                 ),
@@ -117,6 +119,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 
 
   Widget _buildPeriodSelector(Color darkBlue) {
+    final r = context.responsive;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -134,16 +137,16 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 20,
-                    height: 20,
+                    width: r.width(20),
+                    height: r.width(20),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: darkBlue, width: 2),
+                      border: Border.all(color: darkBlue, width: r.borderWidth(2)),
                     ),
                     child: Center(
                       child: Container(
-                        width: 12,
-                        height: 12,
+                        width: r.width(12),
+                        height: r.width(12),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color:
@@ -154,11 +157,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: r.width(8)),
                   Text(
                     'Month',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: r.fontSize(15),
                       fontWeight: FontWeight.w600,
                       color: darkBlue,
                     ),
@@ -166,7 +169,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 ],
               ),
             ),
-            const SizedBox(width: 32),
+            SizedBox(width: r.width(32)),
             // Botão Year
             GestureDetector(
               onTap: () {
@@ -177,16 +180,16 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 20,
-                    height: 20,
+                    width: r.width(20),
+                    height: r.width(20),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: darkBlue, width: 2),
+                      border: Border.all(color: darkBlue, width: r.borderWidth(2)),
                     ),
                     child: Center(
                       child: Container(
-                        width: 10,
-                        height: 10,
+                        width: r.width(10),
+                        height: r.width(10),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color:
@@ -197,11 +200,11 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: r.width(8)),
                   Text(
                     'Year',
                     style: GoogleFonts.poppins(
-                      fontSize: 15,
+                      fontSize: r.fontSize(15),
                       fontWeight: FontWeight.w600,
                       color: darkBlue,
                     ),
@@ -212,15 +215,15 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           ],
         ),
         // Card Total Expenses
-        const SizedBox(height: 16),
+        SizedBox(height: r.height(16)),
         _buildTotalExpensesCard(darkBlue),
         if (_selectedPeriod == 'month') ...[
-          const SizedBox(height: 10),
+          SizedBox(height: r.height(10)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, size: 28),
+                icon: Icon(Icons.chevron_left, size: r.iconSize(28)),
                 color: darkBlue,
                 onPressed: () {
                   setState(() {
@@ -234,7 +237,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               Text(
                 '${_monthName(_selectedMonth.month)} ${_selectedMonth.year}',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
+                  fontSize: r.fontSize(16),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
@@ -255,12 +258,12 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           ),
         ],
         if (_selectedPeriod == 'year') ...[
-          const SizedBox(height: 10),
+          SizedBox(height: r.height(10)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.chevron_left, size: 28),
+                icon: Icon(Icons.chevron_left, size: r.iconSize(28)),
                 color: darkBlue,
                 onPressed: () {
                   setState(() {
@@ -274,13 +277,13 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               Text(
                 '${_selectedMonth.year}',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
+                  fontSize: r.fontSize(16),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.chevron_right, size: 28),
+                icon: Icon(Icons.chevron_right, size: r.iconSize(28)),
                 color: darkBlue,
                 onPressed: () {
                   setState(() {
@@ -332,6 +335,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   }
 
   Widget _buildTotalExpensesCard(Color darkBlue) {
+    final r = context.responsive;
     final filteredExpenses = _getFilteredExpenses();
     final totalExpenses = filteredExpenses.fold<double>(
       0.0,
@@ -340,14 +344,14 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(r.width(24)),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [primaryBlue, darkBlue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(r.borderRadius(20)),
         boxShadow: [
           BoxShadow(
             color: const Color.fromARGB(
@@ -356,8 +360,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               163,
               230,
             ).withValues(alpha: 0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            blurRadius: r.height(15),
+            offset: Offset(0, r.height(5)),
           ),
         ],
       ),
@@ -369,18 +373,18 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               Text(
                 'Total Expenses',
                 style: GoogleFonts.poppins(
-                  fontSize: 17,
+                  fontSize: r.fontSize(17),
                   fontWeight: FontWeight.w500,
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: r.height(14)),
           Text(
             '€ ${totalExpenses.toStringAsFixed(2)}',
             style: GoogleFonts.poppins(
-              fontSize: 36,
+              fontSize: r.fontSize(36),
               fontWeight: FontWeight.w700,
               color: Colors.white,
               height: 1,
@@ -392,6 +396,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   }
 
   Widget _buildSpendingByCategory(Color darkBlue) {
+    final r = context.responsive;
     final filteredExpenses = _getFilteredExpenses();
 
     // Calculate spending by category
@@ -425,18 +430,18 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(r.width(20)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(r.borderRadius(20)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: r.height(10),
+            offset: Offset(0, r.height(2)),
           ),
         ],
-        border: Border.all(color: Colors.grey[200]!, width: 1),
+        border: Border.all(color: Colors.grey[200]!, width: r.borderWidth(1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,17 +449,17 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
           Text(
             'Spending by Category',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: r.fontSize(18),
               fontWeight: FontWeight.w600,
               color: darkBlue,
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
           if (sortedCategories.isEmpty)
             Text(
               'No expenses to display',
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: r.fontSize(14),
                 color: Colors.grey[600],
               ),
             )
@@ -467,7 +472,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
               final color = categoryColors[index % categoryColors.length];
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.only(bottom: r.height(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -477,7 +482,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                         Text(
                           category,
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                             fontWeight: FontWeight.w500,
                             color: darkBlue,
                           ),
@@ -485,22 +490,22 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                         Text(
                           '€${amount.toStringAsFixed(2)}',
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                             fontWeight: FontWeight.w600,
                             color: darkBlue,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: r.height(8)),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(r.borderRadius(10)),
                       child: LinearProgressIndicator(
                         value: percentage / 100,
                         backgroundColor: Colors.grey[200],
                         valueColor: AlwaysStoppedAnimation<Color>(color),
-                        minHeight: 14,
-                        borderRadius: BorderRadius.circular(10),
+                        minHeight: r.height(14),
+                        borderRadius: BorderRadius.circular(r.borderRadius(10)),
                       ),
                     ),
                   ],
@@ -514,20 +519,21 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
   }
 
   Widget _buildExpensesList(Color darkBlue) {
+    final r = context.responsive;
     if (_loading) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(40.0),
+          padding: EdgeInsets.all(r.width(40.0)),
           child: Column(
             children: [
               const CircularProgressIndicator(
                 color: Color.fromARGB(255, 81, 163, 230),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.height(16)),
               Text(
                 'Loading expenses...',
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: r.fontSize(14),
                   color: Colors.grey[600],
                 ),
               ),
@@ -540,46 +546,46 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     if (_error != null) {
       return Center(
         child: Container(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(r.width(24)),
           decoration: BoxDecoration(
             color: Colors.red[50],
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(r.borderRadius(12)),
             border: Border.all(color: Colors.red[200]!),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
-              const SizedBox(height: 16),
+              Icon(Icons.error_outline, size: r.iconSize(48), color: Colors.red[300]),
+              SizedBox(height: r.height(16)),
               Text(
                 'Error loading expenses',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
+                  fontSize: r.fontSize(16),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: r.height(8)),
               Text(
                 _error!,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  fontSize: 13,
+                  fontSize: r.fontSize(13),
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: r.height(16)),
               ElevatedButton(
                 onPressed: _loadExpenses,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 81, 163, 230),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                   ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: r.width(24),
+                    vertical: r.height(12),
                   ),
                 ),
                 child: Text(
@@ -596,20 +602,20 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
     if (_getFilteredExpenses().isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 10.0),
+        padding: EdgeInsets.symmetric(horizontal: r.width(32.0), vertical: r.height(10.0)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              width: 400,
-              height: 400,
+              width: r.width(400),
+              height: r.height(400),
               child: Center(
                 child: Opacity(
                   opacity: 0.12,
                   child: Image.asset(
                     'lib/images/logo_v3.png',
-                    width: 300,
-                    height: 300,
+                    width: r.width(300),
+                    height: r.height(300),
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -618,13 +624,13 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
             Text(
               "No expenses found",
               style: GoogleFonts.poppins(
-                fontSize: 22,
+                fontSize: r.fontSize(22),
                 fontWeight: FontWeight.w400,
                 color: Colors.grey[500],
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 40),
+            SizedBox(height: r.height(40)),
 
           ],
         ),
@@ -651,14 +657,14 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                 }
               },
               child: Container(
-                margin: const EdgeInsets.only(bottom: 12),
+                margin: EdgeInsets.only(bottom: r.height(12)),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[200]!, width: 1),
+                  borderRadius: BorderRadius.circular(r.borderRadius(16)),
+                  border: Border.all(color: Colors.grey[200]!, width: r.borderWidth(1)),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(r.width(16)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -666,20 +672,20 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                         children: [
                           // Category icon
                           Container(
-                            width: 48,
-                            height: 48,
+                            width: r.width(48),
+                            height: r.width(48),
                             decoration: BoxDecoration(
                               color: darkBlue,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(r.borderRadius(12)),
                             ),
                             child: Icon(
                               _getCategoryIcon(expense.category),
                               color: Colors.white,
-                              size: 24,
+                              size: r.iconSize(24),
                             ),
                           ),
 
-                          const SizedBox(width: 16),
+                          SizedBox(width: r.width(16)),
 
                           // Expense info
                           Expanded(
@@ -689,38 +695,38 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                                 Text(
                                   expense.description,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 16,
+                                    fontSize: r.fontSize(16),
                                     fontWeight: FontWeight.w600,
                                     color: darkBlue,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: r.height(4)),
                                 Row(
                                   children: [
                                     Icon(
                                       Icons.calendar_today,
-                                      size: 14,
+                                      size: r.iconSize(14),
                                       color: Colors.grey[600],
                                     ),
-                                    const SizedBox(width: 4),
+                                    SizedBox(width: r.width(4)),
                                     Text(
                                       _formatDate(expense.expenseDate),
                                       style: GoogleFonts.poppins(
-                                        fontSize: 12,
+                                        fontSize: r.fontSize(12),
                                         color: Colors.grey[600],
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    SizedBox(width: r.width(12)),
                                     Icon(
                                       Icons.people,
-                                      size: 14,
+                                      size: r.iconSize(14),
                                       color: Colors.grey[600],
                                     ),
-                                    const SizedBox(width: 4),
+                                    SizedBox(width: r.width(4)),
                                     Text(
                                       '${expense.participants.length + 1}',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 12,
+                                        fontSize: r.fontSize(12),
                                         color: Colors.grey[600],
                                       ),
                                     ),
@@ -734,7 +740,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                           Text(
                             '€${expense.amount.toStringAsFixed(2)}',
                             style: GoogleFonts.poppins(
-                              fontSize: 18,
+                              fontSize: r.fontSize(18),
                               fontWeight: FontWeight.w700,
                               color: darkBlue,
                             ),
@@ -743,26 +749,26 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                       ),
 
                       if (expense.payer != null) ...[
-                        const SizedBox(height: 12),
+                        SizedBox(height: r.height(12)),
                         Container(
-                          padding: const EdgeInsets.all(10),
+                          padding: EdgeInsets.all(r.width(10)),
                           decoration: BoxDecoration(
                             color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(r.borderRadius(8)),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.account_circle,
-                                size: 16,
+                                size: r.iconSize(16),
                                 color: Colors.grey[600],
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: r.width(8)),
                               Expanded(
                                 child: Text(
                                   'Paid by ${expense.payer!.email?.split('@')[0] ?? 'User'}',
                                   style: GoogleFonts.poppins(
-                                    fontSize: 12,
+                                    fontSize: r.fontSize(12),
                                     color: Colors.grey[700],
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -771,7 +777,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                               Text(
                                 '€${(expense.amount / expense.participants.length).toStringAsFixed(2)}/person',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 11,
+                                  fontSize: r.fontSize(11),
                                   color: Colors.grey[600],
                                   fontWeight: FontWeight.w500,
                                 ),

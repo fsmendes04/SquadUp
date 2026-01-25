@@ -7,6 +7,8 @@ import '../../models/expense.dart';
 import '../../widgets/squadup_input.dart';
 import '../../widgets/squadup_date_picker.dart';
 import '../../widgets/squadup_button.dart';
+import '../../widgets/squadup_date_picker_dialog.dart';
+import '../../config/responsive_utils.dart';
 
 class UpdateExpenseScreen extends StatefulWidget {
   final Expense expense;
@@ -60,23 +62,11 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
   }
 
   Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
+    final DateTime? picked = await showSquadUpDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color.fromARGB(255, 81, 163, 230),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null && picked != _selectedDate) {
@@ -220,7 +210,7 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
 
   @override
   Widget build(BuildContext context) {
-
+    final r = context.responsive;
     return LoadingOverlay(
       isLoading: _loading,
       message: 'Updating expense...',
@@ -233,27 +223,27 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
                 darkBlue: darkBlue,
                 title: 'Update Expense',
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: r.height(20)),
               // Form
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: EdgeInsets.symmetric(horizontal: r.width(24.0)),
                   child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildDescriptionField(darkBlue),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildAmountField(darkBlue),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
                         _buildCategorySelector(darkBlue),
-                        const SizedBox(height: 30),
+                        SizedBox(height: r.height(30)),
                         _buildDatePicker(darkBlue),
-                        const SizedBox(height: 40),
+                        SizedBox(height: r.height(40)),
                         _buildUpdateButton(primaryBlue),
-                        const SizedBox(height: 12),
+                        SizedBox(height: r.height(12)),
                         _buildDeleteButton(),
                       ],
                     ),
@@ -303,25 +293,26 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
   }
 
   Widget _buildCategorySelector(Color darkBlue) {
+    final r = context.responsive;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Category',
           style: GoogleFonts.poppins(
-            fontSize: 16,
+            fontSize: r.fontSize(16),
             fontWeight: FontWeight.w600,
             color: darkBlue,
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: r.height(16)),
         GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 4,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 12,
+            crossAxisSpacing: r.width(16),
+            mainAxisSpacing: r.height(12),
             childAspectRatio: 1,
           ),
           itemCount: _categories.length,
@@ -340,13 +331,13 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
                       isSelected
                           ? const Color(0xFF51A3E6).withValues(alpha: 0.15)
                           : Colors.grey[50],
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(r.borderRadius(16)),
                   border: Border.all(
                     color:
                         isSelected
                             ? const Color(0xFF51A3E6)
                             : Colors.grey.withValues(alpha: 0.3),
-                    width: isSelected ? 2.5 : 1,
+                    width: r.borderWidth(isSelected ? 2.5 : 1),
                   ),
                 ),
                 child: Column(
@@ -355,9 +346,9 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
                     Icon(
                       category['icon'] as IconData,
                       color: isSelected ? const Color(0xFF51A3E6) : darkBlue,
-                      size: 28,
+                      size: r.iconSize(28),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: r.height(6)),
                   ],
                 ),
               ),
@@ -378,30 +369,32 @@ class _UpdateExpenseScreenState extends State<UpdateExpenseScreen> {
   }
 
   Widget _buildUpdateButton(Color primaryBlue) {
+    final r = context.responsive;
     return SquadUpButton(
       text: 'Update Expense',
       onPressed: _updateExpense,
       isLoading: _loading,
       width: double.infinity,
-      height: 56,
+      height: r.height(56),
       backgroundColor: darkBlue,
       disabledColor: Colors.grey[300] ?? Colors.grey,
       textColor: Colors.white,
-      borderRadius: 16,
+      borderRadius: r.borderRadius(16),
     );
   }
 
   Widget _buildDeleteButton() {
+    final r = context.responsive;
     return SquadUpButton(
       text: 'Delete Expense',
       onPressed: _deleteExpense,
       isLoading: _loading,
       width: double.infinity,
-      height: 56,
+      height: r.height(56),
       backgroundColor: const Color.fromARGB(255, 221, 69, 59),
       disabledColor: Colors.grey[300] ?? Colors.grey,
       textColor: Colors.white,
-      borderRadius: 16,
+      borderRadius: r.borderRadius(16),
     );
   }
 

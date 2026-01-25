@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../config/responsive_utils.dart';
 
 class IndividualChatScreen extends StatefulWidget {
   final String chatId;
@@ -125,10 +126,11 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
   }
 
   void _scrollToMessage(int messageIndex) {
+    final r = context.responsive;
     if (_scrollController.hasClients &&
         messageIndex >= 0 &&
         messageIndex < _messages.length) {
-      final double itemHeight = 80.0;
+      final double itemHeight = r.height(80.0);
       final double offset = messageIndex * itemHeight;
       final double maxScroll = _scrollController.position.maxScrollExtent;
       final double targetOffset = offset.clamp(0.0, maxScroll);
@@ -167,12 +169,13 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
     bool isOther,
     bool isCurrentHighlight,
   ) {
+    final r = context.responsive;
     if (_searchQuery.isEmpty) {
       return Text(
         text,
         style: GoogleFonts.poppins(
           color: isOther ? Colors.black87 : Colors.white,
-          fontSize: 15,
+          fontSize: r.fontSize(15),
           height: 1.4,
         ),
       );
@@ -192,7 +195,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
             text: text.substring(start, index),
             style: GoogleFonts.poppins(
               color: isOther ? Colors.black87 : Colors.white,
-              fontSize: 15,
+              fontSize: r.fontSize(15),
               height: 1.4,
             ),
           ),
@@ -207,7 +210,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                 isCurrentHighlight
                     ? Colors.white
                     : (isOther ? Colors.black87 : Colors.white),
-            fontSize: 15,
+            fontSize: r.fontSize(15),
             height: 1.4,
             backgroundColor:
                 isCurrentHighlight ? const Color(0xFF1D385F) : Colors.yellow.withOpacity(0.3),
@@ -226,7 +229,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
           text: text.substring(start),
           style: GoogleFonts.poppins(
             color: isOther ? Colors.black87 : Colors.white,
-            fontSize: 15,
+            fontSize: r.fontSize(15),
             height: 1.4,
           ),
         ),
@@ -290,6 +293,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final primaryBlue = const Color(0xFF64AFE8);
     final darkBlue = const Color(0xFF1D385F);
 
@@ -305,28 +309,28 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+                  blurRadius: r.height(8),
+                  offset: Offset(0, r.height(2)),
                 ),
               ],
             ),
             padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: MediaQuery.of(context).padding.top + 8,
-              bottom: 12,
+              left: r.width(16),
+              right: r.width(16),
+              top: MediaQuery.of(context).padding.top + r.height(8),
+              bottom: r.height(12),
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: 22),
+                  icon: Icon(Icons.arrow_back_ios, color: darkBlue, size: r.iconSize(22)),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: r.width(8)),
                 // Avatar
                 Container(
-                  width: 42,
-                  height: 42,
+                  width: r.width(42),
+                  height: r.width(42),
                   decoration: BoxDecoration(
                     color: primaryBlue,
                     shape: BoxShape.circle,
@@ -337,14 +341,14 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                           ? widget.userName[0].toUpperCase()
                           : '?',
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: r.fontSize(18),
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: r.width(12)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -352,7 +356,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                       Text(
                         widget.userName,
                         style: GoogleFonts.poppins(
-                          fontSize: 17,
+                          fontSize: r.fontSize(17),
                           fontWeight: FontWeight.w600,
                           color: darkBlue,
                         ),
@@ -361,7 +365,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                       Text(
                         'Online',
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: r.fontSize(13),
                           color: const Color(0xFF4CAF50),
                           fontWeight: FontWeight.w500,
                         ),
@@ -373,7 +377,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                   icon: Icon(
                     _isSearching ? Icons.close : Icons.search,
                     color: darkBlue,
-                    size: 24,
+                    size: r.iconSize(24),
                   ),
                   onPressed: _toggleSearch,
                   tooltip: _isSearching ? 'Close search' : 'Search messages',
@@ -385,11 +389,11 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
           // Search bar
           if (_isSearching)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(r.width(16)),
               decoration: BoxDecoration(
                 color: darkBlue.withOpacity(0.05),
                 border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200, width: 1),
+                  bottom: BorderSide(color: Colors.grey.shade200, width: r.borderWidth(1)),
                 ),
               ),
               child: Row(
@@ -398,12 +402,12 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(r.borderRadius(24)),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
+                            blurRadius: r.height(4),
+                            offset: Offset(0, r.height(2)),
                           ),
                         ],
                       ),
@@ -414,65 +418,65 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                           hintText: 'Search in messages...',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey.shade500,
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                           ),
                           prefixIcon: Icon(
                             Icons.search,
                             color: primaryBlue,
-                            size: 22,
+                            size: r.iconSize(22),
                           ),
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
+                            borderRadius: BorderRadius.circular(r.borderRadius(24)),
                             borderSide: BorderSide.none,
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: r.width(16),
+                            vertical: r.height(12),
                           ),
                         ),
-                        style: GoogleFonts.poppins(fontSize: 14),
+                        style: GoogleFonts.poppins(fontSize: r.fontSize(14)),
                       ),
                     ),
                   ),
                   if (_highlightedMessageIndexes.isNotEmpty) ...[
-                    const SizedBox(width: 8),
+                    SizedBox(width: r.width(8)),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: r.width(12),
+                        vertical: r.height(8),
                       ),
                       decoration: BoxDecoration(
                         color: primaryBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(r.borderRadius(16)),
                       ),
                       child: Text(
                         '${_currentHighlightIndex + 1}/${_highlightedMessageIndexes.length}',
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: r.fontSize(13),
                           color: darkBlue,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                     IconButton(
-                      icon: Icon(Icons.keyboard_arrow_up, color: primaryBlue, size: 24),
+                      icon: Icon(Icons.keyboard_arrow_up, color: primaryBlue, size: r.iconSize(24)),
                       onPressed: _navigateToPreviousMatch,
                       tooltip: 'Previous',
                     ),
                     IconButton(
-                      icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue, size: 24),
+                      icon: Icon(Icons.keyboard_arrow_down, color: primaryBlue, size: r.iconSize(24)),
                       onPressed: _navigateToNextMatch,
                       tooltip: 'Next',
                     ),
                   ] else if (_searchQuery.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(left: 12),
+                      padding: EdgeInsets.only(left: r.width(12)),
                       child: Text(
                         'No results',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: r.fontSize(12),
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -488,16 +492,16 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                     child: Text(
                       'No messages yet',
                       style: GoogleFonts.poppins(
-                        fontSize: 16,
+                        fontSize: r.fontSize(16),
                         color: darkBlue.withOpacity(0.5),
                       ),
                     ),
                   )
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: r.width(16),
+                      vertical: r.height(16),
                     ),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
@@ -509,7 +513,7 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                           _highlightedMessageIndexes[_currentHighlightIndex] == index;
 
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: EdgeInsets.only(bottom: r.height(12)),
                         child: Row(
                           mainAxisAlignment:
                               isOther
@@ -519,8 +523,8 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                           children: [
                             if (isOther) ...[
                               Container(
-                                width: 32,
-                                height: 32,
+                                width: r.width(32),
+                                height: r.width(32),
                                 decoration: BoxDecoration(
                                   color: darkBlue,
                                   shape: BoxShape.circle,
@@ -531,37 +535,37 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                                         ? widget.userName[0].toUpperCase()
                                         : '?',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 14,
+                                      fontSize: r.fontSize(14),
                                       color: Colors.white,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: r.width(8)),
                             ],
                             Flexible(
                               child: Container(
                                 constraints: BoxConstraints(
                                   maxWidth: MediaQuery.of(context).size.width * 0.7,
                                 ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: r.width(16),
+                                  vertical: r.height(12),
                                 ),
                                 decoration: BoxDecoration(
                                   color: isOther ? Colors.grey.shade100 : primaryBlue,
                                   borderRadius: BorderRadius.only(
-                                    topLeft: const Radius.circular(20),
-                                    topRight: const Radius.circular(20),
-                                    bottomLeft: Radius.circular(isOther ? 4 : 20),
-                                    bottomRight: Radius.circular(isOther ? 20 : 4),
+                                    topLeft: Radius.circular(r.borderRadius(20)),
+                                    topRight: Radius.circular(r.borderRadius(20)),
+                                    bottomLeft: Radius.circular(r.borderRadius(isOther ? 4 : 20)),
+                                    bottomRight: Radius.circular(r.borderRadius(isOther ? 20 : 4)),
                                   ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 4,
-                                      offset: const Offset(0, 2),
+                                      blurRadius: r.height(4),
+                                      offset: Offset(0, r.height(2)),
                                     ),
                                   ],
                                 ),
@@ -573,11 +577,11 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                                       isOther,
                                       isCurrentHighlight,
                                     ),
-                                    const SizedBox(height: 4),
+                                    SizedBox(height: r.height(4)),
                                     Text(
                                       msg['timestamp'] ?? '',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 11,
+                                        fontSize: r.fontSize(11),
                                         color:
                                             isOther
                                                 ? Colors.black45
@@ -597,14 +601,14 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
           
           // Input field
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: EdgeInsets.symmetric(horizontal: r.width(16), vertical: r.height(12)),
             decoration: BoxDecoration(
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, -2),
+                  blurRadius: r.height(8),
+                  offset: Offset(0, r.height(-2)),
                 ),
               ],
             ),
@@ -613,30 +617,30 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: r.width(44),
+                    height: r.width(44),
                     decoration: BoxDecoration(
                       color: darkBlue,
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(r.borderRadius(22)),
                     ),
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.add,
                         color: Colors.white,
-                        size: 22,
+                        size: r.iconSize(22),
                       ),
                       onPressed: () {
                         // Attachment functionality
                       },
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: r.width(12)),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: r.width(16)),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(r.borderRadius(24)),
                       ),
                       child: TextField(
                         controller: _messageController,
@@ -645,11 +649,11 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                           hintText: 'Type a message...',
                           hintStyle: GoogleFonts.poppins(
                             color: Colors.grey.shade500,
-                            fontSize: 15,
+                            fontSize: r.fontSize(15),
                           ),
                         ),
                         style: GoogleFonts.poppins(
-                          fontSize: 15,
+                          fontSize: r.fontSize(15),
                           color: darkBlue,
                         ),
                         enabled: !_isSending,
@@ -659,28 +663,28 @@ class _IndividualChatScreenState extends State<IndividualChatScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: r.width(12)),
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: r.width(44),
+                    height: r.width(44),
                     decoration: BoxDecoration(
                       color: _hasText ? primaryBlue : darkBlue,
-                      borderRadius: BorderRadius.circular(22),
+                      borderRadius: BorderRadius.circular(r.borderRadius(22)),
                     ),
                     child: IconButton(
                       icon: _isSending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
+                          ? SizedBox(
+                              width: r.iconSize(20),
+                              height: r.iconSize(20),
                               child: CircularProgressIndicator(
-                                strokeWidth: 2,
+                                strokeWidth: r.borderWidth(2),
                                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             )
                           : Icon(
                               _hasText ? Icons.send : Icons.mic,
                               color: Colors.white,
-                              size: 20,
+                              size: r.iconSize(20),
                             ),
                       onPressed: _isSending
                           ? null

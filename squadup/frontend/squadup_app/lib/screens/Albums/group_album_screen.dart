@@ -6,6 +6,7 @@ import '../../services/groups_service.dart';
 import '../../services/gallery_service.dart';
 import '../../models/groups.dart';
 import '../../models/gallery.dart';
+import '../../config/responsive_utils.dart';
 
 class GroupGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -88,6 +89,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return LoadingOverlay(
       isLoading: _isLoading,
       message: 'Loading gallery...',
@@ -103,21 +105,21 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                     child: Column(
                       children: [
                           _buildHeader(darkBlue),
-                        const SizedBox(height: 20),
+                        SizedBox(height: r.height(20)),
 
                         // Section title and add button
                         if (!_isSearching) ...[
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                              padding: EdgeInsets.symmetric(horizontal: r.width(18)),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Albums',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 20,
+                                      fontSize: r.fontSize(20),
                                       fontWeight: FontWeight.w600,
                                       color: darkBlue,
                                     ),
@@ -127,12 +129,12 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: r.height(6)),
                         ],
 
                         // Search bar
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          padding: EdgeInsets.symmetric(horizontal: r.width(16)),
                           child: _buildSearchBar(),
                         ),
 
@@ -144,13 +146,13 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                                   : _filteredGalleries.isEmpty && _searchQuery.isNotEmpty
                                       ? _buildNoSearchResultsState()
                                       : ListView.builder(
-                                        padding: const EdgeInsets.all(16.0),
+                                        padding: EdgeInsets.all(r.width(16)),
                                         itemCount: _filteredGalleries.length,
                                         itemBuilder: (context, index) {
                                           final gallery = _filteredGalleries[index];
                                           return Padding(
-                                            padding: const EdgeInsets.only(
-                                              bottom: 20.0,
+                                            padding: EdgeInsets.only(
+                                              bottom: r.height(20),
                                             ),
                                             child: _buildGalleryCard(gallery),
                                           );
@@ -175,6 +177,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildAddButton() {
+    final r = context.responsive;
     return GestureDetector(
       onTap: () async {
         final result = await Navigator.pushNamed(
@@ -190,34 +193,34 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
+        padding: EdgeInsets.symmetric(
+          horizontal: r.width(16),
+          vertical: r.height(8),
         ),
         decoration: BoxDecoration(
           color: primaryBlue,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(r.borderRadius(15)),
           boxShadow: [
             BoxShadow(
               color: darkBlue.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              blurRadius: r.width(8),
+              offset: Offset(0, r.height(2)),
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.add,
               color: Colors.white,
-              size: 18,
+              size: r.iconSize(18),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: r.width(4)),
             Text(
               'New',
               style: GoogleFonts.poppins(
-                fontSize: 14,
+                fontSize: r.fontSize(14),
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
               ),
@@ -229,6 +232,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildSearchBar() {
+    final r = context.responsive;
     return TextField(
       onChanged: (value) {
         setState(() {
@@ -240,22 +244,22 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
           _isSearching = true;
         });
       },
-      style: GoogleFonts.poppins(fontSize: 14, color: darkBlue),
+      style: GoogleFonts.poppins(fontSize: r.fontSize(14), color: darkBlue),
       decoration: InputDecoration(
         hintText: 'Search albums...',
         hintStyle: GoogleFonts.poppins(
-          fontSize: 17,
+          fontSize: r.fontSize(17),
           color: darkBlue,
           fontWeight: FontWeight.w500,
         ),
-        prefixIcon: Icon(Icons.search, color: darkBlue, size: 30),
+        prefixIcon: Icon(Icons.search, color: darkBlue, size: r.iconSize(30)),
         suffixIcon:
             _searchQuery.isNotEmpty || _isSearching
                 ? IconButton(
                   icon: Icon(
                     _searchQuery.isNotEmpty ? Icons.clear : Icons.close,
                     color: darkBlue,
-                    size: 28,
+                    size: r.iconSize(28),
                   ),
                   onPressed: () {
                     if (_searchQuery.isNotEmpty) {
@@ -273,20 +277,20 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                 : null,
         filled: true,
         fillColor: Colors.transparent,
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 12,
-          horizontal: 16,
+        contentPadding: EdgeInsets.symmetric(
+          vertical: r.height(12),
+          horizontal: r.width(16),
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(r.borderRadius(15)),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(r.borderRadius(15)),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(r.borderRadius(15)),
           borderSide: BorderSide.none,
         ),
       ),
@@ -294,48 +298,49 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildEmptyState() {
+    final r = context.responsive;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 60.0),
+      padding: EdgeInsets.symmetric(horizontal: r.width(32), vertical: r.height(60)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 300,
-            height: 300,
+            width: r.width(300),
+            height: r.height(300),
             child: Center(
               child: Opacity(
                 opacity: 0.12,
                 child: Image.asset(
                   'lib/images/logo_v3.png',
-                  width: 300,
-                  height: 300,
+                  width: r.width(300),
+                  height: r.height(300),
                   fit: BoxFit.contain,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: r.height(32)),
           Text(
             'No albums yet',
             style: GoogleFonts.poppins(
-              fontSize: 22,
+              fontSize: r.fontSize(22),
               fontWeight: FontWeight.w400,
               color: Colors.grey[500],
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: r.height(10)),
           Text(
             'Create the first album!',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: r.fontSize(18),
               fontWeight: FontWeight.w400,
               color: Colors.grey[500],
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: r.height(40)),
           GestureDetector(
             onTap: () async {
               await Navigator.pushNamed(context, '/create-gallery', arguments: {
@@ -345,13 +350,13 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
               await _refreshData();
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 32,
-                vertical: 16,
+              padding: EdgeInsets.symmetric(
+                horizontal: r.width(32),
+                vertical: r.height(16),
               ),
               decoration: BoxDecoration(
                 color: const Color.fromARGB(255, 15, 74, 128),
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(r.borderRadius(15)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -359,7 +364,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                   Text(
                     'Create Album',
                     style: GoogleFonts.poppins(
-                      fontSize: 16,
+                      fontSize: r.fontSize(16),
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
@@ -374,16 +379,17 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildNoSearchResultsState() {
+    final r = context.responsive;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(Icons.search_off, size: r.iconSize(64), color: Colors.grey[400]),
+          SizedBox(height: r.height(16)),
           Text(
             'No albums found',
             style: GoogleFonts.poppins(
-              fontSize: 18,
+              fontSize: r.fontSize(18),
               fontWeight: FontWeight.w600,
               color: Colors.grey[600],
             ),
@@ -394,25 +400,26 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildErrorState() {
+    final r = context.responsive;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-          const SizedBox(height: 16),
+          Icon(Icons.error_outline, size: r.iconSize(48), color: Colors.grey[400]),
+          SizedBox(height: r.height(16)),
           Text(
             _error!,
-            style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey[600]),
+            style: GoogleFonts.poppins(fontSize: r.fontSize(16), color: Colors.grey[600]),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: r.height(16)),
           ElevatedButton(
             onPressed: _refreshData,
             style: ElevatedButton.styleFrom(
               backgroundColor: primaryBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(r.borderRadius(12)),
               ),
             ),
             child: Text(
@@ -426,6 +433,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   }
 
   Widget _buildGalleryCard(Gallery gallery) {
+    final r = context.responsive;
     final images = gallery.images.take(4).toList();
     return GestureDetector(
       onTap: () {
@@ -441,12 +449,12 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(r.borderRadius(16)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+              blurRadius: r.width(10),
+              offset: Offset(0, r.height(4)),
             ),
           ],
         ),
@@ -459,31 +467,31 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                 children: images.map((img) {
                   return Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 2.0),
+                      padding: EdgeInsets.only(right: r.width(2)),
                       child: ClipRRect(
                         borderRadius: BorderRadius.only(
-                          topLeft: img == images.first ? Radius.circular(16) : Radius.zero,
-                          topRight: img == images.last ? Radius.circular(16) : Radius.zero,
+                          topLeft: img == images.first ? Radius.circular(r.borderRadius(16)) : Radius.zero,
+                          topRight: img == images.last ? Radius.circular(r.borderRadius(16)) : Radius.zero,
                         ),
                         child: Image.network(
                           img,
-                          height: 160,
+                          height: r.height(160),
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              height: 160,
+                              height: r.height(160),
                               color: primaryBlue.withValues(alpha: 0.1),
                               child: Icon(
                                 Icons.image_not_supported,
                                 color: primaryBlue,
-                                size: 30,
+                                size: r.iconSize(30),
                               ),
                             );
                           },
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
-                              height: 160,
+                              height: r.height(160),
                               color: primaryBlue.withValues(alpha: 0.1),
                               child: Center(
                                 child: CircularProgressIndicator(
@@ -492,7 +500,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                                       ? loadingProgress.cumulativeBytesLoaded /
                                           loadingProgress.expectedTotalBytes!
                                       : null,
-                                  strokeWidth: 2,
+                                  strokeWidth: r.borderWidth(2),
                                 ),
                               ),
                             );
@@ -505,23 +513,23 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
               ),
             if (images.isEmpty)
               ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(r.borderRadius(16)),
+                  topRight: Radius.circular(r.borderRadius(16)),
                 ),
                 child: Container(
-                  height: 120,
+                  height: r.height(120),
                   color: primaryBlue.withValues(alpha: 0.1),
                   child: Icon(
                     Icons.photo_library_outlined,
                     color: primaryBlue,
-                    size: 40,
+                    size: r.iconSize(40),
                   ),
                 ),
               ),
             // Informações do evento
             Padding(
-              padding: const EdgeInsets.all(15.0),
+              padding: EdgeInsets.all(r.width(15)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -532,7 +540,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                         child: Text(
                           gallery.eventName,
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
+                            fontSize: r.fontSize(18),
                             fontWeight: FontWeight.w700,
                             color: darkBlue,
                           ),
@@ -542,14 +550,14 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                         children: [
                           Icon(
                             Icons.camera_alt,
-                            size: 16,
+                            size: r.iconSize(16),
                             color: darkBlue,
                           ),
-                          const SizedBox(width: 4),
+                          SizedBox(width: r.width(4)),
                           Text(
                             '${gallery.images.length}',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
+                              fontSize: r.fontSize(16),
                               fontWeight: FontWeight.w700,
                               color: darkBlue,
                             ),

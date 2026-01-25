@@ -7,6 +7,7 @@ import '../../widgets/loading_overlay.dart';
 import '../../widgets/header.dart';
 import '../../widgets/squadup_input.dart';
 import '../../widgets/squadup_button.dart';
+import '../../config/responsive_utils.dart';
 
 class CreateGalleryScreen extends StatefulWidget {
   final String groupId;
@@ -128,30 +129,32 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
     }
 
     if (_selectedImages.isEmpty) {
+      final r = context.responsive;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select at least one image'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(r.borderRadius(12)),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(r.width(16)),
         ),
       );
       return;
     }
 
     if (_selectedDate == null) {
+      final r = context.responsive;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Please select a date'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(r.borderRadius(12)),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(r.width(16)),
         ),
       );
       return;
@@ -171,15 +174,16 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
       );
 
       if (mounted) {
+        final r = context.responsive;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Album created successfully!'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(r.borderRadius(12)),
             ),
-            margin: const EdgeInsets.all(16),
+            margin: EdgeInsets.all(r.width(16)),
           ),
         );
         Navigator.pop(context, true);
@@ -189,15 +193,16 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
         setState(() {
           _isLoading = false;
         });
+        final r = context.responsive;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error creating album: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(r.borderRadius(12)),
             ),
-            margin: const EdgeInsets.all(16),
+            margin: EdgeInsets.all(r.width(16)),
           ),
         );
       }
@@ -206,6 +211,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     return LoadingOverlay(
       isLoading: _isLoading,
       message: 'Creating album...',
@@ -220,7 +226,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(r.width(20)),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -239,7 +245,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
 
                         // Location
                         SquadUpInput(
@@ -254,7 +260,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
 
                         // Date
                         GestureDetector(
@@ -273,18 +279,18 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: r.height(24)),
 
                         // Images Section
                         Text(
                           'Photos',
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
+                            fontSize: r.fontSize(16),
                             fontWeight: FontWeight.w600,
                             color: darkBlue,
                           ),
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: r.height(12)),
 
                         // Add Images Buttons
                         Row(
@@ -297,14 +303,14 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primaryBlue,
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding: EdgeInsets.symmetric(vertical: r.height(12)),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                                   ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: r.width(12)),
                             Expanded(
                               child: ElevatedButton.icon(
                                 onPressed: _pickImageFromCamera,
@@ -313,17 +319,17 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: primaryBlue,
-                                  side: BorderSide(color: primaryBlue, width: 2),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  side: BorderSide(color: primaryBlue, width: r.borderWidth(2)),
+                                  padding: EdgeInsets.symmetric(vertical: r.height(12)),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                                   ),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
 
                         // Selected Images Grid
                         if (_selectedImages.isNotEmpty)
@@ -331,10 +337,10 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 3,
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
+                                  crossAxisSpacing: r.width(8),
+                                  mainAxisSpacing: r.height(8),
                                 ),
                             itemCount: _selectedImages.length,
                             itemBuilder: (context, index) {
@@ -350,20 +356,20 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                     ),
                                   ),
                                   Positioned(
-                                    top: 4,
-                                    right: 4,
+                                    top: r.height(4),
+                                    right: r.width(4),
                                     child: GestureDetector(
                                       onTap: () => _removeImage(index),
                                       child: Container(
-                                        padding: const EdgeInsets.all(3),
+                                        padding: EdgeInsets.all(r.width(3)),
                                         decoration: const BoxDecoration(
                                           color: Colors.red,
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           Icons.close,
                                           color: Colors.white,
-                                          size: 14,
+                                          size: r.iconSize(14),
                                         ),
                                       ),
                                     ),
@@ -375,13 +381,13 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
 
                         if (_selectedImages.isEmpty)
                           Container(
-                            height: 150,
+                            height: r.height(150),
                             decoration: BoxDecoration(
                               color: primaryBlue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(r.borderRadius(12)),
                               border: Border.all(
                                 color: primaryBlue.withValues(alpha: 0.3),
-                                width: 2,
+                                width: r.borderWidth(2),
                                 style: BorderStyle.solid,
                               ),
                             ),
@@ -391,14 +397,14 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                 children: [
                                   Icon(
                                     Icons.photo_library_outlined,
-                                    size: 48,
+                                    size: r.iconSize(48),
                                     color: primaryBlue.withValues(alpha: 0.5),
                                   ),
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: r.height(8)),
                                   Text(
                                     'No photos selected',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 14,
+                                      fontSize: r.fontSize(14),
                                       color: Colors.grey[600],
                                     ),
                                   ),
@@ -407,7 +413,7 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                             ),
                           ),
 
-                        const SizedBox(height: 32),
+                        SizedBox(height: r.height(32)),
 
                         // Create Button
                         SquadUpButton(
@@ -415,11 +421,11 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                           onPressed: _createGallery,
                           isLoading: _isLoading,
                           width: double.infinity,
-                          height: 56,
+                          height: r.height(56),
                           backgroundColor: darkBlue,
                           disabledColor: primaryBlue.withAlpha(128),
                           textColor: Colors.white,
-                          borderRadius: 12,
+                          borderRadius: r.borderRadius(12),
                         ),
                       ],
                     ),

@@ -8,6 +8,7 @@ import '../../services/groups_service.dart';
 import '../../models/payment.dart';
 import '../../models/groups.dart';
 import '../../widgets/loading_overlay.dart';
+import '../../config/responsive_utils.dart';
 
 class PaymentHistoryScreen extends StatefulWidget {
   final String? groupId;
@@ -122,6 +123,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
 
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -135,8 +137,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         ),
         backgroundColor: isError ? Colors.red[600] : primaryBlue,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.borderRadius(12))),
+        margin: EdgeInsets.all(r.width(16)),
         duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
@@ -172,32 +174,33 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildEmptyState(Color darkBlue) {
+    final r = context.responsive;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 130.0),
+      padding: EdgeInsets.symmetric(horizontal: r.width(32.0), vertical: r.height(130.0)),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 350,
-            height: 350,
+            width: r.width(350),
+            height: r.height(350),
             child: Center(
               child: Opacity(
                 opacity: 0.12,
                 child: Image.asset(
                   'lib/images/logo_v3.png',
-                  width: 350,
-                  height: 350,
+                  width: r.width(350),
+                  height: r.height(350),
                   fit: BoxFit.contain,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          SizedBox(height: r.height(40)),
           Text(
             "No payments yet",
             style: GoogleFonts.poppins(
-              fontSize: 22,
+              fontSize: r.fontSize(22),
               fontWeight: FontWeight.w400,
               color: Colors.grey[500],
             ),
@@ -209,6 +212,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildPaymentsList(Color primaryBlue, Color darkBlue) {
+    final r = context.responsive;
     // Group payments by date
     Map<String, List<Payment>> groupedPayments = {};
     for (var payment in _payments) {
@@ -225,7 +229,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         groupedPayments.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(r.width(16)),
       itemCount: sortedDates.length,
       itemBuilder: (context, index) {
         final dateKey = sortedDates[index];
@@ -252,11 +256,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              padding: EdgeInsets.symmetric(vertical: r.height(12), horizontal: r.width(4)),
               child: Text(
                 dateLabel,
                 style: GoogleFonts.poppins(
-                  fontSize: 14,
+                  fontSize: r.fontSize(14),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
@@ -265,7 +269,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
             ...payments.map(
               (payment) => _buildPaymentCard(payment, primaryBlue, darkBlue),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: r.height(8)),
           ],
         );
       },
@@ -273,6 +277,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
   }
 
   Widget _buildPaymentCard(Payment payment, Color primaryBlue, Color darkBlue) {
+    final r = context.responsive;
     final isCurrentUserSender = payment.fromUserId == _currentUserId;
     final isCurrentUserReceiver = payment.toUserId == _currentUserId;
     final fromUserName = _getUserNameById(payment.fromUserId);
@@ -288,14 +293,14 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: r.height(12)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        borderRadius: BorderRadius.circular(r.borderRadius(16)),
+        border: Border.all(color: Colors.grey[300]!, width: r.borderWidth(1)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(r.width(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -303,11 +308,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
               children: [
                 // Icon
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: r.width(40),
+                  height: r.width(40),
                   decoration: BoxDecoration(
                     color: iconColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(r.borderRadius(12)),
                   ),
                   child: Icon(
                     isCurrentUserSender
@@ -316,11 +321,11 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         ? Icons.arrow_downward_rounded
                         : Icons.remove,
                     color: Colors.white,
-                    size: 20,
+                    size: r.iconSize(20),
                   ),
                 ),
 
-                const SizedBox(width: 16),
+                SizedBox(width: r.width(16)),
 
                 // Payment info
                 Expanded(
@@ -330,35 +335,35 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       RichText(
                         text: TextSpan(
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                             color: darkBlue,
                           ),
                           children: [
                             const TextSpan(text: 'From '),
                             TextSpan(
                               text: fromUserName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: r.fontSize(14),
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: r.height(4)),
                       RichText(
                         text: TextSpan(
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                             color: darkBlue,
                           ),
                           children: [
                             const TextSpan(text: 'To '),
                             TextSpan(
                               text: toUserName,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                fontSize: 14,
+                                fontSize: r.fontSize(14),
                               ),
                             ),
                           ],
@@ -372,7 +377,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 Text(
                   '€${payment.amount.toStringAsFixed(2)}',
                   style: GoogleFonts.poppins(
-                    fontSize: 18,
+                    fontSize: r.fontSize(18),
                     fontWeight: FontWeight.w700,
                     color: isCurrentUserSender
                         ? Colors.red

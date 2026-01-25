@@ -7,6 +7,7 @@ import '../../widgets/header.dart';
 import '../../models/groups.dart';
 import '../../widgets/squadup_button.dart';
 import '../../widgets/squadup_input.dart';
+import '../../config/responsive_utils.dart';
 
 class MakePaymentScreen extends StatefulWidget {
   final String groupId;
@@ -105,6 +106,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
 
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -118,8 +120,8 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
         ),
         backgroundColor: isError ? Colors.red[600] : primaryBlue,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.borderRadius(12))),
+        margin: EdgeInsets.all(r.width(16)),
         duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
@@ -127,6 +129,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
     final availableMembers = _getAvailableMembers();
@@ -143,10 +146,10 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                 darkBlue: darkBlue,
                 title: 'Make Payment',
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: r.height(10)),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(r.width(24)),
                   child: Form(
                     key: _formKey,
                     child: Column(
@@ -156,25 +159,25 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                         Text(
                           'Pay to',
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
+                            fontSize: r.fontSize(16),
                             fontWeight: FontWeight.w600,
                             color: darkBlue,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
                         if (availableMembers.isEmpty)
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(20),
+                            padding: EdgeInsets.all(r.width(20)),
                             decoration: BoxDecoration(
                               color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(r.borderRadius(12)),
                               border: Border.all(color: Colors.grey[300]!),
                             ),
                             child: Text(
                               'No other group members available.',
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: r.fontSize(14),
                                 color: Colors.grey[600],
                               ),
                             ),
@@ -191,26 +194,26 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                       });
                                     },
                                     child: Container(
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      padding: const EdgeInsets.all(16),
+                                      margin: EdgeInsets.only(bottom: r.height(12)),
+                                      padding: EdgeInsets.all(r.width(16)),
                                       decoration: BoxDecoration(
                                         color:
                                             isSelected
                                                 ? primaryBlue.withValues(alpha: 0.1)
                                                 : Colors.grey[50],
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(r.borderRadius(12)),
                                         border: Border.all(
                                           color:
                                               isSelected
                                                   ? primaryBlue
                                                   : Colors.grey.withValues(alpha: 0.3),
-                                          width: isSelected ? 2 : 1,
+                                          width: r.borderWidth(isSelected ? 2 : 1),
                                         ),
                                       ),
                                       child: Row(
                                         children: [
                                           CircleAvatar(
-                                            radius: 20,
+                                            radius: r.width(20),
                                             backgroundColor:
                                                 isSelected
                                                     ? primaryBlue
@@ -235,12 +238,12 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                                     )
                                                     : null,
                                           ),
-                                          const SizedBox(width: 12),
+                                          SizedBox(width: r.width(12)),
                                           Expanded(
                                             child: Text(
                                               member.name ?? member.userId,
                                               style: GoogleFonts.poppins(
-                                                fontSize: 14,
+                                                fontSize: r.fontSize(14),
                                                 fontWeight:
                                                     isSelected
                                                         ? FontWeight.w600
@@ -256,13 +259,13 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                             Icon(
                                               Icons.check_circle,
                                               color: primaryBlue,
-                                              size: 24,
+                                              size: r.iconSize(24),
                                             )
                                           else
                                             Icon(
                                               Icons.radio_button_unchecked,
                                               color: Colors.grey[400],
-                                              size: 24,
+                                              size: r.iconSize(24),
                                             ),
                                         ],
                                       ),
@@ -271,13 +274,13 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                                 }).toList(),
                           ),
 
-                        const SizedBox(height: 24),
+                        SizedBox(height: r.height(24)),
 
                         // Amount
                         Text(
                           'Amount',
                           style: GoogleFonts.poppins(
-                            fontSize: 16,
+                            fontSize: r.fontSize(16),
                             fontWeight: FontWeight.w600,
                             color: darkBlue,
                           ),
@@ -300,7 +303,7 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                           },
                         ),
 
-                        const SizedBox(height: 32),
+                        SizedBox(height: r.height(32)),
 
                         // Submit button
                         SquadUpButton(
@@ -308,14 +311,14 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                           onPressed: _submitPayment,
                           isLoading: _loading,
                           width: double.infinity,
-                          height: 56,
+                          height: r.height(56),
                           backgroundColor: darkBlue,
                           disabledColor: darkBlue.withAlpha(128),
                           textColor: Colors.white,
-                          borderRadius: 12,
+                          borderRadius: r.borderRadius(12),
                         ),
 
-                        const SizedBox(height: 16),
+                        SizedBox(height: r.height(16)),
                         // Botão de histórico
                         SquadUpButton(
                           text: 'Payment History',
@@ -330,11 +333,11 @@ class _MakePaymentScreenState extends State<MakePaymentScreen> {
                             );
                           },
                           width: double.infinity,
-                          height: 56,
+                          height: r.height(56),
                           backgroundColor: primaryBlue,
                           disabledColor: primaryBlue.withAlpha(128),
                           textColor: Colors.white,
-                          borderRadius: 12,
+                          borderRadius: r.borderRadius(12),
                         ),
                       ],
                     ),

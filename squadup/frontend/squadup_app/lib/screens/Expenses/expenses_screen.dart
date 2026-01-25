@@ -10,6 +10,7 @@ import '../../services/groups_service.dart';
 import '../../models/groups.dart';
 import 'settle_up_screen.dart';
 import '../../widgets/squadup_button.dart';
+import '../../config/responsive_utils.dart';
 
 class ExpensesScreen extends StatefulWidget {
   final String? groupId;
@@ -195,6 +196,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   void _showSnackBar(String message, {bool isError = false}) {
     if (!mounted) return;
 
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -208,8 +210,8 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         ),
         backgroundColor: isError ? Colors.red[600] : primaryBlue,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(r.borderRadius(12))),
+        margin: EdgeInsets.all(r.width(16)),
         duration: Duration(seconds: isError ? 4 : 2),
       ),
     );
@@ -217,6 +219,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
   @override
   Widget build(BuildContext context) {
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
     final darkBlue = const Color.fromARGB(255, 29, 56, 95);
 
@@ -235,27 +238,27 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                 groupId: groupId,
                 avatarUrl: _groupDetails?.avatarUrl,
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: r.height(6)),
               // Make entire content scrollable
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0),
+                  padding: EdgeInsets.symmetric(horizontal: r.width(14.0)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildBalanceChart(primaryBlue, darkBlue),
-                      const SizedBox(height: 18),
+                      SizedBox(height: r.height(18)),
                       // Balance tabs with fixed height
                       Container(
-                        height: 400, // Fixed height for transactions
+                        height: r.height(400), // Fixed height for transactions
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(r.borderRadius(16)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.grey.withValues(alpha: 0.08),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
+                              blurRadius: r.width(10),
+                              offset: Offset(0, r.height(2)),
                             ),
                           ],
                           border: Border.all(color: Colors.grey[200]!),
@@ -263,14 +266,14 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                         child: Column(
                           children: [
                             Container(
-                              height: 45,
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
+                              height: r.height(45),
+                              margin: EdgeInsets.symmetric(
+                                horizontal: r.width(12),
+                                vertical: r.height(12),
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(r.borderRadius(12)),
                               ),
                               child: StatefulBuilder(
                                 builder: (context, setState) {
@@ -285,11 +288,11 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                     unselectedLabelColor: darkBlue,
                                     labelStyle: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                                      fontSize: r.fontSize(14),
                                     ),
                                     unselectedLabelStyle: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                                      fontSize: r.fontSize(14),
                                     ),
                                     tabs: [
                                       Tab(
@@ -305,14 +308,14 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                                         ? primaryBlue
                                                         : Colors.white,
                                                 borderRadius:
-                                                    BorderRadius.circular(10),
+                                                    BorderRadius.circular(r.borderRadius(10)),
                                               ),
                                               alignment: Alignment.center,
                                               child: Text(
                                                 'To Receive',
                                                 style: GoogleFonts.poppins(
                                                   fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
+                                                  fontSize: r.fontSize(14),
                                                   color:
                                                       selected
                                                           ? Colors.white
@@ -336,14 +339,14 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                                         ? darkBlue
                                                         : Colors.white,
                                                 borderRadius:
-                                                    BorderRadius.circular(10),
+                                                    BorderRadius.circular(r.borderRadius(10)),
                                               ),
                                               alignment: Alignment.center,
                                               child: Text(
                                                 'To Send',
                                                 style: GoogleFonts.poppins(
                                                   fontWeight: FontWeight.w600,
-                                                  fontSize: 14,
+                                                  fontSize: r.fontSize(14),
                                                   color:
                                                       selected
                                                           ? Colors.white
@@ -381,13 +384,13 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                           ],
                         ),
                       ),
-                      const SizedBox(height: 30),
+                      SizedBox(height: r.height(30)),
                       // Buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
-                            width: 150,
+                            width: r.width(150),
                             child: SquadUpButton(
                               text: 'Settle Up',
                               onPressed: () {
@@ -401,17 +404,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                   ),
                                 );
                               },
-                              width: 150,
-                              height: 50,
+                              width: r.width(150),
+                              height: r.height(50),
                               backgroundColor: primaryBlue,
                               disabledColor: primaryBlue.withAlpha(128),
                               textColor: Colors.white,
-                              borderRadius: 12,
+                              borderRadius: r.borderRadius(12),
                             ),
                           ),
-                          SizedBox(width: 30),
+                          SizedBox(width: r.width(30)),
                           SizedBox(
-                            width: 150,
+                            width: r.width(150),
                             child: SquadUpButton(
                               text: 'Payment',
                               onPressed: () {
@@ -429,17 +432,17 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                   }
                                 });
                               },
-                              width: 150,
-                              height: 50,
+                              width: r.width(150),
+                              height: r.height(50),
                               backgroundColor: darkBlue,
                               disabledColor: darkBlue.withAlpha(128),
                               textColor: Colors.white,
-                              borderRadius: 12,
+                              borderRadius: r.borderRadius(12),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 30),
+                      SizedBox(height: r.height(30)),
                     ],
                   ),
                 ),
@@ -471,6 +474,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
 
 
   Widget _buildBalanceChart(Color primaryBlue, Color darkBlue) {
+    final r = context.responsive;
     // Calculate max value for chart scaling
     double maxValue = 0;
     for (var user in _userBalances) {
@@ -481,15 +485,15 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     if (maxValue == 0) maxValue = 1;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(r.width(20)),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(r.borderRadius(16)),
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withValues(alpha: 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            blurRadius: r.width(10),
+            offset: Offset(0, r.height(2)),
           ),
         ],
         border: Border.all(color: Colors.grey[200]!),
@@ -499,19 +503,19 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         children: [
           Row(
             children: [
-              Icon(Icons.bar_chart_rounded, color: darkBlue, size: 24),
-              const SizedBox(width: 8),
+              Icon(Icons.bar_chart_rounded, color: darkBlue, size: r.iconSize(24)),
+              SizedBox(width: r.width(8)),
               Text(
                 'Group Balance',
                 style: GoogleFonts.poppins(
-                  fontSize: 18,
+                  fontSize: r.fontSize(18),
                   fontWeight: FontWeight.w600,
                   color: darkBlue,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
 
           // Chart - centered at zero
           Column(
@@ -539,25 +543,25 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                   }
 
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: EdgeInsets.only(bottom: r.height(16)),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           displayName,
                           style: GoogleFonts.poppins(
-                            fontSize: 14,
+                            fontSize: r.fontSize(14),
                             fontWeight: FontWeight.w600,
                             color: darkBlue,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: r.height(8)),
                         if (toPay == 0 && toReceive == 0)
                           Center(
                             child: Text(
                               '€0',
                               style: GoogleFonts.poppins(
-                                fontSize: 13,
+                                fontSize: r.fontSize(13),
                                 fontWeight: FontWeight.w600,
                                 color: darkBlue,
                               ),
@@ -580,7 +584,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                         child: LayoutBuilder(
                                           builder: (context, constraints) {
                                             return Container(
-                                              height: 32,
+                                              height: r.height(32),
                                               constraints: BoxConstraints(
                                                 minWidth: _calculateMinBarWidth(
                                                   toPay,
@@ -589,22 +593,22 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                               decoration: BoxDecoration(
                                                 color: darkBlue,
                                                 borderRadius:
-                                                    const BorderRadius
+                                                    BorderRadius
                                                         .horizontal(
                                                       left:
-                                                          Radius.circular(8),
-                                                      right: Radius.circular(8),
+                                                          Radius.circular(r.borderRadius(8)),
+                                                      right: Radius.circular(r.borderRadius(8)),
                                                     ),
                                               ),
                                               alignment: Alignment.centerLeft,
-                                              padding: const EdgeInsets.only(
-                                                left: 8,
-                                                right: 8,
+                                              padding: EdgeInsets.only(
+                                                left: r.width(8),
+                                                right: r.width(8),
                                               ),
                                               child: Text(
                                                 '€${toPay.toStringAsFixed(2)}',
                                                 style: GoogleFonts.poppins(
-                                                  fontSize: 12,
+                                                  fontSize: r.fontSize(12),
                                                   fontWeight: FontWeight.w600,
                                                   color: Colors.white,
                                                 ),
@@ -629,7 +633,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                         child: LayoutBuilder(
                                           builder: (context, constraints) {
                                             return Container(
-                                              height: 32,
+                                              height: r.height(32),
                                               constraints: BoxConstraints(
                                                 minWidth: _calculateMinBarWidth(
                                                   toReceive,
@@ -638,22 +642,22 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                                               decoration: BoxDecoration(
                                                 color: primaryBlue,
                                                 borderRadius:
-                                                    const BorderRadius
+                                                    BorderRadius
                                                         .horizontal(
                                                       right:
-                                                          Radius.circular(8),
-                                                      left: Radius.circular(8),
+                                                          Radius.circular(r.borderRadius(8)),
+                                                      left: Radius.circular(r.borderRadius(8)),
                                                     ),
                                               ),
                                               alignment: Alignment.centerRight,
-                                              padding: const EdgeInsets.only(
-                                                left: 8,
-                                                right: 8,
+                                              padding: EdgeInsets.only(
+                                                left: r.width(8),
+                                                right: r.width(8),
                                               ),
                                               child: Text(
                                                 '€${toReceive.toStringAsFixed(2)}',
                                                 style: GoogleFonts.poppins(
-                                                  fontSize: 12,
+                                                  fontSize: r.fontSize(12),
                                                   fontWeight: FontWeight.w600,
                                                   color: Colors.white,
                                                 ),
@@ -680,42 +684,42 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                 }).toList(),
           ),
 
-          const SizedBox(height: 20),
+          SizedBox(height: r.height(20)),
           // Legend
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 16,
-                height: 16,
+                width: r.width(16),
+                height: r.width(16),
                 decoration: BoxDecoration(
                   color: primaryBlue,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(r.borderRadius(4)),
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: r.width(6)),
               Text(
                 'To Receive',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: r.fontSize(12),
                   fontWeight: FontWeight.w500,
                   color: Colors.grey[600],
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: r.width(20)),
               Container(
-                width: 16,
-                height: 16,
+                width: r.width(16),
+                height: r.width(16),
                 decoration: BoxDecoration(
                   color: darkBlue,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(r.borderRadius(4)),
                 ),
               ),
-              const SizedBox(width: 6),
+              SizedBox(width: r.width(6)),
               Text(
                 'To Send',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: r.fontSize(12),
                   fontWeight: FontWeight.w500,
                   color: Colors.grey[600],
                 ),
@@ -732,12 +736,13 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     Color darkBlue, {
     required bool isReceiving,
   }) {
+    final r = context.responsive;
     final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
 
     if (_loading) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(r.width(20.0)),
           child: CircularProgressIndicator(color: primaryBlue),
         ),
       );
@@ -746,7 +751,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     if (participants.isEmpty) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),
+          padding: EdgeInsets.all(r.width(20.0)),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -754,16 +759,16 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                 opacity: 0.12,
                 child: Image.asset(
                   'lib/images/logo_v3.png',
-                  height: 120,
-                  width: 120,
+                  height: r.height(120),
+                  width: r.width(120),
                 ),
               ),
-              const SizedBox(height: 30),
+              SizedBox(height: r.height(30)),
               Flexible(
                 child: Text(
                   isReceiving ? "Nobody owes you anything" : "You don't owe anything",
                   style: GoogleFonts.poppins(
-                    fontSize: 15,
+                    fontSize: r.fontSize(15),
                     color: Colors.grey[500],
                     fontWeight: FontWeight.w500,
                   ),
@@ -777,7 +782,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: r.width(12), vertical: r.height(8)),
       itemCount: participants.length,
       itemBuilder: (context, index) {
         final item = participants[index];
@@ -785,25 +790,25 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         final totalAmount = item['totalAmount'] as double;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
+          margin: EdgeInsets.only(bottom: r.height(8)),
+          padding: EdgeInsets.all(r.width(12)),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(r.borderRadius(12)),
           ),
           child: Row(
             children: [
               // User icon
               Container(
-                width: 40,
-                height: 40,
+                width: r.width(40),
+                height: r.width(40),
                 decoration: BoxDecoration(
                   color: isReceiving ? primaryBlue : darkBlue,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(r.borderRadius(10)),
                 ),
-                child: Icon(Icons.person, color: Colors.white, size: 20),
+                child: Icon(Icons.person, color: Colors.white, size: r.iconSize(20)),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: r.width(12)),
               // User info
               Expanded(
                 child: Column(
@@ -813,7 +818,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                       Text(
                         'You owe',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: r.fontSize(12),
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -821,19 +826,19 @@ class _ExpensesScreenState extends State<ExpensesScreen>
                     Text(
                       userName,
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
+                        fontSize: r.fontSize(14),
                         fontWeight: FontWeight.w700,
                         color: isReceiving ? primaryBlue : darkBlue,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: r.height(2)),
                     if (isReceiving)
                       Text(
                         'Owes you',
                         style: GoogleFonts.poppins(
-                          fontSize: 12,
+                          fontSize: r.fontSize(12),
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
                         ),
@@ -845,7 +850,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
               Text(
                 '€${totalAmount.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 16,
+                  fontSize: r.fontSize(16),
                   fontWeight: FontWeight.w700,
                   color: isReceiving ? Colors.green : Colors.red,
                 ),

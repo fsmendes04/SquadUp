@@ -315,4 +315,66 @@ export class UserController {
       );
     }
   }
+
+  @Post('forgot-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async forgotPassword(@Body() body: { email: string }) {
+    try {
+      if (!body.email) {
+        throw new BadRequestException('Email is required');
+      }
+
+      const result = await this.userService.forgotPassword(body.email);
+
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      this.logger.error('Forgot password error', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to process forgot password request',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('reset-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async resetPassword(@Body() body: { token: string; newPassword: string; confirmPassword: string }) {
+    try {
+      if (!body.token) {
+        throw new BadRequestException('Reset token is required');
+      }
+
+      if (!body.newPassword) {
+        throw new BadRequestException('New password is required');
+      }
+
+      if (body.newPassword !== body.confirmPassword) {
+        throw new BadRequestException('Passwords do not match');
+      }
+
+      const result = await this.userService.resetPassword(body.token, body.newPassword);
+
+      return {
+        success: true,
+        message: result.message,
+      };
+    } catch (error) {
+      this.logger.error('Reset password error', error.message);
+
+      throw new HttpException(
+        {
+          success: false,
+          message: error.message || 'Failed to reset password',
+        },
+        error.status || HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
 }

@@ -46,6 +46,9 @@ class ApiService {
               if (maskedData.containsKey('confirmNewPassword')) {
                 maskedData['confirmNewPassword'] = '***';
               }
+              if (maskedData.containsKey('confirmPassword')) {
+                maskedData['confirmPassword'] = '***';
+              }
               logData = maskedData.toString();
             }
             _log('➡️ ${options.method} ${options.path}');
@@ -159,6 +162,8 @@ class ApiService {
   static const String userRefreshToken = '$userEndpoint/refresh';
   static const String userProfile = '$userEndpoint/profile';
   static const String userChangePassword = '$userEndpoint/change-password';
+  static const String userForgotPassword = '$userEndpoint/forgot-password';
+  static const String userResetPassword = '$userEndpoint/reset-password';
 
   static const String groupsEndpoint = '/groups';
   static const String createGroup = '/groups/create';

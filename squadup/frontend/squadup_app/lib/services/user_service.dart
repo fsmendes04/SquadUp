@@ -101,6 +101,43 @@ class UserService {
     }
   }
 
+  Future<Map<String, dynamic>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        ApiService.userForgotPassword,
+        data: {'email': email},
+      );
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String token,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    if (newPassword != confirmPassword) {
+      throw Exception('As novas senhas não coincidem.');
+    }
+    try {
+      final response = await _apiService.post(
+        ApiService.userResetPassword,
+        data: {
+          'token': token,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+      );
+      return _handleResponse(response);
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
   Future<Map<String, dynamic>> logout() async {
     try {
       final response = await _apiService.post(ApiService.userLogout);

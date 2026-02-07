@@ -80,6 +80,76 @@ export class UserService {
     return { success: true, message: 'Password updated successfully' };
   }
 
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    try {
+      if (!this.isValidEmail(email)) {
+        throw new BadRequestException('Invalid email format');
+      }
+
+      try {
+        await this.getUserByEmail(email);
+      } catch (err) {
+        if (err instanceof BadRequestException && err.message === 'User not found with this email') {
+          throw new BadRequestException('No account found with this email');
+        }
+        throw err;
+      }
+
+      const { error } = await this.supabase.getClient().auth.resetPasswordForEmail(
+        email.toLowerCase().trim(),
+        {
+          redirectTo: 'squadup://reset-password',
+        }
+      );
+
+      if (error) {
+        this.logger.error(`Forgot password request failed for email: ${email}`, error.message);
+        throw new BadRequestException('Unable to process forgot password request');
+      }
+
+      this.logger.log(`Forgot password email sent to: ${email}`);
+      return { message: 'Password reset email sent successfully' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Unexpected forgot password error', error);
+      throw new BadRequestException('Forgot password request failed');
+    }
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    try {
+      if (!token) {
+        throw new BadRequestException('Reset token is required');
+      }
+
+      if (!this.isStrongPassword(newPassword)) {
+        throw new BadRequestException(
+          'Password must be at least 8 characters and contain uppercase, lowercase, number and special character'
+        );
+      }
+
+      const { error } = await this.supabase.getClientWithToken(token).auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        this.logger.error('Password reset failed', error.message);
+        throw new BadRequestException('Failed to reset password');
+      }
+
+      this.logger.log('Password reset successfully');
+      return { message: 'Password reset successfully' };
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      this.logger.error('Unexpected password reset error', error);
+      throw new BadRequestException('Password reset failed');
+    }
+  }
+
   async getProfile(accessToken: string) {
     try {
       if (!accessToken) {

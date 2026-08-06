@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/gallery.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'layout.dart';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Gallery gallery;
@@ -24,7 +26,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   String _formatDate(String dateStr) {
     try {
       final date = DateTime.parse(dateStr);
-      return '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}';
+      return '${date.day.toString().padLeft(2, '0')} ${_monthName(date.month)} ${date.year}';
     } catch (e) {
       return dateStr;
     }
@@ -61,10 +63,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ImageViewerScreen(
-          images: widget.gallery.images,
-          initialIndex: initialIndex,
-        ),
+        builder:
+            (context) => ImageViewerScreen(
+              images: widget.gallery.images,
+              initialIndex: initialIndex,
+            ),
       ),
     );
   }
@@ -82,72 +85,84 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, size: 28, color: Colors.black),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                  widget.gallery.eventName,
-                  style: GoogleFonts.poppins(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: darkBlue,
-                  ),
-                ),
-                ),
-                const SizedBox(height: 20),
-
-                
-
-                // Data
-                _buildInfoRow(
-                  Icons.calendar_today,
-                  _formatDate(widget.gallery.date),
-                ),
-                const SizedBox(height: 16),
-
-                // Hora
-                _buildInfoRow(
-                  Icons.access_time,
-                  _formatTime(widget.gallery.createdAt),
-                ),
-                const SizedBox(height: 16),
-
-                // Localização
-                _buildInfoRow(
-                  Icons.location_on,
-                  widget.gallery.location,
-                ),
-                const SizedBox(height: 32),
-
-                // Galeria de fotos
-                if (widget.gallery.images.isNotEmpty) ...[
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Row(
                     children: [
-                      Text(
-                        'Photos',
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: darkBlue,
+                      IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_ios,
+                          size: 28,
+                          color: Colors.black,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.gallery.eventName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 23,
+                                fontWeight: FontWeight.w700,
+                                color: darkBlue,
+                              ),
+                            ),
+                            Text(
+                              '${widget.gallery.images.length} photos',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                                color: darkBlue.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        '${widget.gallery.images.length} photos',
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: darkBlue.withValues(alpha: 0.6),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: darkBlue,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.add_a_photo,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Add',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 24),
+                _buildInfoRow(
+                  'Created on:',
+                  '${_formatDate(widget.gallery.date)}, ${_formatTime(widget.gallery.createdAt)}',
+                ),
+                const SizedBox(height: 16),
+
+                _buildInfoRow('Location:', widget.gallery.location),
+                const SizedBox(height: 16),
+
+                if (widget.gallery.images.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _buildPhotoGrid(),
                 ],
@@ -159,30 +174,30 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
+  Widget _buildInfoRow(String label, String value) {
     return Row(
       children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: primaryBlue.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(
-            icon,
-            color: primaryBlue,
-            size: 20,
-          ),
-        ),
-        const SizedBox(width: 16),
         Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: darkBlue,
+          child: Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '$label ',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: darkBlue,
+                  ),
+                ),
+                TextSpan(
+                  text: value,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                    color: darkBlue,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -191,54 +206,37 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
   }
 
   Widget _buildPhotoGrid() {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1,
+    final images = widget.gallery.images;
+    final count = images.length;
+
+    if (count == 0) {
+      return const SizedBox();
+    }
+
+    final layout = generatePhotoLayout(images.length);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: StaggeredGrid.count(
+        crossAxisCount: 3,
+        mainAxisSpacing: 6,
+        crossAxisSpacing: 6,
+        children:
+            layout.map((tile) {
+              return StaggeredGridTile.count(
+                crossAxisCellCount: tile.width,
+                mainAxisCellCount: tile.height,
+                child: _photo(images[tile.index], tile.index),
+              );
+            }).toList(),
       ),
-      itemCount: widget.gallery.images.length,
-      itemBuilder: (context, index) {
-        return GestureDetector(
-          onTap: () => _showImageViewer(index),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              widget.gallery.images[index],
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: primaryBlue.withValues(alpha: 0.1),
-                  child: Icon(
-                    Icons.image_not_supported,
-                    color: primaryBlue,
-                    size: 30,
-                  ),
-                );
-              },
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  color: primaryBlue.withValues(alpha: 0.1),
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      color: primaryBlue,
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                          : null,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
-      },
+    );
+  }
+
+  Widget _photo(String url, int index) {
+    return GestureDetector(
+      onTap: () => _showImageViewer(index),
+      child: ClipRRect(child: Image.network(url, fit: BoxFit.cover)),
     );
   }
 }
@@ -311,10 +309,11 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
                         return Center(
                           child: CircularProgressIndicator(
                             color: Colors.white,
-                            value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded /
-                                    loadingProgress.expectedTotalBytes!
-                                : null,
+                            value:
+                                loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                    : null,
                           ),
                         );
                       },
@@ -329,11 +328,7 @@ class _ImageViewerScreenState extends State<ImageViewerScreen> {
               top: 16,
               left: 16,
               child: IconButton(
-                icon: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 32,
-                ),
+                icon: const Icon(Icons.close, color: Colors.white, size: 32),
                 onPressed: () => Navigator.pop(context),
               ),
             ),

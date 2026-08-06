@@ -318,8 +318,8 @@ class _CreateGalleryScreenState extends State<CreateGalleryScreen> {
                                 label: const Text('Camera'),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
-                                  foregroundColor: primaryBlue,
-                                  side: BorderSide(color: primaryBlue, width: r.borderWidth(2)),
+                                  foregroundColor: Colors.grey[600],
+                                  side: BorderSide(color: const Color.fromARGB(255, 206, 205, 205), width: r.borderWidth(2)),
                                   padding: EdgeInsets.symmetric(vertical: r.height(12)),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(r.borderRadius(12)),

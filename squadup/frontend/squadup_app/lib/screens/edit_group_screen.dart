@@ -6,6 +6,7 @@ import '../models/groups.dart';
 import '../widgets/avatar_group.dart';
 import '../widgets/avatar_widget.dart';
 import '../widgets/loading_overlay.dart';
+import '../widgets/squadup_input.dart';
 import '../config/responsive_utils.dart';
 
 class EditGroupScreen extends StatefulWidget {
@@ -22,19 +23,30 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
   GroupWithMembers? _group;
   bool _loading = true;
   final _formKey = GlobalKey<FormState>();
-  String? _editedName;
   late TextEditingController _nameController;
+  late TextEditingController _searchController;
   bool _saving = false;
-  String? _pendingAvatarPath; // novo: path da imagem selecionada
+  bool _isSearchingMember = false;
+  bool _isAddingMember = false;
+  String? _pendingAvatarPath;
+  Map<String, dynamic>? _searchedUser;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController();
+    _searchController = TextEditingController();
     _fetchGroup();
   }
 
-  Future<void> _fetchGroup() async {
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetchGroup({bool preserveDrafts = false}) async {
     setState(() {
       _loading = true;
     });
@@ -42,10 +54,11 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
       final response = await _groupsService.getGroupById(widget.groupId);
       setState(() {
         _group = GroupWithMembers.fromJson(response['data'] ?? response);
-        _editedName = _group?.name;
-        _nameController.text = _editedName ?? '';
+        if (!preserveDrafts) {
+          _nameController.text = _group?.name ?? '';
+          _pendingAvatarPath = null;
+        }
         _loading = false;
-        _pendingAvatarPath = null; // limpa seleção ao recarregar
       });
     } catch (e) {
       setState(() {
@@ -86,166 +99,82 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
     }
   }
 
-  Future<void> _showAddMemberDialog() async {
-    final darkBlue = const Color.fromARGB(255, 29, 56, 95);
-    final primaryBlue = const Color.fromARGB(255, 81, 163, 230);
-    final emailController = TextEditingController();
-    bool isSearching = false;
-    Map<String, dynamic>? foundUser;
-    String? errorMessage;
+  bool _isSearchedUserAlreadyMember() {
+    if (_searchedUser == null || _group == null) return false;
+    final searchedUserId = _searchedUser!['id']?.toString();
+    if (searchedUserId == null || searchedUserId.isEmpty) return false;
+    return _group!.members.any((member) => member.userId == searchedUserId);
+  }
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(
-                'Add Member',
-                style: GoogleFonts.poppins(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: darkBlue,
-                ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      labelStyle: GoogleFonts.poppins(color: darkBlue),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: darkBlue, width: 2),
-                      ),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  if (isSearching)
-                    const CircularProgressIndicator()
-                  else if (foundUser != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primaryBlue.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          AvatarWidget(
-                            avatarUrl: foundUser!['avatar_url'],
-                            radius: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              foundUser!['name'] ?? 'User',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w500,
-                                color: darkBlue,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else if (errorMessage != null)
-                    Text(
-                      errorMessage!,
-                      style: GoogleFonts.poppins(
-                        color: Colors.red,
-                        fontSize: 14,
-                      ),
-                    ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text(
-                    'Cancel',
-                    style: GoogleFonts.poppins(color: Colors.grey),
-                  ),
-                ),
-                if (foundUser == null)
-                  ElevatedButton(
-                    onPressed: isSearching
-                        ? null
-                        : () async {
-                            final email = emailController.text.trim();
-                            if (email.isEmpty) return;
+  Future<void> _searchUserByEmail(String email) async {
+    if (email.trim().isEmpty) {
+      setState(() {
+        _searchedUser = null;
+        _isSearchingMember = false;
+      });
+      return;
+    }
 
-                            setDialogState(() {
-                              isSearching = true;
-                              errorMessage = null;
-                            });
+    setState(() {
+      _isSearchingMember = true;
+    });
 
-                            try {
-                              final response = await _userService.getUserByEmail(email);
-                              if (response['success'] == true && response['data'] != null) {
-                                setDialogState(() {
-                                  foundUser = response['data'];
-                                  isSearching = false;
-                                });
-                              } else {
-                                setDialogState(() {
-                                  errorMessage = 'User not found';
-                                  isSearching = false;
-                                });
-                              }
-                            } catch (e) {
-                              setDialogState(() {
-                                errorMessage = 'Error searching user';
-                                isSearching = false;
-                              });
-                            }
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: darkBlue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      'Search',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        await _groupsService.addMember(
-                          groupId: widget.groupId,
-                          userEmail: foundUser!['email'],
-                        );
-                        if (mounted) {
-                          Navigator.pop(context);
-                          await _fetchGroup();
-                        }
-                      // ignore: empty_catches
-                      } catch (e) {
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: darkBlue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(
-                      'Add',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-              ],
-            );
-          },
-        );
-      },
-    );
+    try {
+      final response = await _userService.getUserByEmail(email.trim());
+      setState(() {
+        if (response['success'] == true && response['data'] != null) {
+          _searchedUser = response['data'];
+        } else {
+          _searchedUser = null;
+        }
+        _isSearchingMember = false;
+      });
+    } catch (e) {
+      setState(() {
+        _searchedUser = null;
+        _isSearchingMember = false;
+      });
+    }
+  }
+
+  Future<void> _addMemberFromSearch() async {
+    if (_searchedUser == null || _group == null || _isAddingMember) return;
+    if (_isSearchedUserAlreadyMember()) return;
+
+    final userEmail = _searchedUser!['email']?.toString();
+    if (userEmail == null || userEmail.isEmpty) return;
+
+    setState(() {
+      _isAddingMember = true;
+    });
+
+    try {
+      await _groupsService.addMember(
+        groupId: widget.groupId,
+        userEmail: userEmail,
+      );
+      await _fetchGroup(preserveDrafts: true);
+      setState(() {
+        _searchController.clear();
+        _searchedUser = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString().replaceFirst('Exception: ', ''),
+            style: GoogleFonts.poppins(),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingMember = false;
+        });
+      }
+    }
   }
 
   @override
@@ -453,7 +382,6 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                         Align(
                                           alignment: Alignment.centerLeft,
                                           child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                             children: [
                                               Text(
                                                 'Members',
@@ -463,16 +391,13 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                                   color: darkBlue,
                                                 ),
                                               ),
-                                              TextButton.icon(
-                                                onPressed: _showAddMemberDialog,
-                                                icon: Icon(Icons.person_add, color: darkBlue, size: 20),
-                                                label: Text(
-                                                  'Add',
-                                                  style: GoogleFonts.poppins(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: darkBlue,
-                                                  ),
+                                              const Spacer(),
+                                              Text(
+                                                '${_group!.members.length}',
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: darkBlue,
                                                 ),
                                               ),
                                             ],
@@ -485,56 +410,246 @@ class _EditGroupScreenState extends State<EditGroupScreen> {
                                           ),
                                           decoration: BoxDecoration(
                                             border: Border.all(
-                                              color: darkBlue.withValues(alpha: 0.3),
+                                              color: darkBlue.withValues(
+                                                alpha: 0.3,
+                                              ),
                                               width: 1,
                                             ),
-                                            borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
                                           ),
-                                          child: _group!.members.isEmpty
-                                              ? Center(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.all(24.0),
-                                                    child: Text(
-                                                      'No members yet',
-                                                      style: GoogleFonts.poppins(
-                                                        color: Colors.grey[600],
+                                          child:
+                                              _group!.members.isEmpty
+                                                  ? Center(
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            24.0,
+                                                          ),
+                                                      child: Text(
+                                                        'No members yet',
+                                                        style:
+                                                            GoogleFonts.poppins(
+                                                              color:
+                                                                  Colors
+                                                                      .grey[600],
+                                                            ),
                                                       ),
                                                     ),
+                                                  )
+                                                  : ListView.separated(
+                                                    shrinkWrap: true,
+                                                    itemCount:
+                                                        _group!.members.length,
+                                                    separatorBuilder:
+                                                        (context, index) =>
+                                                            Divider(
+                                                              height: 1,
+                                                              color: darkBlue
+                                                                  .withValues(
+                                                                    alpha: 0.1,
+                                                                  ),
+                                                            ),
+                                                    itemBuilder: (
+                                                      context,
+                                                      index,
+                                                    ) {
+                                                      final member =
+                                                          _group!
+                                                              .members[index];
+                                                      return ListTile(
+                                                        leading: AvatarWidget(
+                                                          avatarUrl:
+                                                              member.avatarUrl,
+                                                          radius: 20,
+                                                        ),
+                                                        title: Text(
+                                                          member.name ?? 'User',
+                                                          style:
+                                                              GoogleFonts.poppins(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w500,
+                                                                color: darkBlue,
+                                                              ),
+                                                        ),
+                                                        subtitle: Text(
+                                                          member.role,
+                                                          style: GoogleFonts.poppins(
+                                                            fontSize: 12,
+                                                            color:
+                                                                Colors
+                                                                    .grey[600],
+                                                          ),
+                                                        ),
+                                                      );
+                                                    },
                                                   ),
-                                                )
-                                              : ListView.separated(
-                                                  shrinkWrap: true,
-                                                  itemCount: _group!.members.length,
-                                                  separatorBuilder: (context, index) => Divider(
-                                                    height: 1,
-                                                    color: darkBlue.withValues(alpha: 0.1),
+                                        ),
+                                        const SizedBox(height: 18),
+                                        SquadUpInput(
+                                          controller: _searchController,
+                                          label: 'Add Members',
+                                          icon: Icons.search,
+                                          keyboardType:
+                                              TextInputType.emailAddress,
+                                          onChanged: _searchUserByEmail,
+                                          suffixIcon:
+                                              _isSearchingMember
+                                                  ? Padding(
+                                                    padding: EdgeInsets.all(
+                                                      r.width(12),
+                                                    ),
+                                                    child: SizedBox(
+                                                      width: r.width(20),
+                                                      height: r.width(20),
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color:
+                                                            const Color.fromARGB(
+                                                              255,
+                                                              81,
+                                                              163,
+                                                              230,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  )
+                                                  : _searchController
+                                                      .text
+                                                      .isNotEmpty
+                                                  ? IconButton(
+                                                    icon: Icon(
+                                                      Icons.clear,
+                                                      color: darkBlue,
+                                                      size: r.iconSize(20),
+                                                    ),
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        _searchController
+                                                            .clear();
+                                                        _searchedUser = null;
+                                                      });
+                                                    },
+                                                  )
+                                                  : null,
+                                        ),
+                                        if (_searchedUser != null) ...[
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: Colors.grey[300]!,
+                                                width: 1,
+                                              ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withValues(alpha: 0.05),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: InkWell(
+                                                onTap:
+                                                    _isAddingMember ||
+                                                            _isSearchedUserAlreadyMember()
+                                                        ? null
+                                                        : _addMemberFromSearch,
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    12,
                                                   ),
-                                                  itemBuilder: (context, index) {
-                                                    final member = _group!.members[index];
-                                                    return ListTile(
-                                                      leading: AvatarWidget(
-                                                        avatarUrl: member.avatarUrl,
+                                                  child: Row(
+                                                    children: [
+                                                      AvatarWidget(
+                                                        avatarUrl:
+                                                            _searchedUser!['avatar_url']
+                                                                ?.toString(),
                                                         radius: 20,
                                                       ),
-                                                      title: Text(
-                                                        member.name ?? 'User',
-                                                        style: GoogleFonts.poppins(
-                                                          fontWeight: FontWeight.w500,
-                                                          color: darkBlue,
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              _searchedUser!['name']
+                                                                      ?.toString() ??
+                                                                  'Unknown',
+                                                              style: GoogleFonts.poppins(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                color: darkBlue,
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              _searchedUser!['email']
+                                                                      ?.toString() ??
+                                                                  '',
+                                                              style: GoogleFonts.poppins(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors
+                                                                        .grey[600],
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
                                                       ),
-                                                      subtitle: Text(
-                                                        member.role,
-                                                        style: GoogleFonts.poppins(
-                                                          fontSize: 12,
-                                                          color: Colors.grey[600],
+                                                      if (_isAddingMember)
+                                                        SizedBox(
+                                                          width: r.width(20),
+                                                          height: r.width(20),
+                                                          child: CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color:
+                                                                const Color.fromARGB(
+                                                                  255,
+                                                                  81,
+                                                                  163,
+                                                                  230,
+                                                                ),
+                                                          ),
+                                                        )
+                                                      else
+                                                        Icon(
+                                                          _isSearchedUserAlreadyMember()
+                                                              ? Icons
+                                                                  .check_circle
+                                                              : Icons
+                                                                  .add_circle_outline,
+                                                          color:
+                                                              _isSearchedUserAlreadyMember()
+                                                                  ? Colors.green
+                                                                  : const Color.fromARGB(
+                                                                    255,
+                                                                    81,
+                                                                    163,
+                                                                    230,
+                                                                  ),
+                                                          size: r.iconSize(24),
                                                         ),
-                                                      ),
-                                                    );
-                                                  },
+                                                    ],
+                                                  ),
                                                 ),
-                                        ),
-                                        // ...mensagem de erro/sucesso pode ser adicionada aqui...
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ],
                                     ),
                                   ),

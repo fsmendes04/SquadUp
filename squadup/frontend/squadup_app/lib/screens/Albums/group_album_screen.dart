@@ -33,7 +33,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
   List<Gallery> _galleries = [];
   bool _isLoading = true;
   String? _error;
-  
+
   // Search functionality
   String _searchQuery = '';
   bool _isSearching = false;
@@ -49,7 +49,9 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
       return _galleries;
     }
     return _galleries.where((gallery) {
-      return gallery.eventName.toLowerCase().startsWith(_searchQuery.toLowerCase());
+      return gallery.eventName.toLowerCase().startsWith(
+        _searchQuery.toLowerCase(),
+      );
     }).toList();
   }
 
@@ -104,7 +106,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                     color: primaryBlue,
                     child: Column(
                       children: [
-                          _buildHeader(darkBlue),
+                        _buildHeader(darkBlue),
                         SizedBox(height: r.height(20)),
 
                         // Section title and add button
@@ -112,9 +114,12 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
                             child: Padding(
-                              padding: EdgeInsets.symmetric(horizontal: r.width(18)),
+                              padding: EdgeInsets.symmetric(
+                                horizontal: r.width(18),
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Albums',
@@ -129,36 +134,46 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
                               ),
                             ),
                           ),
-                          SizedBox(height: r.height(6)),
+                          SizedBox(height: r.height(14)),
                         ],
 
-                        // Search bar
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: r.width(16)),
-                          child: _buildSearchBar(),
-                        ),
-
-                        // Lista de eventos
                         Expanded(
                           child:
                               _galleries.isEmpty
                                   ? _buildEmptyState()
-                                  : _filteredGalleries.isEmpty && _searchQuery.isNotEmpty
-                                      ? _buildNoSearchResultsState()
-                                      : ListView.builder(
-                                        padding: EdgeInsets.all(r.width(16)),
-                                        itemCount: _filteredGalleries.length,
-                                        itemBuilder: (context, index) {
-                                          final gallery = _filteredGalleries[index];
-                                          return Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: r.height(20),
-                                            ),
-                                            child: _buildGalleryCard(gallery),
-                                          );
-                                        },
-                                      ),
+                                  : _filteredGalleries.isEmpty &&
+                                      _searchQuery.isNotEmpty
+                                  ? _buildNoSearchResultsState()
+                                  : GridView.builder(
+                                    padding: EdgeInsets.all(r.width(16)),
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          crossAxisSpacing: r.width(20),
+                                          childAspectRatio: 0.88,
+                                        ),
+                                    itemCount: _filteredGalleries.length,
+                                    itemBuilder: (context, index) {
+                                      final gallery = _filteredGalleries[index];
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          bottom: r.height(14),
+                                        ),
+                                        child: _buildGalleryCard(gallery),
+                                      );
+                                    },
+                                  ),
                         ),
+
+                        if (_galleries.isNotEmpty) ...[
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: r.width(16),
+                            ),
+                            child: _buildSearchBar(),
+                          ),
+                          SizedBox(height: r.height(15)),
+                        ]
                       ],
                     ),
                   ),
@@ -195,10 +210,10 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: r.width(16),
-          vertical: r.height(8),
+          vertical: r.height(10),
         ),
         decoration: BoxDecoration(
-          color: primaryBlue,
+          color: darkBlue,
           borderRadius: BorderRadius.circular(r.borderRadius(15)),
           boxShadow: [
             BoxShadow(
@@ -211,11 +226,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.add,
-              color: Colors.white,
-              size: r.iconSize(18),
-            ),
+            Icon(Icons.add, color: Colors.white, size: r.iconSize(18)),
             SizedBox(width: r.width(4)),
             Text(
               'New',
@@ -301,7 +312,10 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
     final r = context.responsive;
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: r.width(32), vertical: r.height(60)),
+      padding: EdgeInsets.symmetric(
+        horizontal: r.width(32),
+        vertical: r.height(60),
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -343,10 +357,14 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
           SizedBox(height: r.height(40)),
           GestureDetector(
             onTap: () async {
-              await Navigator.pushNamed(context, '/create-gallery', arguments: {
-                'groupId': widget.groupId,
-                'groupName': _groupDetails?.name ?? widget.groupName,
-              });
+              await Navigator.pushNamed(
+                context,
+                '/create-gallery',
+                arguments: {
+                  'groupId': widget.groupId,
+                  'groupName': _groupDetails?.name ?? widget.groupName,
+                },
+              );
               await _refreshData();
             },
             child: Container(
@@ -405,11 +423,18 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, size: r.iconSize(48), color: Colors.grey[400]),
+          Icon(
+            Icons.error_outline,
+            size: r.iconSize(48),
+            color: Colors.grey[400],
+          ),
           SizedBox(height: r.height(16)),
           Text(
             _error!,
-            style: GoogleFonts.poppins(fontSize: r.fontSize(16), color: Colors.grey[600]),
+            style: GoogleFonts.poppins(
+              fontSize: r.fontSize(16),
+              color: Colors.grey[600],
+            ),
             textAlign: TextAlign.center,
           ),
           SizedBox(height: r.height(16)),
@@ -434,7 +459,7 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
 
   Widget _buildGalleryCard(Gallery gallery) {
     final r = context.responsive;
-    final images = gallery.images.take(4).toList();
+
     return GestureDetector(
       onTap: () {
         Navigator.pushNamed(
@@ -446,131 +471,68 @@ class _GroupGalleryScreenState extends State<GroupGalleryScreen> {
           },
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(r.borderRadius(16)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: r.width(10),
-              offset: Offset(0, r.height(4)),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Até 4 fotos lado a lado
-            if (images.isNotEmpty)
-              Row(
-                children: images.map((img) {
-                  return Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(right: r.width(2)),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          topLeft: img == images.first ? Radius.circular(r.borderRadius(16)) : Radius.zero,
-                          topRight: img == images.last ? Radius.circular(r.borderRadius(16)) : Radius.zero,
-                        ),
-                        child: Image.network(
-                          img,
-                          height: r.height(160),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              height: r.height(160),
-                              color: primaryBlue.withValues(alpha: 0.1),
-                              child: Icon(
-                                Icons.image_not_supported,
-                                color: primaryBlue,
-                                size: r.iconSize(30),
-                              ),
-                            );
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              height: r.height(160),
-                              color: primaryBlue.withValues(alpha: 0.1),
-                              child: Center(
-                                child: CircularProgressIndicator(
-                                  color: primaryBlue,
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                  strokeWidth: r.borderWidth(2),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(r.borderRadius(20)),
+        child: SizedBox(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              gallery.images.isNotEmpty
+                  ? Image.network(gallery.images.first, fit: BoxFit.cover)
+                  : Container(
+                    color: primaryBlue.withValues(alpha: 0.1),
+                    child: Icon(
+                      Icons.photo_library_outlined,
+                      color: primaryBlue,
+                      size: r.iconSize(40),
                     ),
-                  );
-                }).toList(),
-              ),
-            if (images.isEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(r.borderRadius(16)),
-                  topRight: Radius.circular(r.borderRadius(16)),
-                ),
-                child: Container(
-                  height: r.height(120),
-                  color: primaryBlue.withValues(alpha: 0.1),
-                  child: Icon(
-                    Icons.photo_library_outlined,
-                    color: primaryBlue,
-                    size: r.iconSize(40),
                   ),
-                ),
-              ),
-            // Informações do evento
-            Padding(
-              padding: EdgeInsets.all(r.width(15)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          gallery.eventName,
-                          style: GoogleFonts.poppins(
-                            fontSize: r.fontSize(18),
-                            fontWeight: FontWeight.w700,
-                            color: darkBlue,
-                          ),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.camera_alt,
-                            size: r.iconSize(16),
-                            color: darkBlue,
-                          ),
-                          SizedBox(width: r.width(4)),
-                          Text(
-                            '${gallery.images.length}',
-                            style: GoogleFonts.poppins(
-                              fontSize: r.fontSize(16),
-                              fontWeight: FontWeight.w700,
-                              color: darkBlue,
-                            ),
-                          ),
-                        ],
-                      ),
+
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.65),
                     ],
                   ),
-                  
-                ],
+                ),
               ),
-            ),
-          ],
+
+              Positioned(
+                left: r.width(12),
+                right: r.width(12),
+                bottom: r.height(28),
+                child: Text(
+                  gallery.eventName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: r.fontSize(16),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: r.width(12),
+                right: r.width(12),
+                bottom: r.height(12),
+                child: Text(
+                  '${gallery.images.length} Photos',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: r.fontSize(12.5),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

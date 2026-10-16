@@ -33,6 +33,18 @@ export class SupabaseService {
     return this.client;
   }
 
+  // Cliente descartável para operações de auth que criam sessão (login, signUp, refresh).
+  // Nunca usar o cliente partilhado para isto: a sessão ficaria guardada e partilhada entre pedidos.
+  createAuthClient(): SupabaseClient {
+    return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_ANON_KEY!, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+    });
+  }
+
   getAdminClient(): SupabaseClient {
     return this.adminClient;
   }

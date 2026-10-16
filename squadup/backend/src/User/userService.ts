@@ -26,10 +26,11 @@ export class UserService {
   async getUserByEmail(email: string) {
     try {
       const adminClient = this.supabase.getAdminClient();
+      // Só os campos necessários para adicionar membros; eq (e não ilike) para não aceitar wildcards
       const { data: profile, error } = await adminClient
         .from('profiles')
-        .select('*')
-        .ilike('email', email.trim().toLowerCase())
+        .select('id, email, name, avatar_url')
+        .eq('email', email.trim().toLowerCase())
         .maybeSingle();
 
       if (error) {
@@ -52,7 +53,7 @@ export class UserService {
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<any> {
     const user = await this.getUserById(userId);
 
-    const { error: signInError } = await this.supabase.getClient().auth.signInWithPassword({
+    const { error: signInError } = await this.supabase.createAuthClient().auth.signInWithPassword({
       email: user.email,
       password: currentPassword,
     });
@@ -69,7 +70,7 @@ export class UserService {
       throw new BadRequestException('New password must be different from the current password');
     }
 
-    const { error } = await this.supabase.getClient().auth.updateUser({
+    const { error } = await this.supabase.getAdminClient().auth.admin.updateUserById(userId, {
       password: newPassword,
     });
     if (error) {
@@ -95,7 +96,7 @@ export class UserService {
         throw err;
       }
 
-      const { error } = await this.supabase.getClient().auth.resetPasswordForEmail(
+      const { error } = await this.supabase.createAuthClient().auth.resetPasswordForEmail(
         email.toLowerCase().trim(),
         {
           redirectTo: 'squadup://reset-password',
@@ -213,7 +214,7 @@ export class UserService {
         }
       }
 
-      const { data, error } = await this.supabase.getClient().auth.signUp({
+      const { data, error } = await this.supabase.createAuthClient().auth.signUp({
         email: email.toLowerCase().trim(),
         password,
         options: {
@@ -247,7 +248,6 @@ export class UserService {
     accessToken?: string
   ) {
     try {
-      this.logger.log(`Token recebido para updateProfile: ${accessToken}`);
       const updatePayload: Record<string, any> = {};
 
       // --- Validação e sanitização do nome ---
@@ -384,7 +384,7 @@ export class UserService {
         throw new UnauthorizedException('Email and password are required');
       }
 
-      const { data, error } = await this.supabase.getClient().auth.signInWithPassword({
+      const { data, error } = await this.supabase.createAuthClient().auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
       });

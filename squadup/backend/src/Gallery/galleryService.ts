@@ -4,9 +4,62 @@ import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { Gallery } from './galleryModel';
 import { v4 as uuidv4 } from 'uuid';
 
+export const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MIME_EXTENSIONS: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/jpg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+};
+const BUCKET = 'gallery';
+const SIGNED_URL_TTL_SECONDS = 60 * 60;
+
 @Injectable()
 export class GalleryService {
   constructor(private readonly supabaseService: SupabaseService) { }
+
+  // O bucket é privado: guardamos o caminho do objeto e devolvemos URLs assinadas.
+  // Registos antigos guardam o URL público completo, por isso aceitamos ambos.
+  private toStoragePath(image: string): string {
+    const marker = `/${BUCKET}/`;
+    const index = image.indexOf(marker);
+    return index >= 0 ? decodeURIComponent(image.substring(index + marker.length)) : image;
+  }
+
+  private async withSignedUrls(client: any, gallery: Gallery): Promise<Gallery> {
+    const paths = (gallery.images || []).map(image => this.toStoragePath(image));
+    if (paths.length === 0) {
+      return gallery;
+    }
+
+    const { data, error } = await client.storage
+      .from(BUCKET)
+      .createSignedUrls(paths, SIGNED_URL_TTL_SECONDS);
+
+    if (error || !data) {
+      throw new BadRequestException('Failed to load gallery images');
+    }
+
+    return {
+      ...gallery,
+      images: data.filter((item: any) => item.signedUrl).map((item: any) => item.signedUrl),
+    };
+  }
+
+  private validateImage(image: Express.Multer.File): void {
+    if (!ALLOWED_IMAGE_MIMES.includes(image.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only JPEG, PNG and WEBP are allowed.');
+    }
+
+    const signature = image.buffer.subarray(0, 4).toString('hex');
+    const isJpeg = signature.startsWith('ffd8ff');
+    const isPng = signature === '89504e47';
+    const isWebp = signature === '52494646' && image.buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+
+    if (!isJpeg && !isPng && !isWebp) {
+      throw new BadRequestException('File content does not match an allowed image type');
+    }
+  }
 
   async createGallery(
     createGalleryDto: CreateGalleryDto,
@@ -43,36 +96,33 @@ export class GalleryService {
       throw new BadRequestException('At least one image is required');
     }
 
+    for (const image of images) {
+      this.validateImage(image);
+    }
+
     const eventNameSanitized = event_name.toLowerCase().replace(/[^a-z0-9]/g, '_');
-    const imageUrls: string[] = [];
+    const imagePaths: string[] = [];
 
     for (const image of images) {
-      const fileExtension = image.originalname.split('.').pop();
-      const fileName = `${uuidv4()}.${fileExtension}`;
+      const fileName = `${uuidv4()}.${MIME_EXTENSIONS[image.mimetype]}`;
       const filePath = `${group_id}/${eventNameSanitized}/${fileName}`;
 
-      const { data: uploadData, error: uploadError } = await client
+      const { error: uploadError } = await client
         .storage
-        .from('gallery')
+        .from(BUCKET)
         .upload(filePath, image.buffer, {
           contentType: image.mimetype,
           upsert: false,
         });
 
       if (uploadError) {
-        for (const url of imageUrls) {
-          const path = url.split('/gallery/')[1];
-          await client.storage.from('gallery').remove([path]);
+        if (imagePaths.length > 0) {
+          await client.storage.from(BUCKET).remove(imagePaths);
         }
         throw new BadRequestException(`Failed to upload image: ${uploadError.message}`);
       }
 
-      const { data: publicUrlData } = client
-        .storage
-        .from('gallery')
-        .getPublicUrl(filePath);
-
-      imageUrls.push(publicUrlData.publicUrl);
+      imagePaths.push(filePath);
     }
 
     const { data: gallery, error: galleryError } = await client
@@ -82,20 +132,17 @@ export class GalleryService {
         event_name,
         location,
         date,
-        images: imageUrls,
+        images: imagePaths,
       })
       .select()
       .single();
 
     if (galleryError) {
-      for (const url of imageUrls) {
-        const path = url.split('/gallery/')[1];
-        await client.storage.from('gallery').remove([path]);
-      }
+      await client.storage.from(BUCKET).remove(imagePaths);
       throw new BadRequestException(`Failed to create gallery: ${galleryError.message}`);
     }
 
-    return gallery;
+    return this.withSignedUrls(client, gallery);
   }
 
   async getGalleriesByGroup(groupId: string, token: string): Promise<Gallery[]> {
@@ -108,7 +155,7 @@ export class GalleryService {
     if (error) {
       throw new BadRequestException(`Failed to fetch galleries: ${error.message}`);
     }
-    return galleries;
+    return Promise.all((galleries || []).map(gallery => this.withSignedUrls(client, gallery)));
   }
 
   async getGalleryById(galleryId: string, token: string): Promise<Gallery> {
@@ -121,6 +168,6 @@ export class GalleryService {
     if (error) {
       throw new NotFoundException(`Gallery not found: ${error.message}`);
     }
-    return gallery;
+    return this.withSignedUrls(client, gallery);
   }
 }

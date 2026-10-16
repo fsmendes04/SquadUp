@@ -10,7 +10,7 @@ import {
   Param,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { GalleryService } from './galleryService';
+import { GalleryService, ALLOWED_IMAGE_MIMES } from './galleryService';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { AuthGuard } from '../User/userToken';
 import { CurrentUser, GetToken } from '../common/decorators';
@@ -21,7 +21,18 @@ export class GalleryController {
   constructor(private readonly galleryService: GalleryService) { }
 
   @Post()
-  @UseInterceptors(FilesInterceptor('images', 20))
+  @UseInterceptors(
+    FilesInterceptor('images', 20, {
+      limits: { fileSize: 5 * 1024 * 1024, files: 20 },
+      fileFilter: (req, file, cb) => {
+        if (ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new BadRequestException('Invalid file type. Only JPEG, PNG and WEBP are allowed.'), false);
+        }
+      },
+    }),
+  )
   async createGallery(
     @Body() createGalleryDto: CreateGalleryDto,
     @UploadedFiles() images: Express.Multer.File[],

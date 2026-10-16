@@ -13,7 +13,7 @@ export class SessionService {
         throw new UnauthorizedException('Refresh token is required');
       }
 
-      const { data, error } = await this.supabase.getClient().auth.refreshSession({
+      const { data, error } = await this.supabase.createAuthClient().auth.refreshSession({
         refresh_token: refreshToken,
       });
 
@@ -49,10 +49,12 @@ export class SessionService {
         throw new BadRequestException('Token is required');
       }
 
+      // Revoga as sessões do dono do token (e não as do cliente partilhado)
       const { error: signOutError } = await this.supabase
-        .getClient()
+        .getAdminClient()
         .auth
-        .signOut({ scope: 'global' });
+        .admin
+        .signOut(token, 'global');
 
       if (signOutError) {
         this.logger.error('Failed to revoke session', signOutError);

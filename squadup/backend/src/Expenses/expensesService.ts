@@ -6,6 +6,7 @@ import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { FilterExpensesDto } from './dto/filter-expenses.dto';
 import { ExpenseWithParticipants } from './expenseModel';
 import xss from 'xss';
+import { computeBalances, splitEvenly, toCents, MemberBalance, ParticipantRow, Share } from './ledger';
 
 @Injectable()
 export class ExpensesService {
@@ -21,301 +22,83 @@ export class ExpensesService {
   ) { }
 
   async createExpense(createExpenseDto: CreateExpenseDto, userId: string, token: string): Promise<ExpenseWithParticipants> {
-    try {
-      const { group_id, payer_id, amount, description, category, expense_date, participant_ids } = createExpenseDto;
+    const { group_id, payer_id, amount, description, category, expense_date, participant_ids } = createExpenseDto;
 
-      if (!group_id || !payer_id) {
-        throw new BadRequestException('Group ID and Payer ID are required');
-      }
+    const sanitizedDescription = this.validateDescription(description);
+    const sanitizedCategory = this.validateCategory(category);
+    const shares = this.buildShares(amount, participant_ids);
 
-      if (amount <= 0 || amount > this.MAX_AMOUNT) {
-        throw new BadRequestException(`Amount must be between 0.01 and ${this.MAX_AMOUNT}`);
-      }
+    const client = this.supabaseService.getClientWithToken(token);
+    const { data: expenseId, error } = await client.rpc('create_expense', {
+      p_group_id: group_id,
+      p_payer_id: payer_id,
+      p_amount: amount,
+      p_description: sanitizedDescription,
+      p_category: sanitizedCategory,
+      p_expense_date: expense_date,
+      p_shares: shares,
+    });
 
-      if (!participant_ids || participant_ids.length === 0) {
-        throw new BadRequestException('At least one participant is required');
-      }
-
-      if (participant_ids.length > this.MAX_PARTICIPANTS) {
-        throw new BadRequestException(`Cannot have more than ${this.MAX_PARTICIPANTS} participants`);
-      }
-
-      // Verificar duplicatas
-      const uniqueParticipants = new Set(participant_ids);
-      if (uniqueParticipants.size !== participant_ids.length) {
-        throw new BadRequestException('Duplicate participant IDs are not allowed');
-      }
-
-      const sanitizedDescription = this.sanitizeString(description);
-      const sanitizedCategory = this.sanitizeString(category);
-
-      if (!sanitizedDescription || sanitizedDescription.length === 0) {
-        throw new BadRequestException('Description cannot be empty');
-      }
-
-      if (sanitizedDescription.length > this.MAX_DESCRIPTION_LENGTH) {
-        throw new BadRequestException(`Description cannot exceed ${this.MAX_DESCRIPTION_LENGTH} characters`);
-      }
-
-      if (!sanitizedCategory || sanitizedCategory.length === 0) {
-        throw new BadRequestException('Category cannot be empty');
-      }
-
-      if (sanitizedCategory.length > this.MAX_CATEGORY_LENGTH) {
-        throw new BadRequestException(`Category cannot exceed ${this.MAX_CATEGORY_LENGTH} characters`);
-      }
-
-      await this.validateGroupMembership(group_id, userId, token);
-      await this.validateGroupMembership(group_id, payer_id, token);
-
-      for (const participantId of participant_ids) {
-        await this.validateGroupMembership(group_id, participantId, token);
-      }
-
-      const participantsWithoutPayer = participant_ids.filter(id => id !== payer_id);
-      const amountPerParticipant = amount / participant_ids.length;
-
-      const client = this.supabaseService.getClientWithToken(token);
-      const { data: expense, error: expenseError } = await client
-        .from('expenses')
-        .insert({
-          group_id,
-          payer_id,
-          amount,
-          description: sanitizedDescription,
-          category: sanitizedCategory,
-          expense_date,
-        })
-        .select()
-        .single();
-
-      if (expenseError) {
-        this.logger.error(`Failed to create expense for group ${group_id}`, expenseError.message);
-        throw new BadRequestException('Unable to create expense');
-      }
-
-      const participantsData = participantsWithoutPayer.map(participantId => ({
-        expense_id: expense.id,
-        topayid: participantId,
-        toreceiveid: payer_id,
-        amount: amountPerParticipant,
-        amount_paid: 0,
-      }));
-
-      if (participantsData.length === 0) {
-        return this.getExpenseById(expense.id, userId, token);
-      }
-
-      const { error: participantsError } = await client
-        .from('expense_participants')
-        .insert(participantsData);
-
-      if (participantsError) {
-        await client
-          .from('expenses')
-          .delete()
-          .eq('id', expense.id);
-
-        throw new BadRequestException('Unable to add participants');
-      }
-
-      return this.getExpenseById(expense.id, userId, token);
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof ForbiddenException) {
-        throw error;
-      }
-      throw new BadRequestException('Failed to create expense');
+    if (error) {
+      this.logger.error(`Failed to create expense for group ${group_id}`, error.message);
+      throw this.toHttpError(error, 'Unable to create expense');
     }
+
+    return this.getExpenseById(expenseId, userId, token);
   }
 
   async updateExpense(expenseId: string, updateExpenseDto: UpdateExpenseDto, userId: string, token: string): Promise<ExpenseWithParticipants> {
-    try {
-      // Verificar se a despesa existe e se o usuário tem permissão
-      const expense = await this.getExpenseById(expenseId, userId, token);
+    const expense = await this.getExpenseById(expenseId, userId, token);
 
-      // Verificar se o usuário é membro do grupo
-      await this.validateGroupMembership(expense.group_id, userId, token);
+    const description = updateExpenseDto.description !== undefined
+      ? this.validateDescription(updateExpenseDto.description)
+      : null;
+    const category = updateExpenseDto.category !== undefined
+      ? this.validateCategory(updateExpenseDto.category)
+      : null;
 
-      const updateData: any = { updated_at: new Date().toISOString() };
+    // As partes são recalculadas sempre que o valor ou os participantes mudam.
+    const amount = updateExpenseDto.amount ?? Number(expense.amount);
+    const amountChanged = updateExpenseDto.amount !== undefined && toCents(amount) !== toCents(expense.amount);
+    const participantIds = updateExpenseDto.participant_ids
+      ?? expense.participants.map((participant: any) => participant.topayid);
+    const shares = amountChanged || updateExpenseDto.participant_ids
+      ? this.buildShares(amount, participantIds)
+      : null;
 
-      // Validar e sanitizar dados
-      if (updateExpenseDto.amount !== undefined) {
-        if (updateExpenseDto.amount <= 0 || updateExpenseDto.amount > this.MAX_AMOUNT) {
-          throw new BadRequestException(`Amount must be between 0.01 and ${this.MAX_AMOUNT}`);
-        }
-        updateData.amount = updateExpenseDto.amount;
-      }
-
-      if (updateExpenseDto.description !== undefined) {
-        const sanitizedDescription = this.sanitizeString(updateExpenseDto.description);
-
-        if (!sanitizedDescription || sanitizedDescription.length === 0) {
-          throw new BadRequestException('Description cannot be empty');
-        }
-
-        if (sanitizedDescription.length > this.MAX_DESCRIPTION_LENGTH) {
-          throw new BadRequestException(`Description cannot exceed ${this.MAX_DESCRIPTION_LENGTH} characters`);
-        }
-
-        updateData.description = sanitizedDescription;
-      }
-
-      if (updateExpenseDto.category !== undefined) {
-        const sanitizedCategory = this.sanitizeString(updateExpenseDto.category);
-
-        if (!sanitizedCategory || sanitizedCategory.length === 0) {
-          throw new BadRequestException('Category cannot be empty');
-        }
-
-        if (sanitizedCategory.length > this.MAX_CATEGORY_LENGTH) {
-          throw new BadRequestException(`Category cannot exceed ${this.MAX_CATEGORY_LENGTH} characters`);
-        }
-
-        updateData.category = sanitizedCategory;
-      }
-
-      if (updateExpenseDto.expense_date !== undefined) {
-        updateData.expense_date = updateExpenseDto.expense_date;
-      }
-
-      if (Object.keys(updateData).length === 1) { // Apenas updated_at
-        throw new BadRequestException('No valid fields to update');
-      }
-
-      const client = this.supabaseService.getClientWithToken(token);
-
-      // Atualizar a despesa
-      const { error: expenseError } = await client
-        .from('expenses')
-        .update(updateData)
-        .eq('id', expenseId)
-        .is('deleted_at', null);
-
-      if (expenseError) {
-        this.logger.error(`Failed to update expense ${expenseId}`, expenseError.message);
-        throw new BadRequestException('Unable to update expense');
-      }
-
-      // Se houver novos participantes, atualizar
-      if (updateExpenseDto.participant_ids) {
-        if (updateExpenseDto.participant_ids.length === 0) {
-          throw new BadRequestException('At least one participant is required');
-        }
-
-        if (updateExpenseDto.participant_ids.length > this.MAX_PARTICIPANTS) {
-          throw new BadRequestException(`Cannot have more than ${this.MAX_PARTICIPANTS} participants`);
-        }
-
-        // Verificar duplicatas
-        const uniqueParticipants = new Set(updateExpenseDto.participant_ids);
-        if (uniqueParticipants.size !== updateExpenseDto.participant_ids.length) {
-          throw new BadRequestException('Duplicate participant IDs are not allowed');
-        }
-
-        // Verificar se todos os participantes são membros do grupo
-        for (const participantId of updateExpenseDto.participant_ids) {
-          await this.validateGroupMembership(expense.group_id, participantId, token);
-        }
-
-        // Remover participantes existentes
-        await client
-          .from('expense_participants')
-          .delete()
-          .eq('expense_id', expenseId);
-
-        // Calcular novo valor por participante
-        const newAmount = updateExpenseDto.amount || expense.amount;
-        const participantsWithoutPayer = updateExpenseDto.participant_ids.filter(id => id !== expense.payer_id);
-        const amountPerParticipant = newAmount / updateExpenseDto.participant_ids.length;
-
-        // Criar registros expense_participants apenas para quem deve ao pagador
-        const participantsData = participantsWithoutPayer.map(participantId => ({
-          expense_id: expenseId,
-          topayid: participantId,
-          toreceiveid: expense.payer_id,
-          amount: amountPerParticipant,
-          amount_paid: 0,
-        }));
-
-        // LOG: Mostrar quanto cada participante deve/recebe
-        participantsData.forEach(p => {
-          this.logger.log(`[UPDATE] User ${p.topayid} deve ${p.amount.toFixed(2)} ao user ${p.toreceiveid}`);
-        });
-
-        // Apenas inserir se houver participantes (excluindo o caso onde o pagador é o único)
-        if (participantsData.length > 0) {
-          const { error: participantsError } = await client
-            .from('expense_participants')
-            .insert(participantsData);
-
-          if (participantsError) {
-            this.logger.error(`Failed to update participants for expense ${expenseId}`, participantsError.message);
-            throw new BadRequestException('Unable to update participants');
-          }
-        }
-      } else if (updateExpenseDto.amount) {
-        // Se apenas o valor foi alterado, atualizar os valores dos participantes existentes
-        const { data: participants } = await client
-          .from('expense_participants')
-          .select('*')
-          .eq('expense_id', expenseId);
-
-        if (participants && participants.length > 0) {
-          // Contar total de participantes (incluindo o pagador)
-          const totalParticipants = participants.length + 1; // +1 para o pagador
-          const amountPerParticipant = updateExpenseDto.amount / totalParticipants;
-
-          // Atualizar todos os participantes com o novo valor
-          for (const participant of participants) {
-            await client
-              .from('expense_participants')
-              .update({ amount: amountPerParticipant })
-              .eq('id', participant.id);
-          }
-        }
-      }
-
-      this.logger.log(`Expense ${expenseId} updated successfully by user ${userId}`);
-      return this.getExpenseById(expenseId, userId, token);
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
-        throw error;
-      }
-      this.logger.error('Unexpected error updating expense', error);
-      throw new BadRequestException('Failed to update expense');
+    if (!description && !category && !updateExpenseDto.expense_date && !shares && !amountChanged) {
+      throw new BadRequestException('No valid fields to update');
     }
+
+    const client = this.supabaseService.getClientWithToken(token);
+    const { error } = await client.rpc('update_expense', {
+      p_expense_id: expenseId,
+      p_amount: amountChanged ? amount : null,
+      p_description: description,
+      p_category: category,
+      p_expense_date: updateExpenseDto.expense_date ?? null,
+      p_shares: shares,
+    });
+
+    if (error) {
+      this.logger.error(`Failed to update expense ${expenseId}`, error.message);
+      throw this.toHttpError(error, 'Unable to update expense');
+    }
+
+    this.logger.log(`Expense ${expenseId} updated successfully by user ${userId}`);
+    return this.getExpenseById(expenseId, userId, token);
   }
 
   async deleteExpense(expenseId: string, userId: string, token: string): Promise<void> {
-    try {
-      // Verificar se a despesa existe e se o usuário tem permissão
-      const expense = await this.getExpenseById(expenseId, userId, token);
+    const client = this.supabaseService.getClientWithToken(token);
+    const { error } = await client.rpc('delete_expense', { p_expense_id: expenseId });
 
-      // Verificar se o usuário é membro do grupo
-      await this.validateGroupMembership(expense.group_id, userId, token);
-
-      const client = this.supabaseService.getClientWithToken(token);
-
-      // Soft delete
-      const { error } = await client
-        .from('expenses')
-        .update({ deleted_at: new Date().toISOString() })
-        .eq('id', expenseId)
-        .is('deleted_at', null);
-
-      if (error) {
-        this.logger.error(`Failed to delete expense ${expenseId}`, error.message);
-        throw new BadRequestException('Unable to delete expense');
-      }
-
-      this.logger.log(`Expense ${expenseId} deleted successfully by user ${userId}`);
-    } catch (error) {
-      if (error instanceof BadRequestException || error instanceof ForbiddenException || error instanceof NotFoundException) {
-        throw error;
-      }
-      this.logger.error('Unexpected error deleting expense', error);
-      throw new BadRequestException('Failed to delete expense');
+    if (error) {
+      this.logger.error(`Failed to delete expense ${expenseId}`, error.message);
+      throw this.toHttpError(error, 'Unable to delete expense');
     }
+
+    this.logger.log(`Expense ${expenseId} deleted successfully by user ${userId}`);
   }
 
   async getExpenseById(expenseId: string, userId: string, token: string): Promise<ExpenseWithParticipants> {
@@ -482,7 +265,7 @@ export class ExpensesService {
     }
   }
 
-  async getGroupBalance(groupId: string, userId: string, token: string): Promise<any[]> {
+  async getGroupBalance(groupId: string, userId: string, token: string): Promise<MemberBalance[]> {
     try {
       if (!groupId) {
         throw new BadRequestException('Group ID is required');
@@ -514,50 +297,31 @@ export class ExpensesService {
 
       const ids = expenseIds.map((e: any) => e.id);
 
-      // Buscar todos os participantes dessas despesas
-      const { data: participants, error: participantsError } = await client
-        .from('expense_participants')
-        .select('topayid, toreceiveid, amount, amount_paid')
-        .in('expense_id', ids);
+      let participants: ParticipantRow[] = [];
+      if (ids.length > 0) {
+        const { data, error: participantsError } = await client
+          .from('expense_participants')
+          .select('topayid, toreceiveid, amount')
+          .in('expense_id', ids);
 
-      if (participantsError) {
-        this.logger.error(`Failed to fetch participants for balance calculation ${groupId}`, participantsError.message);
-        throw new BadRequestException('Unable to fetch participants for balance');
+        if (participantsError) {
+          this.logger.error(`Failed to fetch participants for balance calculation ${groupId}`, participantsError.message);
+          throw new BadRequestException('Unable to fetch participants for balance');
+        }
+        participants = data || [];
       }
 
-      // Inicializar saldos para todos os membros
-      const balances = new Map<string, { userId: string; name: string; balance: number }>();
+      const { data: payments, error: paymentsError } = await client
+        .from('payments')
+        .select('from_user_id, to_user_id, amount')
+        .eq('group_id', groupId);
 
-      members.forEach((member: any) => {
-        this.logger.log(`UserID: ${member.user_id}, Name: ${member.name}`);
-        balances.set(member.user_id, {
-          userId: member.user_id,
-          name: member.name || 'Usuário',
-          balance: 0,
-        });
-      });
+      if (paymentsError) {
+        this.logger.error(`Failed to fetch payments for balance calculation ${groupId}`, paymentsError.message);
+        throw new BadRequestException('Unable to fetch payments for balance');
+      }
 
-      // Calcular saldos: quem deve paga (negativo), quem recebe (positivo)
-      participants.forEach((participant: any) => {
-        const remainingAmount = participant.amount - (participant.amount_paid || 0);
-        const payerBalance = balances.get(participant.topayid);
-        const receiverBalance = balances.get(participant.toreceiveid);
-
-        if (payerBalance) {
-          payerBalance.balance -= remainingAmount; // Quem deve tem saldo negativo
-        }
-        if (receiverBalance) {
-          receiverBalance.balance += remainingAmount; // Quem deve receber tem saldo positivo
-        }
-      });      // Converter para o formato esperado
-      const result = Array.from(balances.values()).map(balance => {
-        return {
-          userId: balance.userId,
-          name: balance.name,
-          toReceive: balance.balance > 0 ? Number(balance.balance.toFixed(2)) : 0,
-          toPay: balance.balance < 0 ? Number(Math.abs(balance.balance).toFixed(2)) : 0,
-        };
-      });
+      const result = computeBalances(members, participants, payments || []);
 
       return result;
     } catch (error) {
@@ -603,6 +367,58 @@ export class ExpensesService {
       this.logger.error('Error validating group membership', error);
       throw new ForbiddenException('Unable to verify group membership');
     }
+  }
+
+  private validateDescription(description: string): string {
+    const sanitized = this.sanitizeString(description);
+    if (!sanitized) {
+      throw new BadRequestException('Description cannot be empty');
+    }
+    if (sanitized.length > this.MAX_DESCRIPTION_LENGTH) {
+      throw new BadRequestException(`Description cannot exceed ${this.MAX_DESCRIPTION_LENGTH} characters`);
+    }
+    return sanitized;
+  }
+
+  private validateCategory(category: string): string {
+    const sanitized = this.sanitizeString(category);
+    if (!sanitized) {
+      throw new BadRequestException('Category cannot be empty');
+    }
+    if (sanitized.length > this.MAX_CATEGORY_LENGTH) {
+      throw new BadRequestException(`Category cannot exceed ${this.MAX_CATEGORY_LENGTH} characters`);
+    }
+    return sanitized;
+  }
+
+  private buildShares(amount: number, participantIds: string[]): Share[] {
+    if (!participantIds || participantIds.length === 0) {
+      throw new BadRequestException('At least one participant is required');
+    }
+    if (participantIds.length > this.MAX_PARTICIPANTS) {
+      throw new BadRequestException(`Cannot have more than ${this.MAX_PARTICIPANTS} participants`);
+    }
+    if (new Set(participantIds).size !== participantIds.length) {
+      throw new BadRequestException('Duplicate participant IDs are not allowed');
+    }
+    if (amount <= 0 || amount > this.MAX_AMOUNT) {
+      throw new BadRequestException(`Amount must be between 0.01 and ${this.MAX_AMOUNT}`);
+    }
+    return splitEvenly(amount, participantIds);
+  }
+
+  // Erros das funções SQL: 42501 = sem permissão, P0002 = não encontrado, resto = validação.
+  private toHttpError(error: { code?: string; message: string }, fallback: string) {
+    if (error.code === '42501') {
+      return new ForbiddenException(error.message);
+    }
+    if (error.code === 'P0002') {
+      return new NotFoundException(error.message);
+    }
+    if (error.code === 'P0001') {
+      return new BadRequestException(error.message);
+    }
+    return new BadRequestException(fallback);
   }
 
   private sanitizeString(input: string): string {

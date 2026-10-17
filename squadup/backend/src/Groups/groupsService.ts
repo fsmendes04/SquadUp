@@ -10,6 +10,7 @@ import { CreateGroupDto } from './dto/create-group.dto';
 import { UpdateGroupDto } from './dto/update-group.dto';
 import { Group, GroupMember, GroupWithMembers } from './groupModel';
 import xss from 'xss';
+import { isAllowedImageContent } from '../common/imageSignature';
 
 @Injectable()
 export class GroupsService {
@@ -754,13 +755,7 @@ export class GroupsService {
       throw new BadRequestException('File is empty');
     }
 
-    const signature = file.buffer.slice(0, 4).toString('hex');
-    const validSignatures = [
-      'ffd8ffe0', 'ffd8ffe1', 'ffd8ffe2',
-      '89504e47',
-      '52494646',
-    ];
-    if (!validSignatures.some(sig => signature.startsWith(sig))) {
+    if (!isAllowedImageContent(file.buffer)) {
       throw new BadRequestException('File content does not match declared type');
     }
   }

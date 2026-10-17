@@ -198,6 +198,7 @@ class _AvatarWidgetState extends State<AvatarWidget> {
       });
       return true;
     } catch (e) {
+      debugPrint('Avatar upload failed: $e');
       return false;
     } finally {
       if (mounted) {

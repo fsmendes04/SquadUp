@@ -3,6 +3,7 @@ import { SupabaseService } from '../Supabase/supabaseService';
 import { CreateGalleryDto } from './dto/create-gallery.dto';
 import { Gallery } from './galleryModel';
 import { v4 as uuidv4 } from 'uuid';
+import { isAllowedImageContent } from '../common/imageSignature';
 
 export const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MIME_EXTENSIONS: Record<string, string> = {
@@ -51,12 +52,7 @@ export class GalleryService {
       throw new BadRequestException('Invalid file type. Only JPEG, PNG and WEBP are allowed.');
     }
 
-    const signature = image.buffer.subarray(0, 4).toString('hex');
-    const isJpeg = signature.startsWith('ffd8ff');
-    const isPng = signature === '89504e47';
-    const isWebp = signature === '52494646' && image.buffer.subarray(8, 12).toString('ascii') === 'WEBP';
-
-    if (!isJpeg && !isPng && !isWebp) {
+    if (!isAllowedImageContent(image.buffer)) {
       throw new BadRequestException('File content does not match an allowed image type');
     }
   }

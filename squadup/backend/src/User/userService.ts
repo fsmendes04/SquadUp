@@ -9,6 +9,7 @@ import { SupabaseService } from '../Supabase/supabaseService';
 import { SessionService } from './sessionService';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import xss from 'xss';
+import { isAllowedImageContent } from '../common/imageSignature';
 
 @Injectable()
 export class UserService {
@@ -445,7 +446,7 @@ export class UserService {
 
       return user;
     } catch (error) {
-      this.logger.warn('Token validation failed', error.message);
+      this.logger.warn('Token validation failed', error);
       throw new UnauthorizedException('Authentication failed');
     }
   }
@@ -592,16 +593,7 @@ export class UserService {
       throw new BadRequestException('File is empty');
     }
 
-    const signature = file.buffer.slice(0, 4).toString('hex');
-    const validSignatures = [
-      'ffd8ffe0', // JPG
-      'ffd8ffe1', // JPG
-      'ffd8ffe2', // JPG
-      '89504e47', // PNG
-      '52494646', // WEBP
-    ];
-
-    if (!validSignatures.some(sig => signature.startsWith(sig))) {
+    if (!isAllowedImageContent(file.buffer)) {
       throw new BadRequestException('File content does not match declared type');
     }
   }

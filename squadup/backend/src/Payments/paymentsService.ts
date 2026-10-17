@@ -2,9 +2,9 @@ import { Injectable, BadRequestException, ForbiddenException, Logger } from '@ne
 import { SupabaseService } from '../Supabase/supabaseService';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { Payment } from './paymentModel';
-import { ExpenseParticipant } from '../Expenses/expenseModel';
 import { SettleUpTransaction } from './dto/settle-up-transaction.dto';
 import { ExpensesService } from '../Expenses/expensesService';
+import { settleUp } from '../Expenses/ledger';
 
 @Injectable()
 export class PaymentsService {
@@ -16,7 +16,7 @@ export class PaymentsService {
   ) { }
 
   /**
-   * Register a payment and process settlement of expense participants
+   * Register a payment. Balances are derived from expenses minus payments.
    */
   async registerPayment(
     createPaymentDto: CreatePaymentDto,
@@ -55,6 +55,12 @@ export class PaymentsService {
       throw new BadRequestException('Cannot pay yourself');
     }
 
+    // Pagamentos só entram no saldo (não alteram as partes das despesas), por isso
+    // basta garantir um valor em cêntimos.
+    if (Math.round(amount * 100) / 100 !== amount) {
+      throw new BadRequestException('Amount must have at most 2 decimal places');
+    }
+
     // Insert payment record
     const { data: payment, error: paymentError } = await client
       .from('payments')
@@ -73,91 +79,8 @@ export class PaymentsService {
       throw new BadRequestException('Failed to register payment');
     }
 
-    // Process settlement of expense participants
-    await this.processPaymentSettlement(userId, toUserId, groupId, amount, client);
-
     this.logger.log(`Payment registered: ${userId} paid ${amount} to ${toUserId} in group ${groupId}`);
     return payment;
-  }
-
-  /**
-   * Process payment settlement by distributing the amount across expense participants
-   * and deleting fully paid records
-   */
-  private async processPaymentSettlement(
-    fromUserId: string,
-    toUserId: string,
-    groupId: string,
-    amount: number,
-    client: any,
-  ): Promise<void> {
-    let remaining = amount;
-
-    // Fetch all unpaid or partially paid debts, ordered by creation date
-    const { data: allDebts, error: debtsError } = await client
-      .from('expense_participants')
-      .select('*')
-      .eq('topayid', fromUserId)
-      .eq('toreceiveid', toUserId)
-      .order('created_at', { ascending: true });
-
-    if (debtsError) {
-      this.logger.error(`Error fetching debts: ${debtsError.message}`);
-      throw new BadRequestException('Failed to process payment settlement');
-    }
-
-    // Filter for unpaid or partially paid debts (amount_paid < amount)
-    const debts = allDebts?.filter(debt => (debt.amount_paid || 0) < debt.amount) || [];
-
-
-    if (debts.length === 0) {
-      return;
-    }
-
-    // Process each debt
-    for (const debt of debts as ExpenseParticipant[]) {
-      if (remaining <= 0) break;
-
-      const currentAmountPaid = debt.amount_paid || 0;
-      const debtRemaining = debt.amount - currentAmountPaid;
-
-      if (remaining >= debtRemaining) {
-        // Fully pay this debt - delete the record
-        const { data: deleteData, error: deleteError } = await client
-          .from('expense_participants')
-          .delete()
-          .eq('id', debt.id)
-          .select();
-
-        if (deleteError) {
-          this.logger.error(`Error deleting expense participant ${debt.id}: ${deleteError.message}`);
-        } else {
-          this.logger.log(`Expense participant ${debt.id} fully paid and deleted`);
-        }
-
-        remaining -= debtRemaining;
-      } else if (remaining > 0) {
-        // Partially pay this debt
-        const newAmountPaid = currentAmountPaid + remaining;
-
-        const { data: updateData, error: updateError } = await client
-          .from('expense_participants')
-          .update({ amount_paid: newAmountPaid })
-          .eq('id', debt.id)
-          .select();
-
-        if (updateError) {
-          this.logger.error(`Error updating expense participant ${debt.id}: ${updateError.message}`);
-        } else {
-        }
-
-        remaining = 0;
-      }
-    }
-
-    if (remaining > 0) {
-      this.logger.warn(`Payment of ${amount} exceeded total debts. Remaining: ${remaining}`);
-    }
   }
 
   /**
@@ -191,51 +114,7 @@ export class PaymentsService {
     // Get current balances for all group members
     const balances = await this.expensesService.getGroupBalance(groupId, userId, token);
 
-    // Separate creditors (to receive) and debtors (to pay)
-    const creditors = balances
-      .filter(b => b.toReceive > 0)
-      .map(b => ({
-        userId: b.userId,
-        name: b.name,
-        amount: b.toReceive,
-      }))
-      .sort((a, b) => b.amount - a.amount);
-
-    const debtors = balances
-      .filter(b => b.toPay > 0)
-      .map(b => ({
-        userId: b.userId,
-        name: b.name,
-        amount: b.toPay,
-      }))
-      .sort((a, b) => b.amount - a.amount);
-
-    // Apply greedy algorithm to minimize transactions
-    const transactions: SettleUpTransaction[] = [];
-    let i = 0;
-    let j = 0;
-
-    while (i < debtors.length && j < creditors.length) {
-      const debtor = debtors[i];
-      const creditor = creditors[j];
-      const amount = Math.min(debtor.amount, creditor.amount);
-
-      if (amount > 0.01) {
-        transactions.push({
-          from: debtor.userId,
-          fromName: debtor.name,
-          to: creditor.userId,
-          toName: creditor.name,
-          amount: Number(amount.toFixed(2)),
-        });
-
-        debtor.amount -= amount;
-        creditor.amount -= amount;
-      }
-
-      if (debtor.amount < 0.01) i++;
-      if (creditor.amount < 0.01) j++;
-    }
+    const transactions: SettleUpTransaction[] = settleUp(balances);
 
     this.logger.log(`Calculated ${transactions.length} settle-up transactions for group ${groupId}`);
     return transactions;

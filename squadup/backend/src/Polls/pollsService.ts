@@ -467,133 +467,28 @@ export class PollsService {
 
       const userClient = this.supabaseService.getClientWithToken(token);
 
-      // Get poll to verify status and membership
-      const { data: poll, error: pollError } = await userClient
-        .from('polls')
-        .select('*')
-        .eq('id', pollId)
-        .single();
+      // Validação (membro, sondagem ativa e dentro do prazo, opção válida), voto e
+      // challenger das apostas são feitos de forma atómica na função cast_vote.
+      const { data: vote, error: voteError } = await userClient.rpc('cast_vote', {
+        p_poll_id: pollId,
+        p_option_id: optionId,
+      });
 
-      if (pollError || !poll) {
-        throw new NotFoundException('Poll not found');
-      }
-
-      // Check if poll is still active
-      if (poll.status !== 'active') {
-        throw new BadRequestException('This poll is closed');
-      }
-
-      // Verify user is a member of the group
-      const isMember = await this.groupsService.checkUserIsMember(
-        poll.group_id,
-        userId,
-        token,
-      );
-
-      if (!isMember) {
-        throw new ForbiddenException('You must be a group member to vote');
-      }
-
-      // Verify option belongs to this poll
-      const { data: option, error: optionError } = await userClient
-        .from('poll_options')
-        .select('*')
-        .eq('id', optionId)
-        .eq('poll_id', pollId)
-        .single();
-
-      if (optionError || !option) {
-        throw new BadRequestException('Invalid option for this poll');
-      }
-
-      // Check if user has already voted
-      const { data: existingVote, error: existingVoteError } = await userClient
-        .from('poll_votes')
-        .select('*')
-        .eq('poll_id', pollId)
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (existingVoteError && existingVoteError.code !== 'PGRST116') {
-        this.logger.error('Error checking existing vote', existingVoteError.message);
-        throw new BadRequestException('Failed to process vote');
-      }
-
-      let vote: PollVote;
-
-      if (existingVote) {
-        // User is changing their vote
-        const oldOptionId = existingVote.option_id;
-
-        // Update the vote
-        const { data: updatedVote, error: updateError } = await userClient
-          .from('poll_votes')
-          .update({
-            option_id: optionId,
-          })
-          .eq('id', existingVote.id)
-          .select('*')
-          .single();
-
-        if (updateError) {
-          this.logger.error('Error updating vote', updateError.message);
-          throw new BadRequestException('Failed to update vote');
+      if (voteError) {
+        this.logger.error('Error casting vote', voteError.message);
+        if (voteError.code === '42501') {
+          throw new ForbiddenException(voteError.message);
         }
-
-        vote = updatedVote;
-
-        // O trigger na base de dados trata do incremento/decremento do vote_count
-
-        // Para betting polls, atualizar challenger_user_id
-        if (poll.type === 'betting') {
-          // Remove challenger_user_id from old option
-          await userClient
-            .from('poll_options')
-            .update({ challenger_user_id: null })
-            .eq('id', oldOptionId);
-
-          // Add challenger_user_id to new option se não for o criador
-          if (userId !== poll.created_by) {
-            await userClient
-              .from('poll_options')
-              .update({ challenger_user_id: userId })
-              .eq('id', optionId);
-          }
+        if (voteError.code === 'P0002') {
+          throw new NotFoundException(voteError.message);
         }
-
-        this.logger.log(`Vote updated: poll ${pollId}, user ${userId}, from ${oldOptionId} to ${optionId}`);
-      } else {
-        // User is voting for the first time
-        const { data: newVote, error: voteError } = await userClient
-          .from('poll_votes')
-          .insert([{
-            poll_id: pollId,
-            option_id: optionId,
-            user_id: userId,
-          }])
-          .select('*')
-          .single();
-
-        if (voteError) {
-          this.logger.error('Error creating vote', voteError.message);
-          throw new BadRequestException('Failed to cast vote');
+        if (voteError.code === 'P0001') {
+          throw new BadRequestException(voteError.message);
         }
-
-        vote = newVote;
-
-        // Para betting polls, registar challenger_user_id se não for o criador
-        if (poll.type === 'betting' && userId !== poll.created_by) {
-          const { error: updateError } = await userClient
-            .from('poll_options')
-            .update({ challenger_user_id: userId })
-            .eq('id', optionId);
-
-          if (updateError) {
-            this.logger.warn('Error registering challenger user', updateError.message);
-            // Continua mesmo se houver erro, pois o voto foi criado
-          }
-        }
+        throw new BadRequestException('Failed to cast vote');
       }
+
+      this.logger.log(`Vote cast: poll ${pollId}, user ${userId}, option ${optionId}`);
       const updatedPoll = await this.getPollWithDetails(pollId, token);
 
       return { vote, updatedPoll };

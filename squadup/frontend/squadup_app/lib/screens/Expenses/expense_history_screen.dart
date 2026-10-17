@@ -724,7 +724,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                                     ),
                                     SizedBox(width: r.width(4)),
                                     Text(
-                                      '${expense.participants.length + 1}',
+                                      '${expense.participants.length}',
                                       style: GoogleFonts.poppins(
                                         fontSize: r.fontSize(12),
                                         color: Colors.grey[600],
@@ -775,7 +775,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen> {
                                 ),
                               ),
                               Text(
-                                '€${(expense.amount / expense.participants.length).toStringAsFixed(2)}/person',
+                                '€${(expense.amount / (expense.participants.isEmpty ? 1 : expense.participants.length)).toStringAsFixed(2)}/person',
                                 style: GoogleFonts.poppins(
                                   fontSize: r.fontSize(11),
                                   color: Colors.grey[600],

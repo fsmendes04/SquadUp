@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/expenses_service.dart';
+import '../../services/payments_service.dart';
+import '../../models/settle_up_transaction.dart';
 import '../../services/storage_service.dart';
 import '../../models/expense.dart';
 import '../../widgets/navigation_bar.dart';
@@ -25,6 +27,7 @@ class ExpensesScreen extends StatefulWidget {
 class _ExpensesScreenState extends State<ExpensesScreen>
     with SingleTickerProviderStateMixin {
   final ExpensesService _expensesService = ExpensesService();
+  final PaymentsService _paymentsService = PaymentsService();
   final _groupsService = GroupsService();
 
   late String groupId;
@@ -34,6 +37,7 @@ class _ExpensesScreenState extends State<ExpensesScreen>
   List<Expense> _expenses = [];
   bool _loading = true;
   List<Map<String, dynamic>> _userBalances = [];
+  List<SettleUpTransaction> _settleUp = [];
   bool _initialized = false;
   String? _currentUserName;
   String? _currentUserId;
@@ -96,62 +100,32 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     }
   }
 
+  // Os valores a receber/pagar vêm das transferências sugeridas pelo backend
+  // (saldo = despesas - pagamentos), por isso já descontam os pagamentos feitos.
   List<Map<String, dynamic>> _getParticipantsToReceive() {
     if (_currentUserId == null) return [];
 
-    Map<String, Map<String, dynamic>> groupedByUser = {};
-
-    for (var expense in _expenses) {
-      for (var participant in expense.participants) {
-        if (participant.toReceiveId == _currentUserId) {
-          final userId = participant.toPayId;
-          final remainingAmount = participant.remainingAmount;
-
-          if (groupedByUser.containsKey(userId)) {
-            groupedByUser[userId]!['totalAmount'] += remainingAmount;
-            groupedByUser[userId]!['expenseCount']++;
-          } else {
-            groupedByUser[userId] = {
-              'userId': userId,
-              'userName': _getUserNameById(userId),
-              'totalAmount': remainingAmount,
-              'expenseCount': 1,
-            };
-          }
-        }
-      }
-    }
-
-    return groupedByUser.values.toList();
+    return _settleUp
+        .where((transaction) => transaction.to == _currentUserId)
+        .map((transaction) => <String, dynamic>{
+              'userId': transaction.from,
+              'userName': transaction.fromName,
+              'totalAmount': transaction.amount,
+            })
+        .toList();
   }
 
   List<Map<String, dynamic>> _getParticipantsToPay() {
     if (_currentUserId == null) return [];
 
-    Map<String, Map<String, dynamic>> groupedByUser = {};
-
-    for (var expense in _expenses) {
-      for (var participant in expense.participants) {
-        if (participant.toPayId == _currentUserId) {
-          final userId = participant.toReceiveId;
-          final remainingAmount = participant.remainingAmount;
-
-          if (groupedByUser.containsKey(userId)) {
-            groupedByUser[userId]!['totalAmount'] += remainingAmount;
-            groupedByUser[userId]!['expenseCount']++;
-          } else {
-            groupedByUser[userId] = {
-              'userId': userId,
-              'userName': _getUserNameById(userId),
-              'totalAmount': remainingAmount,
-              'expenseCount': 1,
-            };
-          }
-        }
-      }
-    }
-
-    return groupedByUser.values.toList();
+    return _settleUp
+        .where((transaction) => transaction.from == _currentUserId)
+        .map((transaction) => <String, dynamic>{
+              'userId': transaction.to,
+              'userName': transaction.toName,
+              'totalAmount': transaction.amount,
+            })
+        .toList();
   }
 
   Future<void> _loadExpenses() async {
@@ -162,10 +136,12 @@ class _ExpensesScreenState extends State<ExpensesScreen>
     try {
       final expenses = await _expensesService.getExpensesByGroup(groupId);
       final balances = await _expensesService.getUserBalances(groupId);
+      final settleUp = await _paymentsService.getSettleUpTransactions(groupId);
 
       setState(() {
         _expenses = expenses;
         _userBalances = balances;
+        _settleUp = settleUp;
         _loading = false;
       });
     } catch (e) {
@@ -860,18 +836,6 @@ class _ExpensesScreenState extends State<ExpensesScreen>
         );
       },
     );
-  }
-
-  String _getUserNameById(String userId) {
-    try {
-      final user = _userBalances.firstWhere(
-        (balance) => balance['userId'] == userId,
-        orElse: () => {'name': 'User'},
-      );
-      return user['name'] as String? ?? 'User';
-    } catch (e) {
-      return 'User';
-    }
   }
 
   double _calculateMinBarWidth(double amount) {
